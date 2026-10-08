@@ -1,0 +1,120 @@
+<% layout("/layouts/boilerplate") -%>
+
+<div class="team-applications-page" style="padding: 20px 0; max-width: 1000px; margin: 0 auto;">
+
+    <!-- Breadcrumb / Back Link -->
+    <div style="margin-bottom: 20px;">
+        <a href="/" style="color: #4f46e5; text-decoration: none; font-size: 14px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px;">
+            ← Back to Dashboard
+        </a>
+    </div>
+
+    <!-- Header Card -->
+    <div class="dashboard-card-new full-width" style="margin-bottom: 30px;">
+        <div class="card-header-new">
+            <span class="label-text">TEAM APPLICATIONS</span>
+            <span class="badge badge-urgent"><%= team.theme ? team.theme.toUpperCase() : 'ACTIVE' %></span>
+        </div>
+        <h2 class="team-title" style="margin-bottom: 8px;"><%= team.projectName %></h2>
+        <p style="color: #64748b; font-size: 14px; margin-bottom: 16px;"><%= team.projectRequirement %></p>
+        
+        <div class="team-stats-row">
+            <div class="stat-col">
+                <span class="stat-label">Active Roles</span>
+                <span class="stat-value"><%= team.roles.map(r => r.title + ' (' + r.openings + ' open)').join(', ') %></span>
+            </div>
+            <div class="stat-col">
+                <span class="stat-label">Team Size</span>
+                <span class="stat-value"><%= team.teamSize %> Members</span>
+            </div>
+            <div class="stat-col">
+                <span class="stat-label">Total Applications</span>
+                <span class="stat-value"><%= applications ? applications.length : 0 %> Received</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Applications List Section -->
+    <div class="dashboard-card-new full-width">
+        <h3 class="card-title-new" style="margin-bottom: 20px;">Received Applications</h3>
+
+        <div class="list-container" style="display: flex; flex-direction: column; gap: 16px;">
+            <% if (applications && applications.length > 0) { %>
+                <% applications.forEach(app => { %>
+                    <div class="list-item" style="padding: 16px 20px; border: 1px solid #e2e8f0; border-radius: 12px; background: #ffffff; display: flex; align-items: center; justify-content: space-between; gap: 20px;">
+                        
+                        <!-- Applicant Details -->
+                        <div class="item-main" style="display: flex; align-items: center; gap: 16px; flex: 1;">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='12' fill='%23e2e8f0'/%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z' fill='%239ca3af'/%3E%3C/svg%3E" alt="Avatar" class="item-avatar" style="width: 48px; height: 48px; border-radius: 50%;">
+                            <div class="item-details">
+                                <strong style="font-size: 16px; color: #1e293b;"><%= app.applicantId ? app.applicantId.name : 'Unknown Candidate' %></strong>
+                                <div class="item-meta-row" style="margin-top: 4px; display: flex; align-items: center; gap: 10px;">
+                                    <span class="tag tag-blue"><%= app.role %></span>
+                                    <span class="text-gray" style="font-size: 13px;">Applied on <%= new Date(app.createdAt).toLocaleDateString() %></span>
+                                </div>
+                                <% if (app.applicantId && app.applicantId.skills) { %>
+                                    <div style="margin-top: 6px; font-size: 12px; color: #64748b;">
+                                        Skills: <%= app.applicantId.skills.map(s => s.name).slice(0, 4).join(', ') %>
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+
+                        <!-- Status Badge & Controls -->
+                        <div style="display: flex; align-items: center; gap: 16px;">
+                            
+                            <!-- Current Status Badge -->
+                            <div>
+                                <% if (app.status === 'ACCEPTED') { %>
+                                    <span class="badge badge-success" style="padding: 6px 14px; font-size: 12px;">ACCEPTED</span>
+                                <% } else if (app.status === 'INTERVIEWING') { %>
+                                    <span class="badge badge-info" style="padding: 6px 14px; font-size: 12px;">INTERVIEWING</span>
+                                <% } else if (app.status === 'REJECTED') { %>
+                                    <span class="badge badge-danger" style="padding: 6px 14px; font-size: 12px;">REJECTED</span>
+                                <% } else { %>
+                                    <span class="badge badge-warning" style="padding: 6px 14px; font-size: 12px;">UNDER REVIEW</span>
+                                <% } %>
+                            </div>
+
+                            <!-- Actions Form Dropdown / Buttons -->
+                            <div class="action-buttons-small" style="display: flex; gap: 8px;">
+                                <% if (app.status !== 'ACCEPTED' && app.status !== 'REJECTED') { %>
+                                    <% if (app.status === 'UNDER_REVIEW') { %>
+                                        <form action="/applications/<%= app._id %>/interview" method="POST" style="margin: 0;">
+                                            <button type="submit" class="btn-small-outline" style="color: #0284c7; border-color: #0284c7;">Interview</button>
+                                        </form>
+                                    <% } %>
+                                    <form action="/applications/<%= app._id %>/accept" method="POST" style="margin: 0;">
+                                        <button type="submit" class="btn-small-primary" style="background-color: #10b981; border-color: #10b981;">Accept</button>
+                                    </form>
+                                    <form action="/applications/<%= app._id %>/reject" method="POST" style="margin: 0;">
+                                        <button type="submit" class="btn-small-outline" style="color: #ef4444; border-color: #ef4444;">Reject</button>
+                                    </form>
+                                <% } else { %>
+                                    <!-- Re-open / Change Status Form -->
+                                    <form action="/applications/<%= app._id %>/status" method="POST" style="margin: 0; display: flex; gap: 6px; align-items: center;">
+                                        <select name="status" style="padding: 4px 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 12px;">
+                                            <option value="UNDER_REVIEW" <%= app.status === 'UNDER_REVIEW' ? 'selected' : '' %>>Under Review</option>
+                                            <option value="INTERVIEWING" <%= app.status === 'INTERVIEWING' ? 'selected' : '' %>>Interviewing</option>
+                                            <option value="ACCEPTED" <%= app.status === 'ACCEPTED' ? 'selected' : '' %>>Accepted</option>
+                                            <option value="REJECTED" <%= app.status === 'REJECTED' ? 'selected' : '' %>>Rejected</option>
+                                        </select>
+                                        <button type="submit" class="btn-small-outline" style="padding: 4px 8px; font-size: 12px;">Update</button>
+                                    </form>
+                                <% } %>
+                            </div>
+
+                        </div>
+
+                    </div>
+                <% }); %>
+            <% } else { %>
+                <div style="text-align: center; padding: 40px 20px; color: #64748b;">
+                    <p style="font-size: 15px; margin-bottom: 8px;">No applications received yet.</p>
+                    <span style="font-size: 13px;">When candidates discover and apply to your open roles, they will appear here.</span>
+                </div>
+            <% } %>
+        </div>
+    </div>
+
+</div>

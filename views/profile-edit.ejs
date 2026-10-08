@@ -1,0 +1,83 @@
+<% layout("/layouts/boilerplate") -%>
+
+<div class="profile-edit-page" style="padding: 20px 40px; max-width: 800px; margin: 0 auto;">
+    
+    <div style="margin-bottom: 24px;">
+        <a href="/profile" style="color: #64748b; text-decoration: none; font-size: 14px; display: inline-flex; align-items: center; gap: 4px; margin-bottom: 12px;">
+            ← Back to Profile
+        </a>
+        <h1 style="font-size: 24px; color: #1e293b; margin: 0 0 6px 0;">Edit Profile</h1>
+        <p style="color: #64748b; font-size: 14px; margin: 0;">Update your display name, primary role, availability, and skills.</p>
+    </div>
+
+    <% if (error) { %>
+        <div style="background-color: #fee2e2; border: 1px solid #f87171; color: #b91c1c; padding: 12px 16px; border-radius: 8px; margin-bottom: 24px; font-size: 14px;">
+            <%= error %>
+        </div>
+    <% } %>
+
+    <div class="edit-card" style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 32px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+        <form action="/profile/edit" method="POST">
+            
+            <!-- Full Name -->
+            <div style="margin-bottom: 20px;">
+                <label for="name" style="display: block; font-size: 14px; font-weight: 600; color: #334155; margin-bottom: 6px;">Full Name</label>
+                <input type="text" id="name" name="name" required value="<%= currentUser ? currentUser.name : '' %>"
+                       style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; box-sizing: border-box;">
+            </div>
+
+            <!-- Email (Read Only) -->
+            <div style="margin-bottom: 20px;">
+                <label for="email" style="display: block; font-size: 14px; font-weight: 600; color: #334155; margin-bottom: 6px;">Email (Read-Only)</label>
+                <input type="email" id="email" value="<%= currentUser ? currentUser.email : '' %>" readonly
+                       style="width: 100%; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; background-color: #f8fafc; color: #64748b; box-sizing: border-box;">
+                <span style="font-size: 12px; color: #64748b; margin-top: 4px; display: block;">Your email address is permanent and used for login.</span>
+            </div>
+
+            <!-- Primary Role -->
+            <div style="margin-bottom: 20px;">
+                <label for="role" style="display: block; font-size: 14px; font-weight: 600; color: #334155; margin-bottom: 6px;">Primary Role / Specialization</label>
+                <input type="text" id="role" name="role" required value="<%= currentUser ? currentUser.role : '' %>"
+                       placeholder="e.g. Lead Coordinator, Fullstack Developer, UI/UX Designer"
+                       style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; box-sizing: border-box;">
+            </div>
+
+            <!-- Availability -->
+            <div style="margin-bottom: 20px;">
+                <label for="availability" style="display: block; font-size: 14px; font-weight: 600; color: #334155; margin-bottom: 6px;">Availability Status</label>
+                <select id="availability" name="availability"
+                        style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; background: white; box-sizing: border-box;">
+                    <option value="1" <%= (currentUser && (currentUser.availability === 'Available' || currentUser.availability >= 0.8)) ? 'selected' : '' %>>Available (Open to invitations)</option>
+                    <option value="0.5" <%= (currentUser && (currentUser.availability === 'Looking for team' || (currentUser.availability > 0.2 && currentUser.availability < 0.8))) ? 'selected' : '' %>>Looking for team</option>
+                    <option value="0" <%= (currentUser && (currentUser.availability === 'Busy with current project' || currentUser.availability <= 0.2)) ? 'selected' : '' %>>Busy with current project</option>
+                </select>
+            </div>
+
+            <!-- Skills -->
+            <div style="margin-bottom: 28px;">
+                <label for="skills" style="display: block; font-size: 14px; font-weight: 600; color: #334155; margin-bottom: 6px;">
+                    Skills & Levels (Format: Skill:Level, comma-separated)
+                </label>
+                <% 
+                    const currentSkillsStr = (currentUser && currentUser.skills) 
+                        ? currentUser.skills.map(s => `${s.name}:${s.level || 3}`).join(', ') 
+                        : '';
+                %>
+                <input type="text" id="skills" name="skills" value="<%= currentSkillsStr %>"
+                       placeholder="e.g. React:4, Node.js:5, MongoDB:4, Python:3"
+                       style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; box-sizing: border-box;">
+                <span style="font-size: 12px; color: #64748b; margin-top: 6px; display: block;">
+                    Format each skill with a proficiency level between 1 (beginner) and 5 (expert). Example: <code>React:5, Node.js:4, Express:4</code>
+                </span>
+            </div>
+
+            <!-- Buttons -->
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                <a href="/profile" class="btn-large-outline" style="text-decoration: none; padding: 10px 20px; font-size: 14px;">Cancel</a>
+                <button type="submit" class="btn-large-primary" style="padding: 10px 24px; font-size: 14px; border: none; cursor: pointer;">Save Changes</button>
+            </div>
+
+        </form>
+    </div>
+
+</div>

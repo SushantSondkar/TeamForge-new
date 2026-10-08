@@ -1,0 +1,49 @@
+<% layout("/layouts/boilerplate") -%>
+
+<div class="auth-page" style="max-width: 480px; margin: 40px auto; padding: 20px;">
+    
+    <div class="dashboard-card-new" style="padding: 32px 28px;">
+        
+        <div style="text-align: center; margin-bottom: 24px;">
+            <div style="background-color: #3b82f6; color: white; width: 44px; height: 44px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; font-size: 22px; margin-bottom: 12px;">TF</div>
+            <h2 style="font-size: 24px; color: #1e293b; margin: 0 0 6px 0;">Create an Account</h2>
+            <p style="color: #64748b; font-size: 14px; margin: 0;">Join TeamForge to build teams and discover opportunities.</p>
+        </div>
+
+        <% if (error) { %>
+            <div style="background-color: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 20px; text-align: center;">
+                <%= error %>
+            </div>
+        <% } %>
+
+        <form action="/signup" method="POST" style="display: flex; flex-direction: column; gap: 18px;">
+            <div>
+                <label style="display: block; font-size: 13px; font-weight: 500; color: #475569; margin-bottom: 6px;">Full Name</label>
+                <input type="text" name="name" required placeholder="e.g. Aaradhya Wabale" class="form-control-new" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px;">
+            </div>
+
+            <div>
+                <label style="display: block; font-size: 13px; font-weight: 500; color: #475569; margin-bottom: 6px;">College Email</label>
+                <input type="email" name="email" required placeholder="e.g. aaradhya@test.com" class="form-control-new" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px;">
+            </div>
+
+            <div>
+                <label style="display: block; font-size: 13px; font-weight: 500; color: #475569; margin-bottom: 6px;">Password</label>
+                <input type="password" name="password" required placeholder="Minimum 6 characters" class="form-control-new" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px;">
+            </div>
+
+            <div>
+                <label style="display: block; font-size: 13px; font-weight: 500; color: #475569; margin-bottom: 6px;">Confirm Password</label>
+                <input type="password" name="confirmPassword" required placeholder="Re-enter password" class="form-control-new" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px;">
+            </div>
+
+            <button type="submit" class="btn-large-primary" style="margin-top: 10px; width: 100%; justify-content: center; padding: 12px;">Sign Up</button>
+        </form>
+
+        <div style="text-align: center; margin-top: 24px; font-size: 14px; color: #64748b;">
+            Already have an account? <a href="/login" style="color: #4f46e5; text-decoration: none; font-weight: 500;">Log In</a>
+        </div>
+
+    </div>
+
+</div>

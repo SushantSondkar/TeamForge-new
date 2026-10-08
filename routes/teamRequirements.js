@@ -1,90 +1,152 @@
 const express = require('express');
 const router = express.Router();
 const TeamRequirement = require('../models/TeamRequirement');
+const User = require('../models/User');
+const { getRecommendedCandidates } = require('../utils/recommendations');
+const requireLogin = require('../middleware/auth');
 
-// 1. Context Step
-router.get("/new", (req, res) => {
-  res.render("team-requirement/context");
+// 1. Context Step (Protected)
+router.get("/new", requireLogin, (req, res) => {
+  res.render("team-requirement/context", { teamData: {} });
 });
 
-// 2. Define Team Step
-router.get("/new/define-team", (req, res) => {
-  res.render("team-requirement/define-team");
+router.post("/new", requireLogin, (req, res) => {
+  res.render("team-requirement/context", { teamData: req.body || {} });
 });
 
-router.post("/new/define-team", (req, res) => {
-  const { theme, projectRequirement, deliverables } = req.body;
-  res.render("team-requirement/define-team", {
-    theme,
-    projectRequirement,
-    deliverables,
-  });
-});
-
-// 3. Open Roles Step
-router.get("/new/open-roles", (req, res) => {
+// 2. Define Team Step (Protected)
+router.get("/new/define-team", requireLogin, (req, res) => {
   res.redirect("/team-requirement/new");
 });
 
-router.post("/new/open-roles", (req, res) => {
-  res.render("team-requirement/open-roles", {
-    teamData: req.body,
-  });
+router.post("/new/define-team", requireLogin, (req, res) => {
+  const teamData = {
+    theme: req.body.theme || 'hackathon',
+    projectName: req.body.projectName || '',
+    projectRequirement: req.body.projectRequirement || '',
+    deliverables: req.body.deliverables || '',
+    teamSize: req.body.teamSize || 4,
+    deadline: req.body.deadline || '',
+    rolesJson: req.body.rolesJson || ''
+  };
+  res.render("team-requirement/define-team", { teamData });
 });
 
-// 4. Review Step
-router.post("/new/review", (req, res) => {
-  // If we receive rolesJson, parse it to pass an array of role objects to the review UI
+// 3. Open Roles Step (Protected)
+router.get("/new/open-roles", requireLogin, (req, res) => {
+  res.redirect("/team-requirement/new");
+});
+
+router.post("/new/open-roles", requireLogin, (req, res) => {
   let parsedRoles = [];
   if (req.body.rolesJson) {
     try {
-      parsedRoles = JSON.parse(req.body.rolesJson);
+      parsedRoles = typeof req.body.rolesJson === 'string' ? JSON.parse(req.body.rolesJson) : req.body.rolesJson;
     } catch (err) {
-      console.error("Failed to parse roles JSON:", err);
+      console.error("Failed to parse rolesJson in open-roles:", err);
     }
   }
 
-  res.render("team-requirement/review", {
-    teamData: req.body,
+  res.render("team-requirement/open-roles", {
+    teamData: req.body || {},
     roles: parsedRoles
   });
 });
 
-// Final Submission
-router.post("/submit", async (req, res, next) => {
+// 4. Review Step (Protected)
+router.get("/new/review", requireLogin, (req, res) => {
+  res.redirect("/team-requirement/new");
+});
+
+router.post("/new/review", requireLogin, (req, res) => {
+  let parsedRoles = [];
+  if (req.body.rolesJson) {
+    try {
+      parsedRoles = typeof req.body.rolesJson === 'string' ? JSON.parse(req.body.rolesJson) : req.body.rolesJson;
+    } catch (err) {
+      console.error("Failed to parse roles JSON in review:", err);
+    }
+  }
+
+  res.render("team-requirement/review", {
+    teamData: req.body || {},
+    roles: parsedRoles
+  });
+});
+
+// 5. Final Submission (Protected)
+router.post("/submit", requireLogin, async (req, res, next) => {
   try {
     let parsedRoles = [];
     if (req.body.rolesJson) {
-      parsedRoles = JSON.parse(req.body.rolesJson);
+      parsedRoles = typeof req.body.rolesJson === 'string' ? JSON.parse(req.body.rolesJson) : req.body.rolesJson;
+    }
+
+    const { theme, projectName, projectRequirement, deliverables, teamSize, deadline } = req.body;
+
+    // Validate main required fields
+    if (!theme || !projectName || !projectRequirement || !deliverables || !teamSize || !deadline) {
+      return res.status(400).send("Validation Error: Please fill in all required team details.");
+    }
+
+    // Validate roles
+    if (!parsedRoles || parsedRoles.length === 0) {
+      return res.status(400).send("Validation Error: At least one role is required.");
     }
 
     const requirementData = {
-      theme: req.body.theme,
-      projectName: req.body.projectName,
-      projectRequirement: req.body.projectRequirement,
-      deliverables: req.body.deliverables,
-      teamSize: req.body.teamSize,
-      deadline: req.body.deadline,
+      createdBy: req.user._id,
+      theme,
+      projectName,
+      projectRequirement,
+      deliverables,
+      teamSize: Number(teamSize),
+      deadline: new Date(deadline),
       roles: parsedRoles
     };
 
     const teamRequirement = new TeamRequirement(requirementData);
     await teamRequirement.save();
 
-    console.log("Team Requirement saved successfully!");
-    // Redirect to home on success
-    res.redirect("/");
+    console.log("MongoDB document created successfully:", teamRequirement._id, "by user:", req.user.email);
+    res.redirect("/?teamId=" + teamRequirement._id);
   } catch (err) {
     console.error("Database or Validation Error:", err.message);
-    
-    // If the error is a timeout because local MongoDB is not running, gracefully fallback
-    // This allows the UI flow to complete even if the developer hasn't started the DB.
-    if (err.message && (err.message.includes("buffering timed out") || err.message.includes("ECONNREFUSED"))) {
-        console.warn("MongoDB is not running. Bypassing save to allow UI flow to finish.");
-        return res.redirect("/");
+    if (err.name === 'ValidationError') {
+      return res.status(400).send(`Validation Error: ${err.message}`);
+    }
+    res.status(500).send(`Error saving team requirement: ${err.message}. Please check if local MongoDB is running.`);
+  }
+});
+
+// 6. Get Recommended Candidates for a Team Requirement
+router.get("/:id/recommendations", async (req, res) => {
+  try {
+    const team = await TeamRequirement.findById(req.params.id);
+    if (!team) {
+      return res.status(404).json({ error: "Team requirement not found" });
     }
 
-    next(err); // Pass other errors to global error handler
+    const roleIndex = parseInt(req.query.roleIndex, 10) || 0;
+    const role = (team.roles && team.roles[roleIndex]) ? team.roles[roleIndex] : (team.roles ? team.roles[0] : null);
+
+    if (!role) {
+      return res.json({ team, role: null, recommendations: [] });
+    }
+
+    const currentUserId = req.user ? req.user._id : null;
+    const recommendations = await getRecommendedCandidates(team, role, currentUserId);
+
+    res.json({
+      success: true,
+      teamId: team._id,
+      projectName: team.projectName,
+      role: role.title,
+      recommendations
+    });
+  } catch (err) {
+    console.error("Error fetching recommendations:", err.message);
+    res.status(500).json({ error: `Server error: ${err.message}` });
   }
 });
 

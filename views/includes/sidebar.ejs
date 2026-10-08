@@ -7,21 +7,35 @@
 
     <nav class="sidebar-nav" style="padding: 0 15px;">
 
-        <a href="/" class="sidebar-link" style="color: #475569; font-weight: 500; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: block; text-decoration: none;">
-            <span>Dashboard</span>
-        </a>
+        <% if (currentUser) { %>
+            <a href="/" class="sidebar-link" style="color: #475569; font-weight: 500; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: block; text-decoration: none;">
+                <span>Dashboard</span>
+            </a>
 
-        <a href="/discover" class="sidebar-link" style="color: #475569; font-weight: 500; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: block; text-decoration: none;">
-            <span>Discover Opportunities</span>
-        </a>
+            <a href="/discover" class="sidebar-link" style="color: #475569; font-weight: 500; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: block; text-decoration: none;">
+                <span>Discover Opportunities</span>
+            </a>
 
-        <a href="/notifications" class="sidebar-link" style="color: #475569; font-weight: 500; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: block; text-decoration: none;">
-            <span>Notifications</span>
-        </a>
+            <a href="/notifications" class="sidebar-link" style="color: #475569; font-weight: 500; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: block; text-decoration: none;">
+                <span>Notifications</span>
+            </a>
 
-        <a href="/profile" class="sidebar-link" style="color: #475569; font-weight: 500; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: block; text-decoration: none;">
-            <span>Profile & Settings</span>
-        </a>
+            <a href="/profile" class="sidebar-link" style="color: #475569; font-weight: 500; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: block; text-decoration: none;">
+                <span>Profile & Settings</span>
+            </a>
+        <% } else { %>
+            <a href="/discover" class="sidebar-link" style="color: #475569; font-weight: 500; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: block; text-decoration: none;">
+                <span>Discover Opportunities</span>
+            </a>
+
+            <a href="/login" class="sidebar-link" style="color: #475569; font-weight: 500; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: block; text-decoration: none;">
+                <span>Log In</span>
+            </a>
+
+            <a href="/signup" class="sidebar-link" style="color: #475569; font-weight: 500; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: block; text-decoration: none;">
+                <span>Sign Up</span>
+            </a>
+        <% } %>
 
     </nav>
 

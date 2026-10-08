@@ -2,14 +2,16 @@ const mongoose = require("mongoose");
 
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGO_URI || "mongodb://127.0.0.1:27017/teamforge", {
-        serverSelectionTimeoutMS: 2000 // fail fast if DB is down
+    const mongoURI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/teamforge";
+    await mongoose.connect(mongoURI, {
+      serverSelectionTimeoutMS: 3000
     });
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
+    console.log("MongoDB connected successfully");
+    const seedUsers = require("./seedUsers");
+    await seedUsers();
   } catch (error) {
-    console.error(`Error connecting to MongoDB: ${error.message}`);
-    // Do not exit process in development if Mongo is missing, just mock it or log
-    // process.exit(1); 
+    console.error(`MongoDB connection error: ${error.message}`);
+    console.error("Local MongoDB is not running. Please start local MongoDB using 'brew services start mongodb-community' or 'mongod'.");
   }
 };
 

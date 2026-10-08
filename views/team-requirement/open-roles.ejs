@@ -38,117 +38,97 @@
 
         <form action="/team-requirement/new/review" method="POST" class="open-roles-form">
 
-            <!-- Hidden Inputs for Step 1 & 2 -->
+            <!-- Hidden Inputs from Step 1 & 2 -->
             <input type="hidden" name="theme" value="<%= teamData.theme %>">
             <input type="hidden" name="projectName" value="<%= teamData.projectName %>">
             <input type="hidden" name="projectRequirement" value="<%= teamData.projectRequirement %>">
             <input type="hidden" name="deliverables" value="<%= teamData.deliverables %>">
             <input type="hidden" name="teamSize" value="<%= teamData.teamSize %>">
             <input type="hidden" name="deadline" value="<%= teamData.deadline %>">
-            
-            <!-- Hidden inputs to satisfy old backend expectation -->
-            <input type="hidden" name="openings" value="1">
-            <input type="hidden" name="roleDescription" value="Generated from UI">
+            <input type="hidden" name="rolesJson" id="rolesJson" value="<%= teamData.rolesJson || '' %>">
 
-            <!-- Role Card 1 -->
-            <div class="role-profile-card">
-                <div class="role-profile-header">
-                    <div class="role-profile-title">
-                        <span class="role-number">1</span>
-                        <strong>Role Profile</strong>
+            <div id="roles-container">
+            <% 
+                const defaultInitialRoles = [
+                    {
+                        title: 'Lead Technical Architect',
+                        requiredSkills: ['System Design', 'Node.js', 'MongoDB'],
+                        preferredSkills: ['AWS', 'Docker'],
+                        proficiency: 'Advanced',
+                        openings: 1
+                    }
+                ];
+                const activeRoles = (roles && roles.length > 0) ? roles : defaultInitialRoles;
+            %>
+
+            <% activeRoles.forEach((r, idx) => { %>
+                <div class="role-profile-card">
+                    <div class="role-profile-header">
+                        <div class="role-profile-title">
+                            <span class="role-number" <%- idx > 0 ? 'style="background-color: #dbeafe; color: #2563eb;"' : '' %>><%= idx + 1 %></span>
+                            <strong>Role Profile</strong>
+                        </div>
+                        <div class="role-profile-meta" style="display: flex; align-items: center; gap: 12px;">
+                            <span class="badge badge-success-light">Urgency: Open</span>
+                            <button type="button" class="btn-remove-role" style="background: none; border: none; color: #ef4444; font-size: 13px; font-weight: 600; cursor: pointer; display: <%= activeRoles.length > 1 ? 'inline-block' : 'none' %>;">Remove</button>
+                        </div>
                     </div>
-                    <div class="role-profile-meta">
-                        <span class="badge badge-success-light">Urgency: Open</span>
-                        <span class="meta-note"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg> Auto-calculated from deadline</span>
+
+                    <div class="form-group-new">
+                        <label>Role Title</label>
+                        <input type="text" value="<%= r.title || '' %>" placeholder="e.g. Lead Technical Architect" class="form-control-new role-title-input" required>
+                    </div>
+
+                    <div class="form-group-new">
+                        <label>Required Skills (Press Enter to add)</label>
+                        <div class="skills-input-container required-skills-container">
+                            <% if (r.requiredSkills && r.requiredSkills.length > 0) { %>
+                                <% r.requiredSkills.forEach(skill => { %>
+                                    <div class="skill-tag"><%= skill %> <button type="button">×</button></div>
+                                <% }); %>
+                            <% } %>
+                            <input type="text" placeholder="+ Add skill (press Enter)" class="skill-input-transparent">
+                        </div>
+                    </div>
+
+                    <div class="form-group-new">
+                        <label>Preferred Skills (Optional, Press Enter to add)</label>
+                        <div class="skills-input-container preferred-skills-container">
+                            <% if (r.preferredSkills && r.preferredSkills.length > 0) { %>
+                                <% r.preferredSkills.forEach(skill => { %>
+                                    <div class="skill-tag"><%= skill %> <button type="button">×</button></div>
+                                <% }); %>
+                            <% } %>
+                            <input type="text" placeholder="+ Add skill (press Enter)" class="skill-input-transparent">
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div class="form-group-new">
+                            <label>Minimum Proficiency</label>
+                            <select class="form-control-new role-proficiency-select">
+                                <option value="Intermediate" <%= (r.proficiency === 'Intermediate' || !r.proficiency) ? 'selected' : '' %>>Intermediate</option>
+                                <option value="Advanced" <%= r.proficiency === 'Advanced' ? 'selected' : '' %>>Advanced</option>
+                                <option value="Expert" <%= r.proficiency === 'Expert' ? 'selected' : '' %>>Expert</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group-new">
+                            <label>Openings</label>
+                            <input type="number" min="1" max="10" value="<%= r.openings || 1 %>" class="form-control-new role-openings-input">
+                        </div>
                     </div>
                 </div>
-
-                <div class="form-group-new">
-                    <label>Role Title</label>
-                    <input type="text" name="role" value="Lead Technical Architect" class="form-control-new" required>
-                </div>
-
-                <div class="form-group-new">
-                    <label>Required Skills</label>
-                    <div class="skills-input-container">
-                        <div class="skill-tag">System Design <button type="button">×</button></div>
-                        <div class="skill-tag">Node.js <button type="button">×</button></div>
-                        <div class="skill-tag">PostgreSQL <button type="button">×</button></div>
-                        <input type="text" name="new_skill" placeholder="+ Add skill" class="skill-input-transparent">
-                    </div>
-                </div>
-
-                <div class="form-group-new">
-                    <label>Preferred Skills (Optional)</label>
-                    <div class="skills-input-container">
-                        <div class="skill-tag">AWS <button type="button">×</button></div>
-                        <div class="skill-tag">Docker <button type="button">×</button></div>
-                        <input type="text" placeholder="+ Add skill" class="skill-input-transparent">
-                    </div>
-                </div>
-
-                <div class="form-group-new">
-                    <label>Minimum Proficiency</label>
-                    <select class="form-control-new">
-                        <option>Intermediate</option>
-                        <option>Advanced</option>
-                        <option>Expert</option>
-                    </select>
-                </div>
+            <% }); %>
             </div>
 
-            <!-- Role Card 2 -->
-            <div class="role-profile-card">
-                <div class="role-profile-header">
-                    <div class="role-profile-title">
-                        <span class="role-number" style="background-color: #dbeafe; color: #2563eb;">2</span>
-                        <strong>Role Profile</strong>
-                    </div>
-                    <div class="role-profile-meta">
-                        <span class="badge badge-success-light">Urgency: Open</span>
-                        <span class="meta-note"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg> Auto-calculated from deadline</span>
-                    </div>
-                </div>
-
-                <div class="form-group-new">
-                    <label>Role Title</label>
-                    <input type="text" value="Frontend Developer" class="form-control-new">
-                </div>
-
-                <div class="form-group-new">
-                    <label>Required Skills</label>
-                    <div class="skills-input-container">
-                        <div class="skill-tag">React <button type="button">×</button></div>
-                        <div class="skill-tag">TypeScript <button type="button">×</button></div>
-                        <div class="skill-tag">CSS <button type="button">×</button></div>
-                        <input type="text" placeholder="+ Add skill" class="skill-input-transparent">
-                    </div>
-                </div>
-
-                <div class="form-group-new">
-                    <label>Preferred Skills (Optional)</label>
-                    <div class="skills-input-container">
-                        <div class="skill-tag">Figma <button type="button">×</button></div>
-                        <div class="skill-tag">Next.js <button type="button">×</button></div>
-                        <input type="text" placeholder="+ Add skill" class="skill-input-transparent">
-                    </div>
-                </div>
-
-                <div class="form-group-new">
-                    <label>Minimum Proficiency</label>
-                    <select class="form-control-new">
-                        <option>Intermediate</option>
-                    </select>
-                </div>
-            </div>
-
-            <button type="button" class="btn-dashed-new">
+            <button type="button" class="btn-dashed-new btn-add-role" id="btn-add-role">
                 + Add another role
             </button>
 
             <div class="form-footer-new">
-                <a href="/team-requirement/new/define-team" class="btn-cancel">Back</a>
-                <button type="submit" class="btn-continue">Continue</button>
+                <button type="submit" formaction="/team-requirement/new/define-team" class="btn-cancel" id="btn-back-define-team" style="background: none; border: 1px solid #d1d5db; border-radius: 8px; cursor: pointer; padding: 10px 24px; color: #4b5563;">Back</button>
+                <button type="submit" class="btn-continue" id="btn-continue">Continue</button>
             </div>
 
         </form>

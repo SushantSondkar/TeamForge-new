@@ -3,28 +3,43 @@
 <div class="dashboard-new">
 
     <!-- Active Team Status -->
+    <% if (latestTeam) { %>
     <div class="dashboard-card-new full-width">
         <div class="card-header-new">
             <span class="label-text">ACTIVE TEAM STATUS</span>
-            <span class="badge badge-urgent">URGENT</span>
+            <span class="badge badge-urgent"><%= latestTeam.theme ? latestTeam.theme.toUpperCase() : 'ACTIVE' %></span>
         </div>
-        <h2 class="team-title">Alpha_coders</h2>
+        <h2 class="team-title"><%= latestTeam.projectName %></h2>
         
         <div class="team-stats-row">
             <div class="stat-col">
                 <span class="stat-label">Current Role Needed</span>
-                <span class="stat-value">Lead Technical Architect</span>
+                <span class="stat-value"><%= (latestTeam.roles && latestTeam.roles.length > 0) ? latestTeam.roles[0].title : 'Open Role' %></span>
             </div>
             <div class="stat-col">
                 <span class="stat-label">Total Members</span>
-                <span class="stat-value">6 / 8 Active</span>
+                <!-- Temporary count until full user/member schema is connected -->
+                <span class="stat-value">1 / <%= latestTeam.teamSize %> Active</span>
             </div>
             <div class="stat-col">
                 <span class="stat-label">Project Deadline</span>
-                <span class="stat-value">October 15, 2026</span>
+                <span class="stat-value"><%= new Date(latestTeam.deadline).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) %></span>
+            </div>
+            <div class="stat-col" style="display: flex; justify-content: flex-end; align-items: center;">
+                <a href="/applications/team/<%= latestTeam._id %>" class="btn-small-outline" style="text-decoration: none; padding: 6px 14px; font-size: 13px; white-space: nowrap;">View Applications (<%= teamApplicationCount || 0 %>)</a>
             </div>
         </div>
     </div>
+    <% } else { %>
+    <div class="dashboard-card-new full-width" style="text-align: center; padding: 40px 20px;">
+        <div class="card-header-new" style="justify-content: center; margin-bottom: 12px;">
+            <span class="label-text">ACTIVE TEAM STATUS</span>
+        </div>
+        <h2 class="team-title" style="margin-bottom: 8px;">No Active Team</h2>
+        <p style="color: #64748b; font-size: 14px; margin-bottom: 24px;">Create a team requirement to start finding suitable teammates.</p>
+        <a href="/team-requirement/new" class="btn-large-primary" style="display: inline-block; text-decoration: none;">+ Create Team Requirement</a>
+    </div>
+    <% } %>
 
     <div class="dashboard-grid-new">
 
@@ -32,49 +47,36 @@
         <div class="dashboard-card-new">
             <h3 class="card-title-new">Recommended Candidates</h3>
             <div class="list-container">
-                
-                <div class="list-item">
-                    <div class="item-main">
-                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='12' fill='%23e2e8f0'/%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z' fill='%239ca3af'/%3E%3C/svg%3E" alt="Avatar" class="item-avatar">
-                        <div class="item-details">
-                            <strong>Harsh Dhavane</strong>
-                            <div class="item-meta-row">
-                                <span class="tag tag-blue">REACT DEVELOPER</span>
-                                <span class="text-green">98% Match</span>
+                <% if (recommendedCandidates && recommendedCandidates.length > 0) { %>
+                    <% recommendedCandidates.forEach(cand => { %>
+                        <div class="list-item">
+                            <div class="item-main">
+                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='12' fill='%23e2e8f0'/%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z' fill='%239ca3af'/%3E%3C/svg%3E" alt="Avatar" class="item-avatar">
+                                <div class="item-details">
+                                    <strong><%= cand.user.name %></strong>
+                                    <div class="item-meta-row">
+                                        <span class="tag tag-blue"><%= cand.user.role ? cand.user.role.toUpperCase() : 'CANDIDATE' %></span>
+                                        <span class="text-green"><%= cand.score %>% Match</span>
+                                    </div>
+                                </div>
                             </div>
+                            <% if (cand.isInvited) { %>
+                                <button class="btn-small-primary" disabled style="background-color: #10b981; border-color: #10b981;">Invited</button>
+                            <% } else { %>
+                                <button class="btn-small-primary btn-invite-candidate"
+                                        data-receiver-id="<%= cand.user._id %>"
+                                        data-team-id="<%= latestTeam ? latestTeam._id : '' %>"
+                                        data-role="<%= (latestTeam && latestTeam.roles && latestTeam.roles[0]) ? latestTeam.roles[0].title : '' %>">
+                                    Invite
+                                </button>
+                            <% } %>
                         </div>
+                    <% }); %>
+                <% } else { %>
+                    <div class="list-item">
+                        <span class="text-gray" style="padding: 10px 0;">No matching candidates found.</span>
                     </div>
-                    <button class="btn-small-primary">Invite</button>
-                </div>
-
-                <div class="list-item">
-                    <div class="item-main">
-                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='12' fill='%23e2e8f0'/%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z' fill='%239ca3af'/%3E%3C/svg%3E" alt="Avatar" class="item-avatar">
-                        <div class="item-details">
-                            <strong>Gayatri Jadhav</strong>
-                            <div class="item-meta-row">
-                                <span class="tag tag-blue">PYTHON SPECIALIST</span>
-                                <span class="text-green">94% Match</span>
-                            </div>
-                        </div>
-                    </div>
-                    <button class="btn-small-primary">Invite</button>
-                </div>
-
-                <div class="list-item">
-                    <div class="item-main">
-                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='12' fill='%23e2e8f0'/%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z' fill='%239ca3af'/%3E%3C/svg%3E" alt="Avatar" class="item-avatar">
-                        <div class="item-details">
-                            <strong>Sanket Pawar</strong>
-                            <div class="item-meta-row">
-                                <span class="tag tag-blue">UI-UX DESIGNER</span>
-                                <span class="text-green">91% Match</span>
-                            </div>
-                        </div>
-                    </div>
-                    <button class="btn-small-primary">Invite</button>
-                </div>
-
+                <% } %>
             </div>
         </div>
 
@@ -82,46 +84,34 @@
         <div class="dashboard-card-new">
             <h3 class="card-title-new">Recommended Opportunities</h3>
             <div class="list-container">
-                
-                <div class="list-item">
-                    <div class="item-main">
-                        <div class="item-details">
-                            <strong>Team Nexus</strong>
-                            <div class="item-meta-row">
-                                <span class="text-gray">Frontend Lead</span>
-                                <span class="text-blue">97% Match</span>
+                <% if (recommendedOpportunities && recommendedOpportunities.length > 0) { %>
+                    <% recommendedOpportunities.forEach(opp => { %>
+                        <div class="list-item">
+                            <div class="item-main">
+                                <div class="item-details">
+                                    <strong><%= opp.team.projectName %></strong>
+                                    <div class="item-meta-row">
+                                        <span class="text-gray"><%= opp.role.title %></span>
+                                        <span class="text-blue"><%= opp.score %>% Match</span>
+                                    </div>
+                                </div>
                             </div>
+                            <% if (opp.isApplied) { %>
+                                <button class="btn-small-outline" disabled style="background-color: #10b981; color: white; border-color: #10b981;">Applied</button>
+                            <% } else { %>
+                                <button class="btn-small-outline btn-apply-opportunity"
+                                        data-team-id="<%= opp.team._id %>"
+                                        data-role="<%= opp.role.title %>">
+                                    Apply
+                                </button>
+                            <% } %>
                         </div>
+                    <% }); %>
+                <% } else { %>
+                    <div class="list-item">
+                        <span class="text-gray" style="padding: 10px 0;">No matching opportunities found.</span>
                     </div>
-                    <button class="btn-small-outline">Apply</button>
-                </div>
-
-                <div class="list-item">
-                    <div class="item-main">
-                        <div class="item-details">
-                            <strong>Agratas</strong>
-                            <div class="item-meta-row">
-                                <span class="text-gray">Data Scientist</span>
-                                <span class="text-blue">93% Match</span>
-                            </div>
-                        </div>
-                    </div>
-                    <button class="btn-small-outline">Apply</button>
-                </div>
-
-                <div class="list-item">
-                    <div class="item-main">
-                        <div class="item-details">
-                            <strong>Opportunity Hunters</strong>
-                            <div class="item-meta-row">
-                                <span class="text-gray">Creative Lead</span>
-                                <span class="text-blue">89% Match</span>
-                            </div>
-                        </div>
-                    </div>
-                    <button class="btn-small-outline">Apply</button>
-                </div>
-
+                <% } %>
             </div>
         </div>
 
@@ -129,81 +119,64 @@
         <div class="dashboard-card-new">
             <h3 class="card-title-new">Active Invites Sent</h3>
             <div class="list-container">
-                
-                <div class="list-item">
-                    <div class="item-main">
-                        <div class="item-details">
-                            <strong>Atmaj Gaikwad</strong>
-                            <div class="item-meta-row">
-                                <span class="text-gray">DevOps Engineer</span>
+                <% if (sentInvites && sentInvites.length > 0) { %>
+                    <% sentInvites.forEach(inv => { %>
+                        <div class="list-item">
+                            <div class="item-main">
+                                <div class="item-details">
+                                    <strong><%= inv.receiverId ? inv.receiverId.name : 'Candidate' %></strong>
+                                    <div class="item-meta-row">
+                                        <span class="text-gray"><%= inv.role || 'Team Member' %></span>
+                                    </div>
+                                </div>
                             </div>
+                            <% if (inv.status === 'ACCEPTED') { %>
+                                <span class="badge badge-success">ACCEPTED</span>
+                            <% } else if (inv.status === 'DECLINED') { %>
+                                <span class="badge badge-danger">DECLINED</span>
+                            <% } else { %>
+                                <span class="badge badge-warning">PENDING</span>
+                            <% } %>
                         </div>
+                    <% }); %>
+                <% } else { %>
+                    <div class="list-item">
+                        <span class="text-gray" style="padding: 10px 0;">No invites sent yet.</span>
                     </div>
-                    <span class="badge badge-warning">PENDING</span>
-                </div>
-
-                <div class="list-item">
-                    <div class="item-main">
-                        <div class="item-details">
-                            <strong>Kalpesh Shinde</strong>
-                            <div class="item-meta-row">
-                                <span class="text-gray">Backend Developer</span>
-                            </div>
-                        </div>
-                    </div>
-                    <span class="badge badge-success">ACCEPTED</span>
-                </div>
-
-                <div class="list-item">
-                    <div class="item-main">
-                        <div class="item-details">
-                            <strong>Bhakti Lad</strong>
-                            <div class="item-meta-row">
-                                <span class="text-gray">QA Engineer</span>
-                            </div>
-                        </div>
-                    </div>
-                    <span class="badge badge-danger">DECLINED</span>
-                </div>
-
+                <% } %>
             </div>
         </div>
 
         <!-- New Invites Received -->
-        <div class="dashboard-card-new">
+        <div class="dashboard-card-new" id="invites-received-card">
             <h3 class="card-title-new">New Invites Received</h3>
             <div class="list-container">
-                
-                <div class="list-item">
-                    <div class="item-main">
-                        <div class="item-details">
-                            <strong>Team Vortex</strong>
-                            <div class="item-meta-row">
-                                <span class="text-gray">Senior Developer</span>
+                <% if (receivedInvites && receivedInvites.length > 0) { %>
+                    <% receivedInvites.forEach(inv => { %>
+                        <div class="list-item" data-invite-id="<%= inv._id %>">
+                            <div class="item-main">
+                                <div class="item-details">
+                                    <strong><%= inv.teamRequirementId ? inv.teamRequirementId.projectName : (inv.senderId ? inv.senderId.name : 'Project Team') %></strong>
+                                    <div class="item-meta-row">
+                                        <span class="text-gray"><%= inv.role || 'Collaborator' %></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="action-buttons-small">
+                                <form action="/invites/<%= inv._id %>/accept" method="POST" style="display:inline; margin:0;">
+                                    <button type="submit" class="btn-small-primary btn-accept-invite">Accept</button>
+                                </form>
+                                <form action="/invites/<%= inv._id %>/decline" method="POST" style="display:inline; margin:0;">
+                                    <button type="submit" class="btn-small-outline btn-decline-invite">Decline</button>
+                                </form>
                             </div>
                         </div>
+                    <% }); %>
+                <% } else { %>
+                    <div class="list-item">
+                        <span class="text-gray" style="padding: 10px 0;">No invites received yet.</span>
                     </div>
-                    <div class="action-buttons-small">
-                        <button class="btn-small-primary">Accept</button>
-                        <button class="btn-small-outline">Decline</button>
-                    </div>
-                </div>
-
-                <div class="list-item">
-                    <div class="item-main">
-                        <div class="item-details">
-                            <strong>ByteCraft</strong>
-                            <div class="item-meta-row">
-                                <span class="text-gray">Product Manager</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="action-buttons-small">
-                        <button class="btn-small-primary">Accept</button>
-                        <button class="btn-small-outline">Decline</button>
-                    </div>
-                </div>
-
+                <% } %>
             </div>
         </div>
 
@@ -211,31 +184,33 @@
         <div class="dashboard-card-new">
             <h3 class="card-title-new">Pending Applications</h3>
             <div class="list-container">
-                
-                <div class="list-item">
-                    <div class="item-main">
-                        <div class="item-details">
-                            <strong>Team Jalvedh</strong>
-                            <div class="item-meta-row">
-                                <span class="text-gray">Rust Engineer</span>
+                <% if (myApplications && myApplications.length > 0) { %>
+                    <% myApplications.forEach(app => { %>
+                        <div class="list-item">
+                            <div class="item-main">
+                                <div class="item-details">
+                                    <strong><%= app.teamRequirementId ? app.teamRequirementId.projectName : 'Project Team' %></strong>
+                                    <div class="item-meta-row">
+                                        <span class="text-gray"><%= app.role || 'Member' %></span>
+                                    </div>
+                                </div>
                             </div>
+                            <% if (app.status === 'ACCEPTED') { %>
+                                <span class="badge badge-success">ACCEPTED</span>
+                            <% } else if (app.status === 'INTERVIEWING') { %>
+                                <span class="badge badge-info">INTERVIEWING</span>
+                            <% } else if (app.status === 'REJECTED') { %>
+                                <span class="badge badge-danger">REJECTED</span>
+                            <% } else { %>
+                                <span class="badge badge-warning">UNDER REVIEW</span>
+                            <% } %>
                         </div>
+                    <% }); %>
+                <% } else { %>
+                    <div class="list-item">
+                        <span class="text-gray" style="padding: 10px 0;">No applications yet.</span>
                     </div>
-                    <span class="badge badge-warning">UNDER REVIEW</span>
-                </div>
-
-                <div class="list-item">
-                    <div class="item-main">
-                        <div class="item-details">
-                            <strong>Krypton Web</strong>
-                            <div class="item-meta-row">
-                                <span class="text-gray">UI Designer</span>
-                            </div>
-                        </div>
-                    </div>
-                    <span class="badge badge-info">INTERVIEWING</span>
-                </div>
-
+                <% } %>
             </div>
         </div>
 

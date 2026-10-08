@@ -19,129 +19,60 @@
         <!-- Tab: Smart Recommendations -->
         <div id="smart-recs" class="tab-pane active" style="display: flex; gap: 30px;">
             <div class="teams-list" style="flex: 1;">
-                
-                <div class="team-card-advanced">
-                    <div class="team-card-header">
-                        <div class="team-card-title">
-                            <h3>Nexus Web Lab</h3>
-                            <span class="badge badge-hackathon">HACKATHON</span>
-                        </div>
-                        <div class="team-card-match">
-                            <span class="brief-badge">Clear Brief</span>
-                            <span class="match-score">97% Match</span>
-                        </div>
-                    </div>
-                    <div class="team-card-role">Role: Frontend Lead</div>
-                    
-                    <div class="team-card-meta">
-                        <div class="meta-col">
-                            <span class="meta-label">Lead Reliability</span>
-                            <div class="meta-value">
-                                <span class="stars">★★★★★</span>
-                                <span class="rating-num">5.0</span>
+                <% if (recommendedOpportunities && recommendedOpportunities.length > 0) { %>
+                    <% recommendedOpportunities.forEach(opp => { %>
+                        <div class="team-card-advanced">
+                            <div class="team-card-header">
+                                <div class="team-card-title">
+                                    <h3><%= opp.team.projectName %></h3>
+                                    <span class="badge badge-hackathon"><%= opp.team.theme ? opp.team.theme.toUpperCase() : 'PROJECT' %></span>
+                                </div>
+                                <div class="team-card-match">
+                                    <span class="brief-badge"><%= opp.role.openings %> Openings</span>
+                                    <span class="match-score"><%= opp.score %>% Match</span>
+                                </div>
+                            </div>
+                            <div class="team-card-role">Role: <%= opp.role.title %></div>
+                            
+                            <div class="team-card-meta">
+                                <div class="meta-col">
+                                    <span class="meta-label">Required Skills</span>
+                                    <div class="meta-value" style="font-size: 13px; font-weight: 500;">
+                                        <%= opp.role.requiredSkills.join(', ') %>
+                                    </div>
+                                </div>
+                                <div class="meta-col">
+                                    <span class="meta-label">Team Size</span>
+                                    <div class="meta-value" style="font-size: 13px; font-weight: 500;">
+                                        <%= opp.team.teamSize %> Members
+                                    </div>
+                                </div>
+                                <div class="meta-col">
+                                    <span class="meta-label">Event Deadline</span>
+                                    <div class="meta-value" style="font-size: 13px; font-weight: 500;">
+                                        <%= new Date(opp.team.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="team-card-actions">
+                                <% if (opp.isApplied) { %>
+                                    <button class="btn-small-outline" disabled style="background-color: #10b981; color: white; border-color: #10b981;">Applied</button>
+                                <% } else { %>
+                                    <form action="/applications/apply" method="POST" style="margin: 0; display: inline;">
+                                        <input type="hidden" name="teamRequirementId" value="<%= opp.team._id %>">
+                                        <input type="hidden" name="role" value="<%= opp.role.title %>">
+                                        <button type="submit" class="btn-small-primary">Apply Now</button>
+                                    </form>
+                                <% } %>
                             </div>
                         </div>
-                        <div class="meta-col">
-                            <span class="meta-label">Existing Members</span>
-                            <div class="avatar-group-mini">
-                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='12' fill='%23e2e8f0'/%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z' fill='%239ca3af'/%3E%3C/svg%3E" alt="Avatar">
-                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='12' fill='%23e2e8f0'/%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z' fill='%239ca3af'/%3E%3C/svg%3E" alt="Avatar">
-                                <span class="avatar-more">+2</span>
-                            </div>
-                        </div>
-                        <div class="meta-col">
-                            <span class="meta-label">Event Date</span>
-                            <div class="meta-value">Oct 15, 2026</div>
-                        </div>
+                    <% }); %>
+                <% } else { %>
+                    <div style="text-align: center; padding: 40px; background: white; border-radius: 12px; border: 1px solid #e2e8f0;">
+                        <p style="color: #64748b; font-size: 16px;">No matching opportunities found based on your skills.</p>
                     </div>
-
-                    <div class="team-card-actions">
-                        <button class="btn-small-outline">View Details</button>
-                        <button class="btn-small-primary btn-apply-trigger" data-team="Nexus Web Lab" data-role="Frontend Lead">Apply Now</button>
-                    </div>
-                </div>
-
-                <div class="team-card-advanced">
-                    <div class="team-card-header">
-                        <div class="team-card-title">
-                            <h3>Aether Analytics</h3>
-                            <span class="badge badge-ai">AI ANALYTICS</span>
-                        </div>
-                        <div class="team-card-match">
-                            <span class="brief-badge">Clear Brief</span>
-                            <span class="match-score">94% Match</span>
-                        </div>
-                    </div>
-                    <div class="team-card-role">Role: Python Specialist</div>
-                    
-                    <div class="team-card-meta">
-                        <div class="meta-col">
-                            <span class="meta-label">Lead Reliability</span>
-                            <div class="meta-value">
-                                <span class="stars">★★★★☆</span>
-                                <span class="rating-num">4.2</span>
-                            </div>
-                        </div>
-                        <div class="meta-col">
-                            <span class="meta-label">Existing Members</span>
-                            <div class="avatar-group-mini">
-                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='12' fill='%23e2e8f0'/%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z' fill='%239ca3af'/%3E%3C/svg%3E" alt="Avatar">
-                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='12' fill='%23e2e8f0'/%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z' fill='%239ca3af'/%3E%3C/svg%3E" alt="Avatar">
-                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='12' fill='%23e2e8f0'/%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z' fill='%239ca3af'/%3E%3C/svg%3E" alt="Avatar">
-                            </div>
-                        </div>
-                        <div class="meta-col">
-                            <span class="meta-label">Event Date</span>
-                            <div class="meta-value">Nov 01, 2026</div>
-                        </div>
-                    </div>
-
-                    <div class="team-card-actions">
-                        <button class="btn-small-outline">View Details</button>
-                        <button class="btn-small-primary btn-apply-trigger" data-team="Aether Analytics" data-role="Python Specialist">Apply</button>
-                    </div>
-                </div>
-
-                <div class="team-card-advanced">
-                    <div class="team-card-header">
-                        <div class="team-card-title">
-                            <h3>CloudForge</h3>
-                            <span class="badge badge-infra">INFRASTRUCTURE</span>
-                        </div>
-                        <div class="team-card-match">
-                            <span class="brief-badge brief-needs-detail">Needs Detail</span>
-                            <span class="match-score">91% Match</span>
-                        </div>
-                    </div>
-                    <div class="team-card-role">Role: DevOps Engineer</div>
-                    
-                    <div class="team-card-meta">
-                        <div class="meta-col">
-                            <span class="meta-label">Lead Reliability</span>
-                            <div class="meta-value">
-                                <span class="stars">★★★☆☆</span>
-                                <span class="rating-num">3.5</span>
-                            </div>
-                        </div>
-                        <div class="meta-col">
-                            <span class="meta-label">Existing Members</span>
-                            <div class="avatar-group-mini">
-                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='12' fill='%23e2e8f0'/%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z' fill='%239ca3af'/%3E%3C/svg%3E" alt="Avatar">
-                                <span class="avatar-more">+1</span>
-                            </div>
-                        </div>
-                        <div class="meta-col">
-                            <span class="meta-label">Event Date</span>
-                            <div class="meta-value">Nov 15, 2026</div>
-                        </div>
-                    </div>
-
-                    <div class="team-card-actions">
-                        <button class="btn-small-outline">View Details</button>
-                        <button class="btn-small-primary btn-apply-trigger" data-team="CloudForge" data-role="DevOps Engineer">Apply</button>
-                    </div>
-                </div>
-
+                <% } %>
             </div>
             
             <!-- Application Sidebar -->
@@ -184,88 +115,48 @@
             </div>
 
             <div class="teams-list">
-                
-                <div class="team-card-advanced">
-                    <div class="team-card-header">
-                        <div class="team-card-title">
-                            <h3>Quantum Labs</h3>
-                            <span class="badge badge-hackathon">DEEP TECH</span>
-                        </div>
-                        <div class="team-card-match">
-                            <span class="brief-badge">Clear Brief</span>
-                            <span class="match-score">95% Match</span>
-                        </div>
-                    </div>
-                    <div class="team-card-role">Role: Quantum Algorithms Specialist</div>
-                    
-                    <div class="team-card-meta">
-                        <div class="meta-col">
-                            <span class="meta-label">Lead Reliability</span>
-                            <div class="meta-value">
-                                <span class="stars">★★★★★</span>
-                                <span class="rating-num">4.8</span>
+                <% if (teamRequirements && teamRequirements.length > 0) { %>
+                    <% teamRequirements.forEach(team => { %>
+                        <div class="team-card-advanced">
+                            <div class="team-card-header">
+                                <div class="team-card-title">
+                                    <h3><%= team.projectName %></h3>
+                                    <span class="badge badge-hackathon" style="text-transform: uppercase;"><%= team.theme %></span>
+                                </div>
+                                <div class="team-card-match">
+                                    <span class="brief-badge">Active Requirement</span>
+                                    <span class="match-score"><%= team.roles ? team.roles.length : 1 %> Role<%= team.roles && team.roles.length > 1 ? 's' : '' %></span>
+                                </div>
+                            </div>
+                            <div class="team-card-role">Role: <%= (team.roles && team.roles.length > 0) ? team.roles[0].title : 'Open Role' %></div>
+                            
+                            <div class="team-card-meta">
+                                <div class="meta-col">
+                                    <span class="meta-label">Team Capacity</span>
+                                    <div class="meta-value"><%= team.teamSize %> Members</div>
+                                </div>
+                                <div class="meta-col">
+                                    <span class="meta-label">Open Roles</span>
+                                    <div class="meta-value"><%= team.roles ? team.roles.length : 1 %> Available</div>
+                                </div>
+                                <div class="meta-col">
+                                    <span class="meta-label">Deadline</span>
+                                    <div class="meta-value"><%= new Date(team.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %></div>
+                                </div>
+                            </div>
+
+                            <div class="team-card-actions">
+                                <button class="btn-small-outline">View Details</button>
+                                <button class="btn-small-primary btn-apply-trigger" data-team="<%= team.projectName %>" data-role="<%= (team.roles && team.roles.length > 0) ? team.roles[0].title : 'Team Member' %>">Apply Now</button>
                             </div>
                         </div>
-                        <div class="meta-col">
-                            <span class="meta-label">Existing Members</span>
-                            <div class="avatar-group-mini">
-                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='12' fill='%23e2e8f0'/%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z' fill='%239ca3af'/%3E%3C/svg%3E" alt="Avatar">
-                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='12' fill='%23e2e8f0'/%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z' fill='%239ca3af'/%3E%3C/svg%3E" alt="Avatar">
-                                <span class="avatar-more">+1</span>
-                            </div>
-                        </div>
-                        <div class="meta-col">
-                            <span class="meta-label">Event Date</span>
-                            <div class="meta-value">Nov 12, 2026</div>
-                        </div>
+                    <% }); %>
+                <% } else { %>
+                    <div class="team-card-advanced" style="text-align: center; padding: 30px;">
+                        <p style="color: #64748b; margin-bottom: 12px;">No team requirements currently posted.</p>
+                        <a href="/team-requirement/new" class="btn-small-primary" style="display: inline-block; text-decoration: none;">+ Create First Requirement</a>
                     </div>
-
-                    <div class="team-card-actions">
-                        <button class="btn-small-outline">View Details</button>
-                        <button class="btn-small-primary btn-apply-trigger" data-team="Quantum Labs" data-role="Quantum Algorithms Specialist">Apply Now</button>
-                    </div>
-                </div>
-
-                <div class="team-card-advanced">
-                    <div class="team-card-header">
-                        <div class="team-card-title">
-                            <h3>Data Forge Team</h3>
-                            <span class="badge badge-ai">DATA SCIENCE</span>
-                        </div>
-                        <div class="team-card-match">
-                            <span class="brief-badge">Clear Brief</span>
-                            <span class="match-score">92% Match</span>
-                        </div>
-                    </div>
-                    <div class="team-card-role">Role: Data Pipeline Engineer</div>
-                    
-                    <div class="team-card-meta">
-                        <div class="meta-col">
-                            <span class="meta-label">Lead Reliability</span>
-                            <div class="meta-value">
-                                <span class="stars">★★★★☆</span>
-                                <span class="rating-num">4.5</span>
-                            </div>
-                        </div>
-                        <div class="meta-col">
-                            <span class="meta-label">Existing Members</span>
-                            <div class="avatar-group-mini">
-                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='12' fill='%23e2e8f0'/%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z' fill='%239ca3af'/%3E%3C/svg%3E" alt="Avatar">
-                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='12' fill='%23e2e8f0'/%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z' fill='%239ca3af'/%3E%3C/svg%3E" alt="Avatar">
-                            </div>
-                        </div>
-                        <div class="meta-col">
-                            <span class="meta-label">Event Date</span>
-                            <div class="meta-value">Dec 05, 2026</div>
-                        </div>
-                    </div>
-
-                    <div class="team-card-actions">
-                        <button class="btn-small-outline">View Details</button>
-                        <button class="btn-small-primary btn-apply-trigger" data-team="Data Forge Team" data-role="Data Pipeline Engineer">Apply Now</button>
-                    </div>
-                </div>
-
+                <% } %>
             </div>
         </div>
 

@@ -21,12 +21,16 @@ const roleSchema = new mongoose.Schema({
   },
   openings: {
     type: Number,
-    min: 1,
+    min: 0,
     default: 1
   }
 });
 
 const teamRequirementSchema = new mongoose.Schema({
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User"
+  },
   theme: {
     type: String,
     required: [true, 'Theme is required'],
