@@ -1,0 +1,158 @@
+<% layout("/layouts/boilerplate") -%>
+
+<div class="team-requirement-page">
+
+    <!-- Top Stepper Card -->
+    <div class="stepper-card-new">
+        <div class="stepper-new">
+            <div class="step-new completed">
+                <div class="step-circle" style="background-color: #3b82f6; color: white; border-color: #3b82f6;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </div>
+                <span class="step-label" style="color: #3b82f6;">Context</span>
+            </div>
+            <div class="step-line-new" style="background-color: #3b82f6;"></div>
+            <div class="step-new completed">
+                <div class="step-circle" style="background-color: #3b82f6; color: white; border-color: #3b82f6;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </div>
+                <span class="step-label" style="color: #3b82f6;">Team Details</span>
+            </div>
+            <div class="step-line-new" style="background-color: #3b82f6;"></div>
+            <div class="step-new active">
+                <div class="step-circle" style="border-color: #3b82f6; color: #3b82f6;">3</div>
+                <span class="step-label" style="color: #3b82f6;">Open Roles</span>
+            </div>
+            <div class="step-line-new"></div>
+            <div class="step-new">
+                <div class="step-circle">4</div>
+                <span class="step-label">Review & Send</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Card -->
+    <div class="content-card-new">
+        <span class="step-indicator">STEP 3 OF 4: OPEN ROLES</span>
+        <h1 class="page-title-new">Create Open Roles</h1>
+
+        <form action="/team-requirement/new/review" method="POST" class="open-roles-form">
+
+            <!-- Hidden Inputs for Step 1 & 2 -->
+            <input type="hidden" name="theme" value="<%= teamData.theme %>">
+            <input type="hidden" name="projectName" value="<%= teamData.projectName %>">
+            <input type="hidden" name="projectRequirement" value="<%= teamData.projectRequirement %>">
+            <input type="hidden" name="deliverables" value="<%= teamData.deliverables %>">
+            <input type="hidden" name="teamSize" value="<%= teamData.teamSize %>">
+            <input type="hidden" name="deadline" value="<%= teamData.deadline %>">
+            
+            <!-- Hidden inputs to satisfy old backend expectation -->
+            <input type="hidden" name="openings" value="1">
+            <input type="hidden" name="roleDescription" value="Generated from UI">
+
+            <!-- Role Card 1 -->
+            <div class="role-profile-card">
+                <div class="role-profile-header">
+                    <div class="role-profile-title">
+                        <span class="role-number">1</span>
+                        <strong>Role Profile</strong>
+                    </div>
+                    <div class="role-profile-meta">
+                        <span class="badge badge-success-light">Urgency: Open</span>
+                        <span class="meta-note"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg> Auto-calculated from deadline</span>
+                    </div>
+                </div>
+
+                <div class="form-group-new">
+                    <label>Role Title</label>
+                    <input type="text" name="role" value="Lead Technical Architect" class="form-control-new" required>
+                </div>
+
+                <div class="form-group-new">
+                    <label>Required Skills</label>
+                    <div class="skills-input-container">
+                        <div class="skill-tag">System Design <button type="button">×</button></div>
+                        <div class="skill-tag">Node.js <button type="button">×</button></div>
+                        <div class="skill-tag">PostgreSQL <button type="button">×</button></div>
+                        <input type="text" name="new_skill" placeholder="+ Add skill" class="skill-input-transparent">
+                    </div>
+                </div>
+
+                <div class="form-group-new">
+                    <label>Preferred Skills (Optional)</label>
+                    <div class="skills-input-container">
+                        <div class="skill-tag">AWS <button type="button">×</button></div>
+                        <div class="skill-tag">Docker <button type="button">×</button></div>
+                        <input type="text" placeholder="+ Add skill" class="skill-input-transparent">
+                    </div>
+                </div>
+
+                <div class="form-group-new">
+                    <label>Minimum Proficiency</label>
+                    <select class="form-control-new">
+                        <option>Intermediate</option>
+                        <option>Advanced</option>
+                        <option>Expert</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Role Card 2 -->
+            <div class="role-profile-card">
+                <div class="role-profile-header">
+                    <div class="role-profile-title">
+                        <span class="role-number" style="background-color: #dbeafe; color: #2563eb;">2</span>
+                        <strong>Role Profile</strong>
+                    </div>
+                    <div class="role-profile-meta">
+                        <span class="badge badge-success-light">Urgency: Open</span>
+                        <span class="meta-note"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg> Auto-calculated from deadline</span>
+                    </div>
+                </div>
+
+                <div class="form-group-new">
+                    <label>Role Title</label>
+                    <input type="text" value="Frontend Developer" class="form-control-new">
+                </div>
+
+                <div class="form-group-new">
+                    <label>Required Skills</label>
+                    <div class="skills-input-container">
+                        <div class="skill-tag">React <button type="button">×</button></div>
+                        <div class="skill-tag">TypeScript <button type="button">×</button></div>
+                        <div class="skill-tag">CSS <button type="button">×</button></div>
+                        <input type="text" placeholder="+ Add skill" class="skill-input-transparent">
+                    </div>
+                </div>
+
+                <div class="form-group-new">
+                    <label>Preferred Skills (Optional)</label>
+                    <div class="skills-input-container">
+                        <div class="skill-tag">Figma <button type="button">×</button></div>
+                        <div class="skill-tag">Next.js <button type="button">×</button></div>
+                        <input type="text" placeholder="+ Add skill" class="skill-input-transparent">
+                    </div>
+                </div>
+
+                <div class="form-group-new">
+                    <label>Minimum Proficiency</label>
+                    <select class="form-control-new">
+                        <option>Intermediate</option>
+                    </select>
+                </div>
+            </div>
+
+            <button type="button" class="btn-dashed-new">
+                + Add another role
+            </button>
+
+            <div class="form-footer-new">
+                <a href="/team-requirement/new/define-team" class="btn-cancel">Back</a>
+                <button type="submit" class="btn-continue">Continue</button>
+            </div>
+
+        </form>
+    </div>
+
+</div>
+<script src='/js/team-requirement.js'></script>

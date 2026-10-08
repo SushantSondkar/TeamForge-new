@@ -1,0 +1,117 @@
+<% layout("/layouts/boilerplate") -%>
+
+<div class="notifications-page" style="padding: 20px 40px; max-width: 900px;">
+    
+    <h1 style="font-size: 24px; margin-bottom: 24px; color: #1e293b;">Notifications</h1>
+
+    <div class="notif-tabs" style="display: flex; gap: 12px; margin-bottom: 24px;">
+        <button style="background-color: #3b82f6; color: white; border: none; border-radius: 8px; padding: 8px 24px; font-weight: 500; cursor: pointer;">All</button>
+        <button style="background-color: white; color: #64748b; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 24px; font-weight: 500; cursor: pointer;">Unread (3)</button>
+    </div>
+
+    <div class="notif-list" style="display: flex; flex-direction: column; gap: 16px;">
+        
+        <!-- Unread 1 -->
+        <div class="notif-card" style="background: white; border: 1px solid #3b82f6; border-radius: 12px; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <div style="width: 40px; height: 40px; border-radius: 50%; background: #eff6ff; display: flex; align-items: center; justify-content: center; color: #3b82f6;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                </div>
+                <div>
+                    <strong style="display: block; font-size: 15px; color: #1e293b; margin-bottom: 4px;">Devon Lane accepted your invite</strong>
+                    <span style="font-size: 13px; color: #64748b;">Backend Developer role for Synergy Core Alpha</span>
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <span style="font-size: 13px; color: #64748b;">2h ago</span>
+                <div style="width: 8px; height: 8px; background-color: #3b82f6; border-radius: 50%;"></div>
+            </div>
+        </div>
+
+        <!-- Unread 2 -->
+        <div class="notif-card" style="background: white; border: 1px solid #3b82f6; border-radius: 12px; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <div style="width: 40px; height: 40px; border-radius: 50%; background: #fef2f2; display: flex; align-items: center; justify-content: center; color: #ef4444;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                </div>
+                <div>
+                    <strong style="display: block; font-size: 15px; color: #1e293b; margin-bottom: 4px;">Hackathon Phase 1 Submission closing soon</strong>
+                    <span style="font-size: 13px; color: #64748b;">2 hours remaining</span>
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <span style="font-size: 13px; color: #64748b;">3h ago</span>
+                <div style="width: 8px; height: 8px; background-color: #3b82f6; border-radius: 50%;"></div>
+            </div>
+        </div>
+
+        <!-- Unread 3 -->
+        <div class="notif-card" style="background: white; border: 1px solid #3b82f6; border-radius: 12px; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <div style="width: 40px; height: 40px; border-radius: 50%; background: #eff6ff; display: flex; align-items: center; justify-content: center; color: #3b82f6;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                </div>
+                <div>
+                    <strong style="display: block; font-size: 15px; color: #1e293b; margin-bottom: 4px;">New invite received from Team Vortex</strong>
+                    <span style="font-size: 13px; color: #64748b;">Senior Developer role</span>
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <span style="font-size: 13px; color: #64748b;">5h ago</span>
+                <div style="width: 8px; height: 8px; background-color: #3b82f6; border-radius: 50%;"></div>
+            </div>
+        </div>
+
+        <!-- Read 1 -->
+        <div class="notif-card" style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <div style="width: 40px; height: 40px; border-radius: 50%; background: #f0fdf4; display: flex; align-items: center; justify-content: center; color: #22c55e;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </div>
+                <div>
+                    <strong style="display: block; font-size: 15px; color: #1e293b; margin-bottom: 4px;">Your application to Aether Analytics is under review</strong>
+                    <span style="font-size: 13px; color: #64748b;">Python Specialist role</span>
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <span style="font-size: 13px; color: #64748b;">1d ago</span>
+                <div style="width: 8px; height: 8px; background-color: transparent; border-radius: 50%;"></div>
+            </div>
+        </div>
+
+        <!-- Read 2 -->
+        <div class="notif-card" style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <div style="width: 40px; height: 40px; border-radius: 50%; background: #fef2f2; display: flex; align-items: center; justify-content: center; color: #ef4444;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                </div>
+                <div>
+                    <strong style="display: block; font-size: 15px; color: #1e293b; margin-bottom: 4px;">Team Matching Round Q4 deadline in 2 days</strong>
+                    <span style="font-size: 13px; color: #64748b;">Submit team formation draft to qualify for final selection</span>
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <span style="font-size: 13px; color: #64748b;">1d ago</span>
+                <div style="width: 8px; height: 8px; background-color: transparent; border-radius: 50%;"></div>
+            </div>
+        </div>
+
+        <!-- Read 3 -->
+        <div class="notif-card" style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <div style="width: 40px; height: 40px; border-radius: 50%; background: #eff6ff; display: flex; align-items: center; justify-content: center; color: #3b82f6;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                </div>
+                <div>
+                    <strong style="display: block; font-size: 15px; color: #1e293b; margin-bottom: 4px;">Arlene McCoy declined your invite</strong>
+                    <span style="font-size: 13px; color: #64748b;">QA Engineer role</span>
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <span style="font-size: 13px; color: #64748b;">2d ago</span>
+                <div style="width: 8px; height: 8px; background-color: transparent; border-radius: 50%;"></div>
+            </div>
+        </div>
+
+    </div>
+</div>

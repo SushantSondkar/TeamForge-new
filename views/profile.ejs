@@ -1,0 +1,171 @@
+<% layout("/layouts/boilerplate") -%>
+
+<div class="profile-page" style="padding: 20px 40px; display: grid; grid-template-columns: 300px 1fr; gap: 30px; align-items: start;">
+    
+    <div style="grid-column: 1 / -1; margin-bottom: 10px;">
+        <h1 style="font-size: 24px; color: #1e293b; margin: 0;">Profile & Settings</h1>
+    </div>
+
+    <!-- Left Column: Profile Summary -->
+    <div class="profile-summary-card" style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 30px 20px; text-align: center;">
+        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='12' fill='%23e2e8f0'/%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z' fill='%239ca3af'/%3E%3C/svg%3E" alt="Avatar" style="width: 100px; height: 100px; border-radius: 50%; margin-bottom: 16px; border: 4px solid #f8fafc;">
+        <h2 style="margin: 0 0 8px 0; font-size: 20px; color: #1e293b;">Sushant Sondkar</h2>
+        <div style="color: #3b82f6; font-size: 14px; font-weight: 500; margin-bottom: 4px;">Lead Coordinator</div>
+        <div style="color: #64748b; font-size: 13px; margin-bottom: 24px;">Computer Engineering · 3rd Year</div>
+
+        <div style="text-align: left; margin-bottom: 24px; border-top: 1px solid #e2e8f0; padding-top: 20px;">
+            <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; font-weight: 600;">
+                <span style="color: #1e293b;">Profile Completion</span>
+                <span style="color: #3b82f6;">80%</span>
+            </div>
+            <div style="height: 6px; background-color: #e2e8f0; border-radius: 3px; margin-bottom: 8px;">
+                <div style="height: 100%; width: 80%; background-color: #3b82f6; border-radius: 3px;"></div>
+            </div>
+            <div style="font-size: 12px; color: #64748b;">Add your LinkedIn to reach 100%</div>
+        </div>
+
+        <div style="text-align: left;">
+            <div style="font-size: 11px; font-weight: 600; color: #64748b; margin-bottom: 8px; text-transform: uppercase;">REPUTATION SCORE</div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 24px; font-weight: 700; color: #1e293b;">4.7</span>
+                <span style="color: #fbbf24; font-size: 18px;">★★★★☆</span>
+                <span style="font-size: 13px; color: #10b981; font-weight: 500;">Reliable Team Lead</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Settings Sections -->
+    <div class="settings-sections" style="display: flex; flex-direction: column; gap: 24px;">
+        
+        <!-- Basic Info -->
+        <div class="settings-card" style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px;">
+            <h3 style="margin: 0 0 20px 0; font-size: 16px; color: #1e293b;">Basic Info</h3>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <label style="display: block; font-size: 13px; color: #475569; margin-bottom: 8px; font-weight: 500;">Full Name</label>
+                    <input type="text" value="Sushant Sondkar" style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 13px; color: #475569; margin-bottom: 8px; font-weight: 500;">College Email (Read-Only)</label>
+                    <div style="position: relative;">
+                        <input type="text" value="sushant.sondkar@college.edu" readonly style="width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; background-color: #f8fafc; color: #64748b;">
+                        <span style="position: absolute; right: 10px; top: 10px; background-color: #dcfce7; color: #16a34a; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 600;">VERIFIED</span>
+                    </div>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 13px; color: #475569; margin-bottom: 8px; font-weight: 500;">Year (Dropdown)</label>
+                    <select style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; background: white;">
+                        <option selected>2nd Year</option>
+                        <option>3rd Year</option>
+                        <option>4th Year</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 13px; color: #475569; margin-bottom: 8px; font-weight: 500;">Department (Dropdown)</label>
+                    <select style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; background: white;">
+                        <option selected>Computer Engineering</option>
+                        <option>IT</option>
+                        <option>E&TC</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Skills -->
+        <div class="settings-card" style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px;">
+            <h3 style="margin: 0 0 20px 0; font-size: 16px; color: #1e293b;">Skills</h3>
+            <p style="font-size: 13px; color: #64748b; margin-bottom: 16px;">These tags will help match you with correct opportunities.</p>
+            
+            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                <div style="background-color: #eff6ff; color: #3b82f6; border: 1px solid #bfdbfe; font-size: 13px; padding: 6px 12px; border-radius: 6px; display: flex; align-items: center; gap: 6px;">React <span style="cursor: pointer;">⊗</span></div>
+                <div style="background-color: #eff6ff; color: #3b82f6; border: 1px solid #bfdbfe; font-size: 13px; padding: 6px 12px; border-radius: 6px; display: flex; align-items: center; gap: 6px;">Node.js <span style="cursor: pointer;">⊗</span></div>
+                <div style="background-color: #eff6ff; color: #3b82f6; border: 1px solid #bfdbfe; font-size: 13px; padding: 6px 12px; border-radius: 6px; display: flex; align-items: center; gap: 6px;">Python <span style="cursor: pointer;">⊗</span></div>
+                <div style="background-color: #eff6ff; color: #3b82f6; border: 1px solid #bfdbfe; font-size: 13px; padding: 6px 12px; border-radius: 6px; display: flex; align-items: center; gap: 6px;">UI/UX <span style="cursor: pointer;">⊗</span></div>
+                <div style="background-color: #eff6ff; color: #3b82f6; border: 1px solid #bfdbfe; font-size: 13px; padding: 6px 12px; border-radius: 6px; display: flex; align-items: center; gap: 6px;">PostgreSQL <span style="cursor: pointer;">⊗</span></div>
+                <button style="background: transparent; color: #3b82f6; border: 1px dashed #3b82f6; border-radius: 6px; padding: 6px 12px; font-size: 13px; cursor: pointer;">+ Add skill</button>
+            </div>
+        </div>
+
+        <!-- Portfolio Links -->
+        <div class="settings-card" style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px;">
+            <h3 style="margin: 0 0 20px 0; font-size: 16px; color: #1e293b;">Portfolio Links</h3>
+            
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+                <div>
+                    <label style="display: block; font-size: 13px; color: #475569; margin-bottom: 8px; font-weight: 500;">GitHub URL</label>
+                    <div style="display: flex; border: 1px solid #cbd5e1; border-radius: 6px; overflow: hidden;">
+                        <span style="padding: 10px 12px; background-color: #f8fafc; border-right: 1px solid #cbd5e1; color: #3b82f6;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
+                        </span>
+                        <input type="text" value="https://github.com/sushantsondkar" style="flex: 1; border: none; padding: 10px 12px; font-size: 14px; outline: none;">
+                    </div>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 13px; color: #475569; margin-bottom: 8px; font-weight: 500;">LinkedIn URL</label>
+                    <div style="display: flex; border: 1px solid #cbd5e1; border-radius: 6px; overflow: hidden;">
+                        <span style="padding: 10px 12px; background-color: #f8fafc; border-right: 1px solid #cbd5e1; color: #3b82f6;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
+                        </span>
+                        <input type="text" value="https://linkedin.com/in/sushantsondkar" style="flex: 1; border: none; padding: 10px 12px; font-size: 14px; outline: none;">
+                    </div>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 13px; color: #475569; margin-bottom: 8px; font-weight: 500;">Portfolio / Website</label>
+                    <div style="display: flex; border: 1px solid #cbd5e1; border-radius: 6px; overflow: hidden;">
+                        <span style="padding: 10px 12px; background-color: #f8fafc; border-right: 1px solid #cbd5e1; color: #3b82f6;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                        </span>
+                        <input type="text" value="https://sushant.dev" style="flex: 1; border: none; padding: 10px 12px; font-size: 14px; outline: none;">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notification Preferences -->
+        <div class="settings-card" style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px;">
+            <h3 style="margin: 0 0 20px 0; font-size: 16px; color: #1e293b;">Notification Preferences</h3>
+            
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <strong style="display: block; font-size: 14px; color: #1e293b; margin-bottom: 4px;">Invite Updates</strong>
+                        <span style="font-size: 13px; color: #64748b;">Notify me immediately when team invites are sent or received.</span>
+                    </div>
+                    <!-- Mock Toggle Switch -->
+                    <div style="width: 44px; height: 24px; background-color: #3b82f6; border-radius: 12px; position: relative; cursor: pointer;">
+                        <div style="width: 20px; height: 20px; background-color: white; border-radius: 50%; position: absolute; right: 2px; top: 2px; box-shadow: 0 1px 2px rgba(0,0,0,0.1);"></div>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <strong style="display: block; font-size: 14px; color: #1e293b; margin-bottom: 4px;">Deadline Reminders</strong>
+                        <span style="font-size: 13px; color: #64748b;">Send daily alerts for events closing within 48 hours.</span>
+                    </div>
+                    <!-- Mock Toggle Switch -->
+                    <div style="width: 44px; height: 24px; background-color: #3b82f6; border-radius: 12px; position: relative; cursor: pointer;">
+                        <div style="width: 20px; height: 20px; background-color: white; border-radius: 50%; position: absolute; right: 2px; top: 2px; box-shadow: 0 1px 2px rgba(0,0,0,0.1);"></div>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <strong style="display: block; font-size: 14px; color: #1e293b; margin-bottom: 4px;">New Recommendations</strong>
+                        <span style="font-size: 13px; color: #64748b;">Receive weekly digests of curated projects matching your profile.</span>
+                    </div>
+                    <!-- Mock Toggle Switch (Off) -->
+                    <div style="width: 44px; height: 24px; background-color: #cbd5e1; border-radius: 12px; position: relative; cursor: pointer;">
+                        <div style="width: 20px; height: 20px; background-color: white; border-radius: 50%; position: absolute; left: 2px; top: 2px; box-shadow: 0 1px 2px rgba(0,0,0,0.1);"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; margin-bottom: 40px;">
+            <button style="background-color: #3b82f6; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer;">Save Changes</button>
+        </div>
+
+    </div>
+</div>
+

@@ -1,0 +1,115 @@
+<% layout("/layouts/boilerplate") -%>
+
+<div class="team-requirement-page">
+    
+    <!-- Top Stepper Card -->
+    <div class="stepper-card-new">
+        <div class="stepper-new">
+            <div class="step-new active">
+                <div class="step-circle">1</div>
+                <span class="step-label">Context</span>
+            </div>
+            <div class="step-line-new"></div>
+            <div class="step-new">
+                <div class="step-circle">2</div>
+                <span class="step-label">Team Details</span>
+            </div>
+            <div class="step-line-new"></div>
+            <div class="step-new">
+                <div class="step-circle">3</div>
+                <span class="step-label">Open Roles</span>
+            </div>
+            <div class="step-line-new"></div>
+            <div class="step-new">
+                <div class="step-circle">4</div>
+                <span class="step-label">Review & Send</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Card -->
+    <div class="content-card-new">
+        <span class="step-indicator">STEP 1 OF 4: SELECT CONTEXT</span>
+        <h1 class="page-title-new">What are you creating this team for?</h1>
+
+        <form action="/team-requirement/new/define-team" method="post" class="context-form">
+            <!-- Hidden inputs to keep backend intact if needed -->
+            <input type="hidden" name="projectRequirement" value="Generated from UI">
+            <input type="hidden" name="deliverables" value="Generated from UI">
+
+            <div class="options-grid">
+                
+                <label class="option-card">
+                    <input type="radio" name="theme" value="hackathon" class="hidden-radio" checked>
+                    <div class="card-content">
+                        <div class="icon-box" style="color: #3b82f6; background-color: #eff6ff;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg>
+                        </div>
+                        <h3>Hackathon</h3>
+                        <p>Forming a swift, high-intensity team to build and launch a prototype within a tight window.</p>
+                        <div class="selection-indicator">
+                            <span class="select-text">Selected</span>
+                            <div class="radio-circle"></div>
+                        </div>
+                    </div>
+                </label>
+
+                <label class="option-card">
+                    <input type="radio" name="theme" value="competition" class="hidden-radio">
+                    <div class="card-content">
+                        <div class="icon-box" style="color: #4b5563; background-color: #f3f4f6;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 11v8a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1h3a4 4 0 0 0 4-4V2"></path><path d="M17 11v8a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-7a1 1 0 0 0-1-1h-3a4 4 0 0 1-4-4V2"></path><path d="M12 2v20"></path></svg>
+                        </div>
+                        <h3>Competition</h3>
+                        <p>Assembling highly technical talent for academic or international engineering tournaments.</p>
+                        <div class="selection-indicator">
+                            <span class="select-text">Click to select</span>
+                            <div class="radio-circle"></div>
+                        </div>
+                    </div>
+                </label>
+
+                <label class="option-card">
+                    <input type="radio" name="theme" value="college-project" class="hidden-radio">
+                    <div class="card-content">
+                        <div class="icon-box" style="color: #4b5563; background-color: #f3f4f6;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
+                        </div>
+                        <h3>College Project</h3>
+                        <p>Coordinating classmates to fulfill course deliverables, timelines, and grading criteria.</p>
+                        <div class="selection-indicator">
+                            <span class="select-text">Click to select</span>
+                            <div class="radio-circle"></div>
+                        </div>
+                    </div>
+                </label>
+
+                <label class="option-card">
+                    <input type="radio" name="theme" value="independent-project" class="hidden-radio">
+                    <div class="card-content">
+                        <div class="icon-box" style="color: #4b5563; background-color: #f3f4f6;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                        </div>
+                        <h3>Independent Project</h3>
+                        <p>Kicking off a personal passion project, open-source tool, or startup research venture.</p>
+                        <div class="selection-indicator">
+                            <span class="select-text">Click to select</span>
+                            <div class="radio-circle"></div>
+                        </div>
+                    </div>
+                </label>
+
+            </div>
+
+            <div class="form-footer-new">
+                <span class="footer-note">Selection required to proceed. Continue is currently active as an option has been pre-selected.</span>
+                <div class="footer-actions">
+                    <a href="/" class="btn-cancel">Cancel</a>
+                    <button type="submit" class="btn-continue">Continue</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+</div>
+<script src='/js/team-requirement.js'></script>

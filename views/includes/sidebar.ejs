@@ -1,0 +1,45 @@
+<aside class="sidebar" style="background-color: #f8fafc; border-right: 1px solid #e2e8f0; width: 250px;">
+
+    <div class="sidebar-brand" style="display: flex; align-items: center; gap: 10px; padding: 20px;">
+        <div style="background-color: #3b82f6; color: white; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px;">TF</div>
+        <h2 style="color: #1e293b; font-size: 20px; font-weight: 700; margin: 0;">TeamForge</h2>
+    </div>
+
+    <nav class="sidebar-nav" style="padding: 0 15px;">
+
+        <a href="/" class="sidebar-link" style="color: #475569; font-weight: 500; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: block; text-decoration: none;">
+            <span>Dashboard</span>
+        </a>
+
+        <a href="/discover" class="sidebar-link" style="color: #475569; font-weight: 500; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: block; text-decoration: none;">
+            <span>Discover Opportunities</span>
+        </a>
+
+        <a href="/notifications" class="sidebar-link" style="color: #475569; font-weight: 500; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: block; text-decoration: none;">
+            <span>Notifications</span>
+        </a>
+
+        <a href="/profile" class="sidebar-link" style="color: #475569; font-weight: 500; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: block; text-decoration: none;">
+            <span>Profile & Settings</span>
+        </a>
+
+    </nav>
+
+</aside>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const currentPath = window.location.pathname;
+        const links = document.querySelectorAll('.sidebar-link');
+        links.forEach(link => {
+            const href = link.getAttribute('href');
+            if (href === currentPath || (href !== '/' && currentPath.startsWith(href))) {
+                link.style.backgroundColor = '#4f46e5';
+                link.style.color = 'white';
+            } else {
+                link.style.backgroundColor = 'transparent';
+                link.style.color = '#475569';
+            }
+        });
+    });
+</script>

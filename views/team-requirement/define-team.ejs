@@ -1,0 +1,112 @@
+<% layout("/layouts/boilerplate") -%>
+
+<div class="team-requirement-page">
+
+    <!-- Top Stepper Card -->
+    <div class="stepper-card-new">
+        <div class="stepper-new">
+            <div class="step-new completed">
+                <div class="step-circle" style="background-color: #3b82f6; color: white; border-color: #3b82f6;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </div>
+                <span class="step-label" style="color: #3b82f6;">Context</span>
+            </div>
+            <div class="step-line-new" style="background-color: #3b82f6;"></div>
+            <div class="step-new active">
+                <div class="step-circle" style="border-color: #3b82f6; color: #3b82f6;">2</div>
+                <span class="step-label" style="color: #3b82f6;">Team Details</span>
+            </div>
+            <div class="step-line-new"></div>
+            <div class="step-new">
+                <div class="step-circle">3</div>
+                <span class="step-label">Open Roles</span>
+            </div>
+            <div class="step-line-new"></div>
+            <div class="step-new">
+                <div class="step-circle">4</div>
+                <span class="step-label">Review & Send</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Card -->
+    <div class="content-card-new">
+        <span class="step-indicator">STEP 2 OF 4: TEAM DETAILS</span>
+        <h1 class="page-title-new">Define the Team</h1>
+
+        <form action="/team-requirement/new/open-roles" method="POST" class="define-team-form">
+
+            <!-- Step 1 data -->
+            <input type="hidden" name="theme" value="<%= theme %>">
+
+            <div class="form-group-new">
+                <label>Project Name</label>
+                <input type="text" name="projectName" placeholder="e.g. Synergy Core Alpha" class="form-control-new" required>
+            </div>
+
+            <div class="form-group-new">
+                <label>Problem Statement</label>
+                <input type="text" name="projectRequirement" placeholder="One sentence describing the problem you're solving" class="form-control-new" value="<%= projectRequirement %>" required>
+            </div>
+
+            <div class="form-group-new">
+                <label>Description</label>
+                <textarea name="deliverables" rows="4" placeholder="Explain the project in more detail" class="form-control-new" required><%= deliverables %></textarea>
+            </div>
+
+            <div class="form-group-new">
+                <label>Team Size</label>
+                <div class="team-size-control-new">
+                    <button type="button" class="size-btn-new" onclick="document.getElementById('team-size').stepDown()">−</button>
+                    <input type="number" id="team-size" name="teamSize" value="4" min="2" max="8" class="size-input-new" readonly>
+                    <button type="button" class="size-btn-new" onclick="document.getElementById('team-size').stepUp()">+</button>
+                    <span class="size-helper">2–8 members</span>
+                </div>
+            </div>
+
+            <div class="form-group-new">
+                <label>Current Members</label>
+                <div class="member-list-new">
+                    <div class="member-item-new">
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='12' fill='%23e2e8f0'/%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z' fill='%239ca3af'/%3E%3C/svg%3E" alt="Sushant Sondkar" class="member-avatar-new">
+                        <div class="member-info-new">
+                            <strong>Sushant Sondkar (You)</strong>
+                            <span class="member-role-badge">Lead Coordinator</span>
+                        </div>
+                        <button type="button" class="remove-btn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                        </button>
+                    </div>
+                    <div class="member-item-new">
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='12' fill='%23e2e8f0'/%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z' fill='%239ca3af'/%3E%3C/svg%3E" alt="Rohit Sharma" class="member-avatar-new">
+                        <div class="member-info-new">
+                            <strong>Rohit Sharma</strong>
+                            <span class="member-role-badge">Frontend Lead</span>
+                        </div>
+                        <button type="button" class="remove-btn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                        </button>
+                    </div>
+                </div>
+                <button type="button" class="btn-add-member">+ Add member</button>
+            </div>
+
+            <div class="form-group-new">
+                <label>Event/Project Deadline</label>
+                <div class="date-input-wrapper">
+                    <input type="date" name="deadline" class="form-control-new" required>
+                </div>
+                <p class="helper-text-new">* Note: This deadline date is used to dynamically flag high-priority team construction and automatically calculate team formation urgency in the next steps.</p>
+            </div>
+
+            <div class="form-footer-new">
+                <a href="/team-requirement/new" class="btn-cancel">Back</a>
+                <button type="submit" class="btn-continue">Continue</button>
+            </div>
+
+        </form>
+    </div>
+
+</div>
+<script src='/js/team-requirement.js'></script>
+
