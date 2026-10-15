@@ -1,0 +1,94 @@
+<% layout("/layouts/boilerplate") -%>
+
+<div class="events-page" style="padding: 24px 36px; max-width: 1200px; margin: 0 auto;">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+        <div>
+            <h1 style="font-size: 24px; font-weight: 700; color: #0f172a; margin: 0 0 4px 0;">Campus Events & Hackathons</h1>
+            <p style="color: #64748b; font-size: 14px; margin: 0;">Explore upcoming competitions, form teams, and lock your commitments per event.</p>
+        </div>
+        <% if (currentUser) { %>
+            <a href="/events/new" class="btn-small-primary" style="text-decoration: none; padding: 10px 18px; font-size: 13.5px; border-radius: 8px;">
+                + Add Campus Event
+            </a>
+        <% } %>
+    </div>
+
+    <% if (typeof error !== 'undefined' && error) { %>
+        <div style="background-color: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; padding: 12px 16px; border-radius: 8px; margin-bottom: 24px; font-size: 14px;">
+            <%= error %>
+        </div>
+    <% } %>
+
+    <div class="events-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 20px;">
+        <% if (events && events.length > 0) { %>
+            <% events.forEach(evt => { %>
+                <div class="event-card" style="background: white; border: 1px solid #e2e8f0; border-radius: 14px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+                            <span style="background: #e0f2fe; color: #0284c7; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 20px;">
+                                <%= evt.mode || 'Offline' %>
+                            </span>
+                            <% if (evt.isLocked) { %>
+                                <span style="background: #fee2e2; color: #b91c1c; font-size: 11.5px; font-weight: 700; padding: 4px 10px; border-radius: 12px;">
+                                    🔒 Locked (Committed)
+                                </span>
+                            <% } else { %>
+                                <span style="background: #dcfce7; color: #15803d; font-size: 11.5px; font-weight: 600; padding: 4px 10px; border-radius: 12px;">
+                                    ● Eligible to Join
+                                </span>
+                            <% } %>
+                        </div>
+
+                        <h2 style="font-size: 18px; font-weight: 700; color: #0f172a; margin: 0 0 6px 0;">
+                            <a href="/events/<%= evt._id %>" style="color: inherit; text-decoration: none;"><%= evt.name %></a>
+                        </h2>
+                        <div style="font-size: 13px; color: #64748b; margin-bottom: 12px; font-weight: 500;">
+                            Organizer: <%= evt.organizer %>
+                        </div>
+
+                        <% if (evt.description) { %>
+                            <p style="font-size: 13.5px; color: #334155; line-height: 1.5; margin: 0 0 16px 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                                <%= evt.description %>
+                            </p>
+                        <% } %>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #f8fafc; padding: 12px; border-radius: 8px; margin-bottom: 18px; font-size: 12.5px;">
+                            <div>
+                                <span style="color: #64748b; display: block;">Event Date</span>
+                                <strong style="color: #1e293b;"><%= new Date(evt.date).toLocaleDateString() %></strong>
+                            </div>
+                            <div>
+                                <span style="color: #64748b; display: block;">Reg. Deadline</span>
+                                <strong style="color: #b45309;"><%= new Date(evt.deadline).toLocaleDateString() %></strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; padding-top: 16px;">
+                        <span style="font-size: 13px; color: #64748b; font-weight: 500;">
+                            👥 <%= evt.teamCount || 0 %> Teams Active
+                        </span>
+                        
+                        <div style="display: flex; gap: 8px;">
+                            <a href="/events/<%= evt._id %>" class="btn-small-outline" style="text-decoration: none; padding: 8px 14px; font-size: 13px; border-radius: 6px;">Details</a>
+                            <% if (!evt.isLocked) { %>
+                                <a href="/team-requirement/new?eventId=<%= evt._id %>" class="btn-small-primary" style="text-decoration: none; padding: 8px 14px; font-size: 13px; border-radius: 6px;">+ Form Team</a>
+                            <% } else { %>
+                                <button disabled class="btn-small-outline" style="padding: 8px 14px; font-size: 13px; border-radius: 6px; opacity: 0.6; cursor: not-allowed;">Committed</button>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            <% }); %>
+        <% } else { %>
+            <div style="grid-column: 1 / -1; background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 40px; text-align: center;">
+                <p style="color: #64748b; font-size: 15px; margin: 0 0 16px 0;">No campus events registered yet.</p>
+                <% if (currentUser) { %>
+                    <a href="/events/new" class="btn-large-primary" style="text-decoration: none; padding: 10px 20px; font-size: 14px; border-radius: 8px;">Create First Campus Event</a>
+                <% } %>
+            </div>
+        <% } %>
+    </div>
+
+</div>

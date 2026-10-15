@@ -8,6 +8,17 @@
     </div>
 
     <div class="navbar-right" style="display: flex; align-items: center; gap: 16px;">
+        <a href="/events" style="color: #475569; text-decoration: none; font-size: 14px; font-weight: 500;">Events</a>
+        <a href="/discover" style="color: #475569; text-decoration: none; font-size: 14px; font-weight: 500;">Discover</a>
+        <a href="/leaderboard" style="color: #475569; text-decoration: none; font-size: 14px; font-weight: 500;">Leaderboard</a>
+        <% if (currentUser) { %>
+            <a href="/reviews" style="color: #475569; text-decoration: none; font-size: 14px; font-weight: 500;">Reviews</a>
+            <% if (currentUser.isAdmin) { %>
+                <a href="/admin/organizers" style="color: #dc2626; text-decoration: none; font-size: 14px; font-weight: 600;">Admin</a>
+            <% } else { %>
+                <a href="/organizer/apply" style="color: #475569; text-decoration: none; font-size: 14px; font-weight: 500;">Organizer</a>
+            <% } %>
+        <% } %>
 
         <% if (currentUser) { %>
             <a href="/notifications" class="notification" style="position: relative; text-decoration: none; color: inherit; display: flex; align-items: center;">
@@ -30,10 +41,10 @@
             </a>
 
             <form action="/logout" method="POST" style="margin: 0;">
+                <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
                 <button type="submit" class="btn-small-outline" style="border-radius: 6px; padding: 6px 12px; font-size: 13px; cursor: pointer;">Logout</button>
             </form>
         <% } else { %>
-            <a href="/discover" style="color: #475569; text-decoration: none; font-size: 14px; font-weight: 500;">Discover</a>
             <a href="/login" class="btn-small-outline" style="text-decoration: none; font-size: 13px; padding: 6px 14px;">Log In</a>
             <a href="/signup" class="btn-small-primary" style="text-decoration: none; font-size: 13px; padding: 6px 14px;">Sign Up</a>
         <% } %>

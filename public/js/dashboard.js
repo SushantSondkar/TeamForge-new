@@ -1,5 +1,14 @@
 document.addEventListener('DOMContentLoaded', () => {
 
+    function getCsrfToken() {
+        const meta = document.querySelector('meta[name="csrf-token"]');
+        if (meta && meta.getAttribute('content')) {
+            return meta.getAttribute('content');
+        }
+        const input = document.querySelector('input[name="_csrf"]');
+        return input ? input.value : '';
+    }
+
     // 1. Recommended Candidates - "Invite"
     const inviteButtons = document.querySelectorAll('.btn-invite-candidate');
     inviteButtons.forEach(btn => {
@@ -19,17 +28,21 @@ document.addEventListener('DOMContentLoaded', () => {
             this.textContent = 'Sending...';
             this.disabled = true;
 
+            const csrfToken = getCsrfToken();
+
             try {
                 const response = await fetch('/invites/send', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Accept': 'application/json'
+                        'Accept': 'application/json',
+                        'X-CSRF-Token': csrfToken
                     },
                     body: JSON.stringify({
                         receiverId,
                         teamRequirementId,
-                        role
+                        role,
+                        _csrf: csrfToken
                     })
                 });
 
@@ -44,8 +57,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     alert(data.error || 'Failed to send invite.');
                     if (data.error && data.error.includes('already exists')) {
                         this.textContent = 'Invited';
-                        this.style.backgroundColor = '#10b981';
-                        this.style.borderColor = '#10b981';
                         this.disabled = true;
                     } else {
                         this.textContent = originalText;
@@ -54,7 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } catch (err) {
                 console.error('Error sending invite:', err);
-                alert('Network error sending invite.');
+                alert('Network error while sending invite.');
                 this.textContent = originalText;
                 this.disabled = false;
             }
@@ -71,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const role = this.getAttribute('data-role');
 
             if (!teamRequirementId || !role) {
-                alert('Missing team or role information.');
+                alert('Missing opportunity details.');
                 return;
             }
 
@@ -79,16 +90,20 @@ document.addEventListener('DOMContentLoaded', () => {
             this.textContent = 'Applying...';
             this.disabled = true;
 
+            const csrfToken = getCsrfToken();
+
             try {
                 const response = await fetch('/applications/apply', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Accept': 'application/json'
+                        'Accept': 'application/json',
+                        'X-CSRF-Token': csrfToken
                     },
                     body: JSON.stringify({
                         teamRequirementId,
-                        role
+                        role,
+                        _csrf: csrfToken
                     })
                 });
 
@@ -109,28 +124,28 @@ document.addEventListener('DOMContentLoaded', () => {
                         const newItem = document.createElement('div');
                         newItem.className = 'list-item';
                         newItem.innerHTML = `
-                            <div class="item-main">
-                                <div class="item-details">
-                                    <strong>${teamName}</strong>
+                            <div class="item-content-left">
+                                <div class="avatar-small" style="background:#e0f2fe; color:#0369a1; border-radius:8px;">TF</div>
+                                <div>
+                                    <strong style="color: #1e293b;">${teamName}</strong>
                                     <div class="item-meta-row">
                                         <span class="text-gray">${role}</span>
                                     </div>
                                 </div>
                             </div>
-                            <span class="badge badge-warning">UNDER REVIEW</span>
+                            <span class="badge badge-info" style="font-size:11px;">UNDER REVIEW</span>
                         `;
-                        if (emptyItem) {
-                            pendingCard.innerHTML = '';
+
+                        if (emptyItem && emptyItem.closest('.list-item')) {
+                            emptyItem.closest('.list-item').replaceWith(newItem);
+                        } else {
+                            pendingCard.prepend(newItem);
                         }
-                        pendingCard.prepend(newItem);
                     }
                 } else {
                     alert(data.error || 'Failed to submit application.');
                     if (data.error && data.error.includes('already applied')) {
                         this.textContent = 'Applied';
-                        this.style.backgroundColor = '#10b981';
-                        this.style.color = 'white';
-                        this.style.borderColor = '#10b981';
                         this.disabled = true;
                     } else {
                         this.textContent = originalText;
@@ -138,20 +153,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
             } catch (err) {
-                console.error('Error applying for opportunity:', err);
-                alert('Network error submitting application.');
+                console.error('Error submitting application:', err);
+                alert('Network error while submitting application.');
                 this.textContent = originalText;
                 this.disabled = false;
             }
         });
     });
 
-    // 3. New Invites Received - "Accept" and "Decline"
-    const invitesReceivedCard = document.querySelector('#invites-received-card') || document.querySelector('.dashboard-grid-new > .dashboard-card-new:nth-child(4)');
-    if (invitesReceivedCard) {
-        invitesReceivedCard.addEventListener('click', async function(e) {
+    // 3. Received Invites - Accept & Decline inline handling
+    const receivedInvitesCard = document.querySelectorAll('.dashboard-card-new')[3];
+    if (receivedInvitesCard) {
+        receivedInvitesCard.addEventListener('click', async (e) => {
             const acceptBtn = e.target.closest('.btn-accept-invite');
             const declineBtn = e.target.closest('.btn-decline-invite');
+            const csrfToken = getCsrfToken();
             
             if (acceptBtn) {
                 e.preventDefault();
@@ -162,7 +178,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 try {
                     const response = await fetch(form.action, {
                         method: 'POST',
-                        headers: { 'Accept': 'application/json' }
+                        headers: { 
+                            'Accept': 'application/json',
+                            'X-CSRF-Token': csrfToken,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ _csrf: csrfToken })
                     });
                     if (response.ok) {
                         actionsContainer.innerHTML = '<span class="badge badge-success">ACCEPTED</span>';
@@ -184,7 +205,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 try {
                     const response = await fetch(form.action, {
                         method: 'POST',
-                        headers: { 'Accept': 'application/json' }
+                        headers: { 
+                            'Accept': 'application/json',
+                            'X-CSRF-Token': csrfToken,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ _csrf: csrfToken })
                     });
                     if (response.ok) {
                         actionsContainer.innerHTML = '<span class="badge badge-danger">DECLINED</span>';

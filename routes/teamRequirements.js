@@ -1,17 +1,40 @@
 const express = require('express');
 const router = express.Router();
 const TeamRequirement = require('../models/TeamRequirement');
+const Event = require('../models/Event');
 const User = require('../models/User');
 const { getRecommendedCandidates } = require('../utils/recommendations');
 const requireLogin = require('../middleware/auth');
 
 // 1. Context Step (Protected)
-router.get("/new", requireLogin, (req, res) => {
-  res.render("team-requirement/context", { teamData: {} });
+router.get("/new", requireLogin, async (req, res) => {
+  try {
+    const events = await Event.find().sort({ date: 1 });
+    const selectedEventId = req.query.eventId || '';
+
+    // If an event was targeted, verify caller isn't already locked into it
+    if (selectedEventId && req.user.lockedEvents && req.user.lockedEvents.includes(selectedEventId)) {
+      return res.redirect(`/events/${selectedEventId}?error=locked`);
+    }
+
+    res.render("team-requirement/context", {
+      teamData: { eventId: selectedEventId },
+      events,
+      selectedEventId
+    });
+  } catch (err) {
+    console.error("Error loading new team context:", err);
+    res.redirect("/events");
+  }
 });
 
-router.post("/new", requireLogin, (req, res) => {
-  res.render("team-requirement/context", { teamData: req.body || {} });
+router.post("/new", requireLogin, async (req, res) => {
+  const events = await Event.find().sort({ date: 1 });
+  res.render("team-requirement/context", {
+    teamData: req.body || {},
+    events,
+    selectedEventId: req.body.eventId || ''
+  });
 });
 
 // 2. Define Team Step (Protected)
@@ -19,14 +42,21 @@ router.get("/new/define-team", requireLogin, (req, res) => {
   res.redirect("/team-requirement/new");
 });
 
-router.post("/new/define-team", requireLogin, (req, res) => {
+router.post("/new/define-team", requireLogin, async (req, res) => {
+  let event = null;
+  if (req.body.eventId) {
+    event = await Event.findById(req.body.eventId);
+  }
+
   const teamData = {
+    eventId: req.body.eventId || '',
+    eventName: event ? event.name : '',
     theme: req.body.theme || 'hackathon',
     projectName: req.body.projectName || '',
     projectRequirement: req.body.projectRequirement || '',
     deliverables: req.body.deliverables || '',
     teamSize: req.body.teamSize || 4,
-    deadline: req.body.deadline || '',
+    deadline: req.body.deadline || (event && event.deadline ? event.deadline.toISOString().slice(0, 10) : ''),
     rolesJson: req.body.rolesJson || ''
   };
   res.render("team-requirement/define-team", { teamData });
@@ -58,7 +88,7 @@ router.get("/new/review", requireLogin, (req, res) => {
   res.redirect("/team-requirement/new");
 });
 
-router.post("/new/review", requireLogin, (req, res) => {
+router.post("/new/review", requireLogin, async (req, res) => {
   let parsedRoles = [];
   if (req.body.rolesJson) {
     try {
@@ -68,8 +98,16 @@ router.post("/new/review", requireLogin, (req, res) => {
     }
   }
 
+  let event = null;
+  if (req.body.eventId) {
+    event = await Event.findById(req.body.eventId);
+  }
+
   res.render("team-requirement/review", {
-    teamData: req.body || {},
+    teamData: {
+      ...req.body,
+      eventName: event ? event.name : ''
+    },
     roles: parsedRoles
   });
 });
@@ -82,7 +120,22 @@ router.post("/submit", requireLogin, async (req, res, next) => {
       parsedRoles = typeof req.body.rolesJson === 'string' ? JSON.parse(req.body.rolesJson) : req.body.rolesJson;
     }
 
-    const { theme, projectName, projectRequirement, deliverables, teamSize, deadline } = req.body;
+    const { eventId, theme, projectName, projectRequirement, deliverables, teamSize, deadline } = req.body;
+
+    // Validate event
+    if (!eventId) {
+      return res.status(400).send("Validation Error: Team requirement must belong to a valid Event.");
+    }
+
+    const event = await Event.findById(eventId);
+    if (!event) {
+      return res.status(400).send("Validation Error: Selected event does not exist.");
+    }
+
+    // Check if user is already locked into this event
+    if (req.user.lockedEvents && req.user.lockedEvents.includes(event._id.toString())) {
+      return res.status(400).send("Validation Error: You are already committed to another team for this event.");
+    }
 
     // Validate main required fields
     if (!theme || !projectName || !projectRequirement || !deliverables || !teamSize || !deadline) {
@@ -96,6 +149,7 @@ router.post("/submit", requireLogin, async (req, res, next) => {
 
     const requirementData = {
       createdBy: req.user._id,
+      eventId: event._id,
       theme,
       projectName,
       projectRequirement,
@@ -108,23 +162,34 @@ router.post("/submit", requireLogin, async (req, res, next) => {
     const teamRequirement = new TeamRequirement(requirementData);
     await teamRequirement.save();
 
-    console.log("MongoDB document created successfully:", teamRequirement._id, "by user:", req.user.email);
+    // Lock creator into this event
+    if (!req.user.lockedEvents.includes(event._id.toString())) {
+      req.user.lockedEvents.push(event._id.toString());
+      await req.user.save();
+    }
+
+    console.log("Team requirement created successfully:", teamRequirement._id, "for event:", event.name, "by:", req.user.email);
     res.redirect("/?teamId=" + teamRequirement._id);
   } catch (err) {
     console.error("Database or Validation Error:", err.message);
     if (err.name === 'ValidationError') {
       return res.status(400).send(`Validation Error: ${err.message}`);
     }
-    res.status(500).send(`Error saving team requirement: ${err.message}. Please check if local MongoDB is running.`);
+    res.status(500).send(`Error saving team requirement: ${err.message}.`);
   }
 });
 
-// 6. Get Recommended Candidates for a Team Requirement
-router.get("/:id/recommendations", async (req, res) => {
+// 6. Get Recommended Candidates for a Team Requirement (Owner Only)
+router.get("/:id/recommendations", requireLogin, async (req, res) => {
   try {
     const team = await TeamRequirement.findById(req.params.id);
     if (!team) {
       return res.status(404).json({ error: "Team requirement not found" });
+    }
+
+    // Verify caller is the creator / owner of this team requirement
+    if (!team.createdBy || !team.createdBy.equals(req.user._id)) {
+      return res.status(403).json({ error: "Forbidden: Only the team creator can view candidate recommendations." });
     }
 
     const roleIndex = parseInt(req.query.roleIndex, 10) || 0;
@@ -134,8 +199,7 @@ router.get("/:id/recommendations", async (req, res) => {
       return res.json({ team, role: null, recommendations: [] });
     }
 
-    const currentUserId = req.user ? req.user._id : null;
-    const recommendations = await getRecommendedCandidates(team, role, currentUserId);
+    const recommendations = await getRecommendedCandidates(team, role, req.user._id);
 
     res.json({
       success: true,

@@ -233,6 +233,37 @@ const initialCandidates = [
 const Invite = require("./Invite");
 const TeamRequirement = require("./TeamRequirement");
 const Application = require("./Application");
+const Event = require("./Event");
+
+const initialEvents = [
+  {
+    name: "EQUINOX 2026",
+    organizer: "Computer Engineering Department, K.K. Wagh",
+    date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+    deadline: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
+    mode: "Offline",
+    link: "https://kkwagh.edu.in/equinox",
+    description: "Annual National Technical Symposium and 24-hour campus hackathon at K.K. Wagh Institute of Engineering Education & Research."
+  },
+  {
+    name: "Smart India Hackathon (SIH) 2026",
+    organizer: "Ministry of Education & K.K. Wagh Committee",
+    date: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000),
+    deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    mode: "Hybrid",
+    link: "https://sih.gov.in",
+    description: "Nationwide initiative to provide students with a platform to solve pressing problems of society and industry."
+  },
+  {
+    name: "DevJams KKW '26",
+    organizer: "CSI Student Branch",
+    date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    deadline: new Date(Date.now() + 18 * 24 * 60 * 60 * 1000),
+    mode: "Offline",
+    link: "https://csi-kkwagh.org",
+    description: "36-hour rapid product prototyping hackathon focusing on AI, cloud, and edge IoT devices."
+  }
+];
 
 const initialOpportunityTeams = [
   {
@@ -353,24 +384,47 @@ async function seedUsers() {
     const sanket = await User.findOne({ name: "Sanket Pawar" });
     const kalpesh = await User.findOne({ name: "Kalpesh Shinde" });
 
+    // Seed Events if they do not exist
+    for (const evt of initialEvents) {
+      const existingEvt = await Event.findOne({ name: evt.name });
+      if (!existingEvt) {
+        await Event.create(evt);
+        console.log(`Seeded event: ${evt.name}`);
+      }
+    }
+
+    const defaultEvent = await Event.findOne({ name: "EQUINOX 2026" }) || await Event.findOne();
+
     // Seed opportunity teams if they don't exist
     for (const teamData of initialOpportunityTeams) {
-      const existingTeam = await TeamRequirement.findOne({ projectName: teamData.projectName });
+      let existingTeam = await TeamRequirement.findOne({ projectName: teamData.projectName });
       if (!existingTeam) {
         // Set creator to kalpesh or harsh so aaradhya can discover and apply
         await TeamRequirement.create({
           ...teamData,
+          eventId: defaultEvent ? defaultEvent._id : undefined,
           createdBy: kalpesh ? kalpesh._id : undefined
         });
         console.log(`Seeded opportunity team: ${teamData.projectName}`);
+      } else if (!existingTeam.eventId && defaultEvent) {
+        existingTeam.eventId = defaultEvent._id;
+        await existingTeam.save();
       }
     }
 
-    // Ensure Alpha_coders is attributed to Aaradhya Wabale
-    const alphaTeam = await TeamRequirement.findOne({ projectName: "Alpha_coders" });
-    if (alphaTeam && aaradhya && !alphaTeam.createdBy) {
-      alphaTeam.createdBy = aaradhya._id;
-      await alphaTeam.save();
+    // Ensure Alpha_coders is attributed to Aaradhya Wabale and linked to defaultEvent
+    let alphaTeam = await TeamRequirement.findOne({ projectName: "Alpha_coders" });
+    if (alphaTeam) {
+      let changed = false;
+      if (aaradhya && !alphaTeam.createdBy) {
+        alphaTeam.createdBy = aaradhya._id;
+        changed = true;
+      }
+      if (!alphaTeam.eventId && defaultEvent) {
+        alphaTeam.eventId = defaultEvent._id;
+        changed = true;
+      }
+      if (changed) await alphaTeam.save();
     }
 
     // Ensure a sample received invite exists for Aaradhya Wabale

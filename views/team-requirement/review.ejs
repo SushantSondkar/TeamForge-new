@@ -48,7 +48,9 @@
             <h1 class="page-title-new" style="padding-left: 20px;">Review & Send</h1>
 
             <form method="POST" class="review-form">
+                <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
                 <!-- Hidden inputs carrying all wizard data -->
+                <input type="hidden" name="eventId" value="<%= teamData.eventId %>">
                 <input type="hidden" name="theme" value="<%= teamData.theme %>">
                 <input type="hidden" name="projectName" value="<%= teamData.projectName %>">
                 <input type="hidden" name="projectRequirement" value="<%= teamData.projectRequirement %>">

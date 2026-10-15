@@ -2,11 +2,19 @@ const express = require("express");
 const router = express.Router();
 const User = require("../models/User");
 const TeamRequirement = require("../models/TeamRequirement");
+const TeamRequestAction = require("../models/TeamRequestAction");
 const Application = require("../models/Application");
 const requireLogin = require("../middleware/auth");
+const {
+  createAction,
+  acceptAction,
+  confirmAction,
+  declineAction,
+  optInContactSharing
+} = require("../utils/actionStateMachine");
 
 // -----------------------------------------------------------------
-// 1. POST /applications/apply - Candidate applies to a team role
+// 1. POST /applications/apply - Candidate applies to a team role (Direction: APPLY)
 // -----------------------------------------------------------------
 router.post("/apply", requireLogin, async (req, res) => {
   try {
@@ -17,103 +25,87 @@ router.post("/apply", requireLogin, async (req, res) => {
       return res.status(400).json({ error: "Missing teamRequirementId or role." });
     }
 
-    // 1. Verify Team Requirement exists
     const team = await TeamRequirement.findById(teamRequirementId);
     if (!team) {
       return res.status(404).json({ error: "Team requirement not found." });
     }
 
-    // Prevent team creator from applying to their own team
     if (team.createdBy && team.createdBy.equals(currentUser._id)) {
       return res.status(400).json({ error: "You cannot apply to your own team." });
     }
 
-    // 2. Find the requested role in team
     const roleObj = (team.roles || []).find(r => r.title.toLowerCase().trim() === role.toLowerCase().trim());
     if (!roleObj) {
       return res.status(404).json({ error: "Role not found in this team requirement." });
     }
 
-    // 3. Check openings: Cannot apply if openings <= 0
     if (roleObj.openings <= 0) {
-      return res.status(400).json({ error: "This role has no openings remaining." });
+      return res.status(400).json({ error: "This role has no openings remaining (Role Filled)." });
     }
 
-    // 4. Check required skills
-    const userSkillsMap = {};
-    if (Array.isArray(currentUser.skills)) {
-      currentUser.skills.forEach(s => {
-        if (s && s.name) {
-          userSkillsMap[s.name.toLowerCase().trim()] = s.level || 1;
-        }
-      });
-    }
-
-    const requiredSkills = roleObj.requiredSkills || [];
-    for (const reqSkill of requiredSkills) {
-      const level = userSkillsMap[reqSkill.toLowerCase().trim()];
-      if (!level || level <= 0) {
-        return res.status(400).json({ error: `You lack the required skill: ${reqSkill}` });
-      }
-    }
-
-    // 5. Prevent duplicate applications
-    const existingApplication = await Application.findOne({
-      applicantId: currentUser._id,
-      teamRequirementId: team._id,
-      role: roleObj.title
-    });
-
-    if (existingApplication) {
-      return res.status(400).json({ error: "You have already applied for this role." });
-    }
-
-    // 6. Create application with default status: UNDER_REVIEW
-    const newApplication = new Application({
-      applicantId: currentUser._id,
+    const action = await createAction({
+      senderId: currentUser._id,
+      receiverId: team.createdBy,
       teamRequirementId: team._id,
       role: roleObj.title,
-      status: "UNDER_REVIEW"
+      direction: "APPLY"
     });
 
-    await newApplication.save();
-    console.log(`Application created: ${currentUser.name} applied for ${roleObj.title} at ${team.projectName}`);
+    console.log(`Unified Action created: APPLY from ${currentUser.name} to team ${team.projectName} for role ${roleObj.title}`);
 
-    // If client requested JSON via AJAX fetch
     if (req.xhr || req.headers.accept?.includes("application/json") || req.is("json")) {
       return res.json({
         success: true,
         message: "Application submitted successfully",
-        applicationId: newApplication._id,
-        status: "UNDER_REVIEW"
+        actionId: action._id,
+        status: action.status
       });
     }
 
-    res.redirect("/");
+    res.redirect("/discover");
   } catch (err) {
     console.error("Error creating application:", err.message);
-    res.status(500).json({ error: `Server error creating application: ${err.message}` });
+    res.status(400).json({ error: err.message });
   }
 });
 
-// -------------------------------------------------------------
-// 2. GET /applications/team/:teamRequirementId - Team owner views applications
-// -------------------------------------------------------------
-router.get("/team/:teamRequirementId", requireLogin, async (req, res) => {
+// -----------------------------------------------------------------
+// 2. GET /applications/team/:teamId - View applications received for team
+// -----------------------------------------------------------------
+router.get("/team/:teamId", requireLogin, async (req, res) => {
   try {
-    const team = await TeamRequirement.findById(req.params.teamRequirementId);
+    const team = await TeamRequirement.findById(req.params.teamId);
     if (!team) {
       return res.status(404).send("Team requirement not found.");
     }
 
-    // Authorization: Only the creator of the team can view candidates' applications
     if (team.createdBy && !team.createdBy.equals(req.user._id)) {
-      return res.status(403).send("Unauthorized: Only the creator of this team can review applications.");
+      return res.status(403).send("Unauthorized: Only the team owner can view received applications.");
     }
 
-    const applications = await Application.find({ teamRequirementId: team._id })
-      .populate("applicantId")
+    // Retrieve actions submitted to this team (APPLY or INVITE)
+    const actions = await TeamRequestAction.find({ teamRequirementId: team._id })
+      .populate("senderId", "name email department role skills credibility github linkedin portfolio")
+      .populate("receiverId", "name email department role skills credibility github linkedin portfolio")
       .sort({ createdAt: -1 });
+
+    // Map to normalized structure for view compatibility
+    const applications = actions.map(act => {
+      const applicant = act.direction === "APPLY" ? act.senderId : act.receiverId;
+      const bothOptedIn = act.senderContactOptIn && act.receiverContactOptIn;
+      return {
+        _id: act._id,
+        applicantId: applicant,
+        role: act.role,
+        status: act.status,
+        direction: act.direction,
+        confirmedByRequester: act.confirmedByRequester,
+        confirmationExpiresAt: act.confirmationExpiresAt,
+        bothOptedIn,
+        myContactOptIn: act.receiverId._id.equals(req.user._id) ? act.receiverContactOptIn : act.senderContactOptIn,
+        createdAt: act.createdAt
+      };
+    });
 
     res.render("applications/team", {
       team,
@@ -125,101 +117,115 @@ router.get("/team/:teamRequirementId", requireLogin, async (req, res) => {
   }
 });
 
-// -------------------------------------------------------------
-// Helper to update application status and handle openings reduction
-// -------------------------------------------------------------
-async function updateApplicationStatus(applicationId, newStatus, req, res) {
-  const application = await Application.findById(applicationId);
-  if (!application) {
-    return res.status(404).send("Application not found.");
-  }
-
-  const team = await TeamRequirement.findById(application.teamRequirementId);
-  if (!team) {
-    return res.status(404).send("Associated team not found.");
-  }
-
-  // Authorization: Only team owner can update status
-  if (team.createdBy && !team.createdBy.equals(req.user._id)) {
-    return res.status(403).send("Unauthorized: Only the team owner can update application status.");
-  }
-
-  const validStatuses = ["UNDER_REVIEW", "INTERVIEWING", "ACCEPTED", "REJECTED"];
-  if (!validStatuses.includes(newStatus)) {
-    return res.status(400).send("Invalid status.");
-  }
-
-  const previousStatus = application.status;
-  application.status = newStatus;
-  await application.save();
-
-  // If application was just ACCEPTED, decrement role opening
-  if (newStatus === "ACCEPTED" && previousStatus !== "ACCEPTED") {
-    if (Array.isArray(team.roles)) {
-      const roleObj = team.roles.find(r => r.title.toLowerCase().trim() === application.role.toLowerCase().trim());
-      if (roleObj && roleObj.openings > 0) {
-        roleObj.openings -= 1;
-        await team.save();
-        console.log(`Decreased openings for role ${roleObj.title} in ${team.projectName}. Remaining: ${roleObj.openings}`);
-      }
-    }
-
-    // Lock candidate into this event
-    const applicant = await User.findById(application.applicantId);
-    if (applicant && team && team.projectName) {
-      if (!applicant.lockedEvents.includes(team.projectName)) {
-        applicant.lockedEvents.push(team.projectName);
-        await applicant.save();
-      }
-    }
-  }
-
-  console.log(`Application ${application._id} updated to ${newStatus} by ${req.user.name}`);
-
-  if (req.xhr || req.headers.accept?.includes("application/json")) {
-    return res.json({ success: true, status: application.status });
-  }
-
-  res.redirect(`/applications/team/${application.teamRequirementId}`);
-}
-
-// -------------------------------------------------------------
-// 3. Status Action Routes (Protected)
-// -------------------------------------------------------------
-router.post("/:id/status", requireLogin, async (req, res) => {
-  try {
-    const { status } = req.body;
-    await updateApplicationStatus(req.params.id, status, req, res);
-  } catch (err) {
-    console.error("Error updating status:", err.message);
-    res.status(500).send("Error updating application status.");
-  }
-});
-
-router.post("/:id/interview", requireLogin, async (req, res) => {
-  try {
-    await updateApplicationStatus(req.params.id, "INTERVIEWING", req, res);
-  } catch (err) {
-    console.error("Error moving to interview:", err.message);
-    res.status(500).send("Error updating status.");
-  }
-});
-
+// -----------------------------------------------------------------
+// 3. POST /applications/:id/accept - Lead accepts application
+// NOTE: Accepting never locks! Requester subsequently confirms.
+// -----------------------------------------------------------------
 router.post("/:id/accept", requireLogin, async (req, res) => {
   try {
-    await updateApplicationStatus(req.params.id, "ACCEPTED", req, res);
+    // Find unified action
+    let action = await TeamRequestAction.findById(req.params.id);
+    if (!action) {
+      // Check legacy application
+      const legacyApp = await Application.findById(req.params.id);
+      if (legacyApp) {
+        action = await TeamRequestAction.findOne({
+          senderId: legacyApp.applicantId,
+          teamRequirementId: legacyApp.teamRequirementId,
+          role: legacyApp.role
+        });
+      }
+    }
+
+    if (!action) {
+      return res.status(404).send("Application action not found.");
+    }
+
+    const updated = await acceptAction(action._id, req.user._id);
+
+    if (req.xhr || req.headers.accept?.includes("application/json")) {
+      return res.json({ success: true, status: updated.status, message: "Accepted. Waiting for applicant to confirm." });
+    }
+
+    res.redirect(`/applications/team/${action.teamRequirementId}`);
   } catch (err) {
     console.error("Error accepting application:", err.message);
-    res.status(500).send("Error updating status.");
+    res.status(400).send(err.message);
   }
 });
 
+// -----------------------------------------------------------------
+// 4. POST /applications/:id/confirm - Applicant confirms accepted spot -> LOCKED
+// -----------------------------------------------------------------
+router.post("/:id/confirm", requireLogin, async (req, res) => {
+  try {
+    const action = await confirmAction(req.params.id, req.user._id);
+
+    if (req.xhr || req.headers.accept?.includes("application/json")) {
+      return res.json({ success: true, status: "LOCKED", message: "Spot confirmed and locked for this event!" });
+    }
+
+    res.redirect("/notifications");
+  } catch (err) {
+    console.error("Error confirming spot:", err.message);
+    res.status(400).send(err.message);
+  }
+});
+
+// -----------------------------------------------------------------
+// 5. POST /applications/:id/reject or decline
+// -----------------------------------------------------------------
 router.post("/:id/reject", requireLogin, async (req, res) => {
   try {
-    await updateApplicationStatus(req.params.id, "REJECTED", req, res);
+    let action = await TeamRequestAction.findById(req.params.id);
+    if (!action) {
+      const legacyApp = await Application.findById(req.params.id);
+      if (legacyApp) {
+        action = await TeamRequestAction.findOne({
+          senderId: legacyApp.applicantId,
+          teamRequirementId: legacyApp.teamRequirementId,
+          role: legacyApp.role
+        });
+      }
+    }
+
+    if (!action) {
+      return res.status(404).send("Application action not found.");
+    }
+
+    const updated = await declineAction(action._id, req.user._id);
+
+    if (req.xhr || req.headers.accept?.includes("application/json")) {
+      return res.json({ success: true, status: updated.status });
+    }
+
+    res.redirect(`/applications/team/${action.teamRequirementId}`);
   } catch (err) {
-    console.error("Error rejecting application:", err.message);
-    res.status(500).send("Error updating status.");
+    console.error("Error declining application:", err.message);
+    res.status(400).send(err.message);
+  }
+});
+
+// -----------------------------------------------------------------
+// 6. POST /applications/:id/contact-consent - Mutual Contact Opt-in
+// -----------------------------------------------------------------
+router.post("/:id/contact-consent", requireLogin, async (req, res) => {
+  try {
+    const action = await optInContactSharing(req.params.id, req.user._id);
+    const bothOptedIn = action.senderContactOptIn && action.receiverContactOptIn;
+
+    if (req.xhr || req.headers.accept?.includes("application/json")) {
+      return res.json({
+        success: true,
+        bothOptedIn,
+        message: bothOptedIn ? "Mutual contact sharing unlocked!" : "Opt-in recorded. Waiting for teammate."
+      });
+    }
+
+    res.redirect(`/applications/team/${action.teamRequirementId}`);
+  } catch (err) {
+    console.error("Error updating contact consent:", err.message);
+    res.status(400).send(err.message);
   }
 });
 

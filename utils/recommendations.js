@@ -2,23 +2,25 @@ const User = require("../models/User");
 const Invite = require("../models/Invite");
 const TeamRequirement = require("../models/TeamRequirement");
 const Application = require("../models/Application");
+const TeamRequestAction = require("../models/TeamRequestAction");
 const { calculateMatchScore } = require("./matchScore");
 
 /**
  * Filters candidates and computes match scores for a given team requirement role.
  * 
  * Rules:
- * 1. Filter out candidate if missing ANY required skill (Condition 1).
- * 2. Filter out candidate if locked into this project/event (Condition 2).
- * 3. Filter out current user from their own recommendations.
- * 4. Compute Match Score (0 - 100) using calculateMatchScore().
- * 5. Sort candidates from highest to lowest score.
- * 6. Mark if an invite has already been sent.
+ * 1. Filter out candidate if locked for this event (Term A).
+ * 2. Filter out candidate if profile is hidden (Term A).
+ * 3. Filter out candidate if missing >= 50% of required skills (Term S).
+ * 4. Filter out coordinator / current user themselves.
+ * 5. Compute MatchScore (0 - 100) using calculateMatchScore().
+ * 6. Multi-tier sort: score -> raw R -> lastActive -> profile completeness -> name.
+ * 7. Provide per-term breakdown for "why this match".
  * 
  * @param {Object} team - The TeamRequirement document
  * @param {Object} role - The specific role within the team requirement
- * @param {ObjectId} currentUserId - The ID of the logged in / demo user
- * @returns {Array} Array of recommended candidate objects with scores
+ * @param {ObjectId} currentUserId - The ID of the logged in user
+ * @returns {Array} Array of recommended candidate objects with scores and breakdown
  */
 async function getRecommendedCandidates(team, role, currentUserId) {
   if (!team || !role) {
@@ -28,53 +30,44 @@ async function getRecommendedCandidates(team, role, currentUserId) {
   // Find all users except the current coordinator
   const allUsers = await User.find(currentUserId ? { _id: { $ne: currentUserId } } : {});
 
-  const requiredSkills = role.requiredSkills || [];
-  const eventName = team.projectName || "";
+  // Determine event lock key: use eventId if present, fallback to projectName
+  const eventLockKey = team.eventId ? team.eventId.toString() : (team.projectName || "");
 
   const recommended = [];
 
   for (const candidate of allUsers) {
     // -------------------------------------------------------------
-    // CONDITION 2: Remove candidates locked into this event/project
+    // EXCLUSION 1: Locked for this event
     // -------------------------------------------------------------
-    if (candidate.lockedEvents && candidate.lockedEvents.includes(eventName)) {
-      continue; // Skip: candidate is already committed to a team for this event
+    if (eventLockKey && candidate.lockedEvents && candidate.lockedEvents.includes(eventLockKey)) {
+      continue;
     }
 
     // -------------------------------------------------------------
-    // CONDITION 1: Remove candidates missing ANY required skill
+    // EXCLUSION 2: Profile is hidden
     // -------------------------------------------------------------
-    const candidateSkillsMap = {};
-    if (Array.isArray(candidate.skills)) {
-      candidate.skills.forEach(s => {
-        if (s && s.name) {
-          candidateSkillsMap[s.name.toLowerCase().trim()] = s.level || 1;
-        }
-      });
-    }
-
-    let hasAllRequired = true;
-    for (const reqSkill of requiredSkills) {
-      const level = candidateSkillsMap[reqSkill.toLowerCase().trim()];
-      if (!level || level <= 0) {
-        hasAllRequired = false;
-        break; // Missing at least one required skill
-      }
-    }
-
-    if (!hasAllRequired) {
-      continue; // Hard filter: candidate does NOT qualify
+    if (candidate.isProfileHidden === true) {
+      continue;
     }
 
     // -------------------------------------------------------------
-    // CALCULATE MATCH SCORE
+    // CALCULATE MATCH SCORE & COVERAGE FILTER (Term S >= 50%)
     // -------------------------------------------------------------
     const matchResult = calculateMatchScore(candidate, role);
+    if (!matchResult.qualifies) {
+      continue; // Excluded due to insufficient skill coverage
+    }
 
     // Check if an invite has already been sent
     let isInvited = false;
     if (currentUserId) {
-      const existingInvite = await Invite.findOne({
+      const existingInvite = await TeamRequestAction.findOne({
+        senderId: currentUserId,
+        receiverId: candidate._id,
+        teamRequirementId: team._id,
+        direction: "INVITE",
+        status: { $in: ["PENDING", "ACCEPTED", "LOCKED"] }
+      }) || await Invite.findOne({
         senderId: currentUserId,
         receiverId: candidate._id,
         teamRequirementId: team._id,
@@ -89,12 +82,44 @@ async function getRecommendedCandidates(team, role, currentUserId) {
       user: candidate,
       score: matchResult.score,
       matchResult: matchResult,
+      breakdown: matchResult.breakdown,
       isInvited: isInvited
     });
   }
 
-  // Sort candidates by highest score first
-  recommended.sort((a, b) => b.score - a.score);
+  // -------------------------------------------------------------
+  // MULTI-TIER SORT: score -> raw R -> lastActive -> completeness -> name
+  // -------------------------------------------------------------
+  recommended.sort((a, b) => {
+    // 1. Score (descending)
+    if (b.score !== a.score) {
+      return b.score - a.score;
+    }
+
+    // 2. Raw R (reputation) (descending)
+    const rawRA = a.matchResult?.breakdown?.rawR || 0;
+    const rawRB = b.matchResult?.breakdown?.rawR || 0;
+    if (rawRB !== rawRA) {
+      return rawRB - rawRA;
+    }
+
+    // 3. lastActive (descending / most recently active first)
+    const timeA = a.user.lastActive ? new Date(a.user.lastActive).getTime() : 0;
+    const timeB = b.user.lastActive ? new Date(b.user.lastActive).getTime() : 0;
+    if (timeB !== timeA) {
+      return timeB - timeA;
+    }
+
+    // 4. Profile completeness percentage (descending)
+    const compA = a.user.completenessPercentage || 0;
+    const compB = b.user.completenessPercentage || 0;
+    if (compB !== compA) {
+      return compB - compA;
+    }
+
+    // 5. Name (alphabetical ascending)
+    return (a.user.name || "").localeCompare(b.user.name || "");
+  });
 
   return recommended;
 }
@@ -103,38 +128,29 @@ async function getRecommendedCandidates(team, role, currentUserId) {
  * Finds and calculates matching open team roles (opportunities) for the current user.
  * 
  * Rules:
- * 1. Filter out teams if user is already locked into that event.
+ * 1. Filter out teams if user is locked for that event.
  * 2. Filter out roles where openings <= 0.
- * 3. Filter out roles if current user is missing ANY required skill.
+ * 3. Filter out roles if current user fails the >= 50% skill coverage requirement.
  * 4. Filter out teams created by the user themselves.
  * 5. Calculate Match Score using calculateMatchScore(currentUser, role).
- * 6. Check if user already applied to this role.
- * 7. Sort opportunities highest score first.
+ * 6. Sort opportunities: score -> raw R -> lastActive -> name.
  * 
- * @param {Object} currentUser - The current logged in / demo user document
- * @returns {Array} Array of recommended opportunity objects
+ * @param {Object} currentUser - Current logged-in user
+ * @returns {Array} Array of recommended opportunity objects with breakdown
  */
 async function getRecommendedOpportunities(currentUser) {
   if (!currentUser) {
     return [];
   }
 
-  const allTeams = await TeamRequirement.find();
+  const allTeams = await TeamRequirement.find().populate("eventId");
   const opportunities = [];
 
-  // Build candidate skills lookup map
-  const userSkillsMap = {};
-  if (Array.isArray(currentUser.skills)) {
-    currentUser.skills.forEach(s => {
-      if (s && s.name) {
-        userSkillsMap[s.name.toLowerCase().trim()] = s.level || 1;
-      }
-    });
-  }
-
   for (const team of allTeams) {
+    const eventLockKey = team.eventId ? (team.eventId._id || team.eventId).toString() : (team.projectName || "");
+
     // Skip if user is locked into this event
-    if (team.projectName && currentUser.lockedEvents && currentUser.lockedEvents.includes(team.projectName)) {
+    if (eventLockKey && currentUser.lockedEvents && currentUser.lockedEvents.includes(eventLockKey)) {
       continue;
     }
 
@@ -151,26 +167,19 @@ async function getRecommendedOpportunities(currentUser) {
         continue;
       }
 
-      // 2. REQUIRED SKILL FILTER: User must have ALL required skills
-      const requiredSkills = role.requiredSkills || [];
-      let hasAllRequired = true;
-      for (const reqSkill of requiredSkills) {
-        const level = userSkillsMap[reqSkill.toLowerCase().trim()];
-        if (!level || level <= 0) {
-          hasAllRequired = false;
-          break;
-        }
-      }
-
-      if (!hasAllRequired) {
-        continue; // Hard filter: candidate lacks required skill
-      }
-
-      // 3. CALCULATE MATCH SCORE
+      // 2. CALCULATE MATCH SCORE & COVERAGE
       const matchResult = calculateMatchScore(currentUser, role);
+      if (!matchResult.qualifies) {
+        continue; // Lacks >= 50% coverage of required skills
+      }
 
-      // 4. CHECK IF ALREADY APPLIED
-      const existingApplication = await Application.findOne({
+      // 3. CHECK IF ALREADY APPLIED
+      const existingAction = await TeamRequestAction.findOne({
+        senderId: currentUser._id,
+        teamRequirementId: team._id,
+        role: role.title,
+        direction: "APPLY"
+      }) || await Application.findOne({
         applicantId: currentUser._id,
         teamRequirementId: team._id,
         role: role.title
@@ -181,15 +190,26 @@ async function getRecommendedOpportunities(currentUser) {
         role: role,
         score: matchResult.score,
         matchResult: matchResult,
-        isApplied: !!existingApplication,
-        applicationStatus: existingApplication ? existingApplication.status : null,
-        applicationId: existingApplication ? existingApplication._id : null
+        breakdown: matchResult.breakdown,
+        isApplied: !!existingAction,
+        applicationStatus: existingAction ? existingAction.status : null,
+        applicationId: existingAction ? existingAction._id : null
       });
     }
   }
 
-  // Sort opportunities highest match score first
-  opportunities.sort((a, b) => b.score - a.score);
+  // Multi-tier sort
+  opportunities.sort((a, b) => {
+    if (b.score !== a.score) {
+      return b.score - a.score;
+    }
+    const rawRA = a.matchResult?.breakdown?.rawR || 0;
+    const rawRB = b.matchResult?.breakdown?.rawR || 0;
+    if (rawRB !== rawRA) {
+      return rawRB - rawRA;
+    }
+    return (a.team.projectName || "").localeCompare(b.team.projectName || "");
+  });
 
   return opportunities;
 }

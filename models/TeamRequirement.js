@@ -31,6 +31,11 @@ const teamRequirementSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "User"
   },
+  eventId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Event",
+    required: [true, 'Event is required']
+  },
   theme: {
     type: String,
     required: [true, 'Theme is required'],

@@ -1,12 +1,18 @@
 const express = require("express");
 const router = express.Router();
-const User = require("../models/User");
-const Invite = require("../models/Invite");
+const TeamRequestAction = require("../models/TeamRequestAction");
 const TeamRequirement = require("../models/TeamRequirement");
 const requireLogin = require("../middleware/auth");
+const {
+  createAction,
+  acceptAction,
+  confirmAction,
+  declineAction,
+  optInContactSharing
+} = require("../utils/actionStateMachine");
 
 // -----------------------------------------------------------------
-// 1. POST /invites/send - Send a team invitation to a candidate
+// 1. POST /invites/send - Send a team invitation (Direction: INVITE)
 // -----------------------------------------------------------------
 router.post("/send", requireLogin, async (req, res) => {
   try {
@@ -17,132 +23,113 @@ router.post("/send", requireLogin, async (req, res) => {
       return res.status(400).json({ error: "Missing receiverId or teamRequirementId." });
     }
 
-    // 1. Verify candidate exists
-    const candidate = await User.findById(receiverId);
-    if (!candidate) {
-      return res.status(404).json({ error: "Candidate not found." });
-    }
-
-    // 2. Verify team requirement exists
     const team = await TeamRequirement.findById(teamRequirementId);
     if (!team) {
       return res.status(404).json({ error: "Team requirement not found." });
     }
 
-    // 3. Verify candidate is not already locked into the event
-    if (candidate.lockedEvents && candidate.lockedEvents.includes(team.projectName)) {
-      return res.status(400).json({ error: "Candidate is already locked into this event/project." });
-    }
+    const assignedRole = role || (team.roles && team.roles[0] ? team.roles[0].title : "Collaborator");
 
-    // 4. Check for duplicate pending invite
-    const existingInvite = await Invite.findOne({
+    const action = await createAction({
       senderId: currentUser._id,
-      receiverId: candidate._id,
-      teamRequirementId: team._id,
-      status: "PENDING"
+      receiverId,
+      teamRequirementId,
+      role: assignedRole,
+      direction: "INVITE"
     });
 
-    if (existingInvite) {
-      return res.status(400).json({ error: "A pending invite already exists for this candidate." });
-    }
+    console.log(`Unified Action created: INVITE from ${currentUser.name} to ${receiverId} for ${team.projectName}`);
 
-    // 5. Create and save new invite
-    const newInvite = new Invite({
-      senderId: currentUser._id,
-      receiverId: candidate._id,
-      teamRequirementId: team._id,
-      role: role || (team.roles && team.roles[0] ? team.roles[0].title : "Team Member"),
-      status: "PENDING"
-    });
-
-    await newInvite.save();
-    console.log(`Invite created: from ${currentUser.name} to ${candidate.name} for ${team.projectName}`);
-
-    // If client requested JSON (via fetch in dashboard.js)
     if (req.xhr || req.headers.accept?.includes("application/json") || req.is("json")) {
       return res.json({
         success: true,
-        message: "Invite sent successfully",
-        inviteId: newInvite._id,
-        status: "PENDING"
+        message: "Invitation sent successfully",
+        actionId: action._id,
+        status: action.status
       });
     }
 
-    // Default redirect to dashboard
     res.redirect("/");
   } catch (err) {
     console.error("Error sending invite:", err.message);
-    res.status(500).json({ error: `Server error sending invite: ${err.message}` });
+    res.status(400).json({ error: err.message });
   }
 });
 
 // -----------------------------------------------------------------
 // 2. POST /invites/:id/accept - Candidate accepts invitation
+// NOTE: Accepting never locks; the requester confirms!
 // -----------------------------------------------------------------
 router.post("/:id/accept", requireLogin, async (req, res) => {
   try {
-    const invite = await Invite.findById(req.params.id);
-    if (!invite) {
-      return res.status(404).send("Invite not found");
-    }
+    const action = await acceptAction(req.params.id, req.user._id);
+    console.log(`Action ${action._id} ACCEPTED by ${req.user.name}. Awaiting requester confirmation.`);
 
-    // Verify current user is the recipient of the invite
-    if (!invite.receiverId.equals(req.user._id)) {
-      return res.status(403).send("Unauthorized: You cannot accept an invite addressed to someone else.");
-    }
-
-    invite.status = "ACCEPTED";
-    await invite.save();
-
-    // Lock candidate into project
-    const receiver = await User.findById(invite.receiverId);
-    const team = await TeamRequirement.findById(invite.teamRequirementId);
-    if (receiver && team && team.projectName) {
-      if (!receiver.lockedEvents.includes(team.projectName)) {
-        receiver.lockedEvents.push(team.projectName);
-        await receiver.save();
-      }
-    }
-
-    console.log(`Invite ${invite._id} ACCEPTED by ${req.user.name}`);
-
-    if (req.xhr || req.headers.accept?.includes("application/json")) {
-      return res.json({ success: true, status: "ACCEPTED" });
+    if (req.xhr || req.headers.accept?.includes("application/json") || req.is("json")) {
+      return res.json({ success: true, status: "ACCEPTED", message: "Accepted. Awaiting requester confirmation." });
     }
     res.redirect("/");
   } catch (err) {
     console.error("Error accepting invite:", err.message);
-    res.status(500).send("Error accepting invite");
+    res.status(400).send(err.message);
   }
 });
 
 // -----------------------------------------------------------------
-// 3. POST /invites/:id/decline - Candidate declines invitation
+// 3. POST /invites/:id/confirm - Requester confirms match -> LOCKED
+// -----------------------------------------------------------------
+router.post("/:id/confirm", requireLogin, async (req, res) => {
+  try {
+    const action = await confirmAction(req.params.id, req.user._id);
+    console.log(`Action ${action._id} CONFIRMED & LOCKED by ${req.user.name}.`);
+
+    if (req.xhr || req.headers.accept?.includes("application/json") || req.is("json")) {
+      return res.json({ success: true, status: "LOCKED", message: "Match officially locked for this event." });
+    }
+    res.redirect("/");
+  } catch (err) {
+    console.error("Error confirming invite:", err.message);
+    res.status(400).send(err.message);
+  }
+});
+
+// -----------------------------------------------------------------
+// 4. POST /invites/:id/decline - Candidate declines invitation
 // -----------------------------------------------------------------
 router.post("/:id/decline", requireLogin, async (req, res) => {
   try {
-    const invite = await Invite.findById(req.params.id);
-    if (!invite) {
-      return res.status(404).send("Invite not found");
-    }
+    const action = await declineAction(req.params.id, req.user._id);
+    console.log(`Action ${action._id} DECLINED by ${req.user.name}`);
 
-    // Verify current user is the recipient of the invite
-    if (!invite.receiverId.equals(req.user._id)) {
-      return res.status(403).send("Unauthorized: You cannot decline an invite addressed to someone else.");
-    }
-
-    invite.status = "DECLINED";
-    await invite.save();
-
-    console.log(`Invite ${invite._id} DECLINED by ${req.user.name}`);
-
-    if (req.xhr || req.headers.accept?.includes("application/json")) {
+    if (req.xhr || req.headers.accept?.includes("application/json") || req.is("json")) {
       return res.json({ success: true, status: "DECLINED" });
     }
     res.redirect("/");
   } catch (err) {
     console.error("Error declining invite:", err.message);
-    res.status(500).send("Error declining invite");
+    res.status(400).send(err.message);
+  }
+});
+
+// -----------------------------------------------------------------
+// 5. POST /invites/:id/contact-consent - Opt in to share contact details
+// -----------------------------------------------------------------
+router.post("/:id/contact-consent", requireLogin, async (req, res) => {
+  try {
+    const action = await optInContactSharing(req.params.id, req.user._id);
+    const bothOptedIn = action.senderContactOptIn && action.receiverContactOptIn;
+
+    if (req.xhr || req.headers.accept?.includes("application/json") || req.is("json")) {
+      return res.json({
+        success: true,
+        bothOptedIn,
+        message: bothOptedIn ? "Contacts shared!" : "Opt-in recorded. Waiting for teammate."
+      });
+    }
+    res.redirect("/");
+  } catch (err) {
+    console.error("Error updating contact consent:", err.message);
+    res.status(400).send(err.message);
   }
 });
 

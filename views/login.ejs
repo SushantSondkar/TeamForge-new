@@ -1,37 +1,55 @@
 <% layout("/layouts/boilerplate") -%>
 
-<div class="auth-page" style="max-width: 440px; margin: 50px auto; padding: 20px;">
+<div class="auth-page" style="max-width: 440px; margin: 48px auto; padding: 0 16px;">
     
-    <div class="dashboard-card-new" style="padding: 32px 28px;">
+    <div class="dashboard-card-new" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 36px 30px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);">
         
         <div style="text-align: center; margin-bottom: 24px;">
-            <div style="background-color: #3b82f6; color: white; width: 44px; height: 44px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; font-size: 22px; margin-bottom: 12px;">TF</div>
-            <h2 style="font-size: 24px; color: #1e293b; margin: 0 0 6px 0;">Welcome Back</h2>
-            <p style="color: #64748b; font-size: 14px; margin: 0;">Log in to access your dashboard and active teams.</p>
+            <div style="background: linear-gradient(135deg, #2563eb, #3b82f6); color: white; width: 48px; height: 48px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 20px; margin-bottom: 14px; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);">TF</div>
+            <h2 style="font-size: 22px; font-weight: 700; color: #0f172a; margin: 0 0 6px 0;">Welcome Back</h2>
+            <p style="color: #64748b; font-size: 13.5px; margin: 0;">Sign in to access your teams and opportunities</p>
         </div>
 
-        <% if (error) { %>
-            <div style="background-color: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 20px; text-align: center;">
-                <%= error %>
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div style="background-color: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; padding: 11px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
+                <span>⚠️</span>
+                <span><%= error %></span>
             </div>
         <% } %>
 
-        <form action="/login" method="POST" style="display: flex; flex-direction: column; gap: 18px;">
+        <% if (typeof success !== 'undefined' && success) { %>
+            <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; padding: 11px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
+                <span>✅</span>
+                <span><%= success %></span>
+            </div>
+        <% } %>
+
+        <form action="/login" method="POST" style="display: flex; flex-direction: column; gap: 16px;">
+            <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+            
             <div>
-                <label style="display: block; font-size: 13px; font-weight: 500; color: #475569; margin-bottom: 6px;">College Email</label>
-                <input type="email" name="email" required placeholder="e.g. aaradhya@test.com" class="form-control-new" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px;">
+                <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">College Email</label>
+                <input type="email" name="email" required placeholder="e.g. name@kkwagh.edu.in"
+                       style="width: 100%; box-sizing: border-box; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none; transition: border-color 0.15s ease;">
             </div>
 
             <div>
-                <label style="display: block; font-size: 13px; font-weight: 500; color: #475569; margin-bottom: 6px;">Password</label>
-                <input type="password" name="password" required placeholder="Enter your password" class="form-control-new" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <label style="font-size: 13px; font-weight: 600; color: #334155;">Password</label>
+                    <a href="/forgot-password" style="font-size: 12.5px; color: #2563eb; text-decoration: none; font-weight: 500;">Forgot password?</a>
+                </div>
+                <input type="password" name="password" required placeholder="Enter your password"
+                       style="width: 100%; box-sizing: border-box; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none;">
             </div>
 
-            <button type="submit" class="btn-large-primary" style="margin-top: 10px; width: 100%; justify-content: center; padding: 12px;">Log In</button>
+            <button type="submit" class="btn-large-primary"
+                    style="margin-top: 8px; width: 100%; justify-content: center; padding: 11px; font-size: 14.5px; font-weight: 600; border-radius: 8px; background-color: #2563eb; color: #ffffff; border: none; cursor: pointer;">
+                Log In
+            </button>
         </form>
 
-        <div style="text-align: center; margin-top: 24px; font-size: 14px; color: #64748b;">
-            Don't have an account yet? <a href="/signup" style="color: #4f46e5; text-decoration: none; font-weight: 500;">Sign Up</a>
+        <div style="text-align: center; margin-top: 24px; font-size: 13.5px; color: #64748b;">
+            Don't have an account? <a href="/signup" style="color: #2563eb; text-decoration: none; font-weight: 600;">Sign up</a>
         </div>
 
     </div>

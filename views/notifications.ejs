@@ -1,41 +1,109 @@
 <% layout("/layouts/boilerplate") -%>
 
-<div class="notifications-page" style="padding: 20px 40px; max-width: 900px;">
-    
-    <h1 style="font-size: 24px; margin-bottom: 24px; color: #1e293b;">Notifications</h1>
+<% 
+    const unreadCount = notifications ? notifications.filter(n => !n.read).length : 0;
+%>
 
-    <div class="notif-tabs" style="display: flex; gap: 12px; margin-bottom: 24px;">
-        <button style="background-color: #3b82f6; color: white; border: none; border-radius: 8px; padding: 8px 24px; font-weight: 500; cursor: pointer;">All</button>
-        <button style="background-color: white; color: #64748b; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 24px; font-weight: 500; cursor: pointer;">Unread (3)</button>
+<div class="notifications-page" style="padding: 20px 40px; max-width: 900px; margin: 0 auto;">
+    
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
+        <div>
+            <h1 style="font-size: 24px; margin-bottom: 4px; color: #1e293b;">Notifications</h1>
+            <p style="font-size: 14px; color: #64748b; margin: 0;">Updates on your team invitations, applications, and event deadlines.</p>
+        </div>
+
+        <% if (unreadCount > 0) { %>
+            <form action="/notifications/mark-read" method="POST" style="margin: 0;">
+                <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                <button type="submit" class="btn-small-outline" style="font-size: 13px; padding: 6px 14px;">Mark all as read</button>
+            </form>
+        <% } %>
     </div>
 
-    <div class="notif-list" style="display: flex; flex-direction: column; gap: 16px;">
+    <!-- Filter Tabs -->
+    <div class="notif-tabs" style="display: flex; gap: 10px; margin-bottom: 20px;">
+        <button id="tab-all" onclick="filterNotifs('all')" style="background-color: #4f46e5; color: white; border: none; border-radius: 8px; padding: 8px 20px; font-weight: 500; font-size: 13px; cursor: pointer;">
+            All (<%= notifications ? notifications.length : 0 %>)
+        </button>
+        <button id="tab-unread" onclick="filterNotifs('unread')" style="background-color: white; color: #64748b; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 20px; font-weight: 500; font-size: 13px; cursor: pointer;">
+            Unread (<%= unreadCount %>)
+        </button>
+    </div>
+
+    <div class="notif-list" style="display: flex; flex-direction: column; gap: 12px;">
         <% if (notifications && notifications.length > 0) { %>
             <% notifications.forEach(n => { %>
-                <div class="notif-card" style="background: white; border: 1px solid <%= n.type === 'success' ? '#10b981' : (n.type === 'danger' ? '#ef4444' : '#3b82f6') %>; border-radius: 12px; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between;">
-                    <div style="display: flex; align-items: center; gap: 16px;">
-                        <div style="width: 40px; height: 40px; border-radius: 50%; background: <%= n.type === 'success' ? '#f0fdf4' : (n.type === 'danger' ? '#fef2f2' : '#eff6ff') %>; display: flex; align-items: center; justify-content: center; color: <%= n.type === 'success' ? '#10b981' : (n.type === 'danger' ? '#ef4444' : '#3b82f6') %>;">
+                <div class="notif-card <%= n.read ? 'notif-read' : 'notif-unread' %>" data-read="<%= n.read %>" style="background: <%= n.read ? '#ffffff' : '#f8fafc' %>; border: 1px solid <%= n.read ? '#e2e8f0' : '#c7d2fe' %>; border-radius: 12px; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; transition: all 0.2s ease;">
+                    <div style="display: flex; align-items: center; gap: 16px; flex: 1;">
+                        <div style="width: 42px; height: 42px; border-radius: 50%; background: <%= n.type === 'success' ? '#f0fdf4' : (n.type === 'danger' ? '#fef2f2' : (n.type === 'warning' ? '#fffbeb' : '#eff6ff')) %>; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: <%= n.type === 'success' ? '#10b981' : (n.type === 'danger' ? '#ef4444' : (n.type === 'warning' ? '#f59e0b' : '#4f46e5')) %>;">
                             <% if (n.type === 'success') { %>
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <% } else if (n.type === 'danger') { %>
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                            <% } else if (n.type === 'warning') { %>
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
                             <% } else { %>
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
                             <% } %>
                         </div>
                         <div>
-                            <strong style="display: block; font-size: 15px; color: #1e293b; margin-bottom: 4px;"><%= n.title %></strong>
+                            <strong style="display: block; font-size: 15px; color: #1e293b; margin-bottom: 2px;"><%= n.title %></strong>
                             <span style="font-size: 13px; color: #64748b;"><%= n.subtitle %></span>
                         </div>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 16px;">
-                        <span style="font-size: 13px; color: #64748b;"><%= n.time %></span>
-                        <div style="width: 8px; height: 8px; background-color: <%= n.type === 'success' ? '#10b981' : '#3b82f6' %>; border-radius: 50%;"></div>
+                    <div style="display: flex; align-items: center; gap: 14px; flex-shrink: 0;">
+                        <span style="font-size: 12px; color: #94a3b8;"><%= n.time %></span>
+                        <% if (n.link) { %>
+                            <a href="<%= n.link %>" class="btn-small-outline" style="font-size: 12px; padding: 4px 10px; text-decoration: none;">View</a>
+                        <% } %>
+                        <% if (!n.read) { %>
+                            <div style="width: 8px; height: 8px; background-color: #4f46e5; border-radius: 50%;" title="Unread"></div>
+                        <% } %>
                     </div>
                 </div>
             <% }); %>
         <% } else { %>
-            <div style="text-align: center; padding: 40px; background: white; border-radius: 12px; border: 1px solid #e2e8f0; color: #64748b;">
-                No notifications yet.
+            <div style="text-align: center; padding: 48px 20px; background: white; border-radius: 12px; border: 1px solid #e2e8f0; color: #64748b;">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" style="margin-bottom: 12px;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                <p style="font-size: 15px; margin: 0; font-weight: 500; color: #334155;">No notifications yet</p>
+                <span style="font-size: 13px;">When you receive invites, application reviews, or confirmations, they will appear here.</span>
             </div>
         <% } %>
     </div>
 </div>
+
+<script>
+function filterNotifs(type) {
+    const tabAll = document.getElementById('tab-all');
+    const tabUnread = document.getElementById('tab-unread');
+    const cards = document.querySelectorAll('.notif-card');
+
+    if (type === 'all') {
+        tabAll.style.backgroundColor = '#4f46e5';
+        tabAll.style.color = 'white';
+        tabAll.style.border = 'none';
+
+        tabUnread.style.backgroundColor = 'white';
+        tabUnread.style.color = '#64748b';
+        tabUnread.style.border = '1px solid #e2e8f0';
+
+        cards.forEach(c => c.style.display = 'flex');
+    } else {
+        tabUnread.style.backgroundColor = '#4f46e5';
+        tabUnread.style.color = 'white';
+        tabUnread.style.border = 'none';
+
+        tabAll.style.backgroundColor = 'white';
+        tabAll.style.color = '#64748b';
+        tabAll.style.border = '1px solid #e2e8f0';
+
+        cards.forEach(c => {
+            if (c.getAttribute('data-read') === 'false') {
+                c.style.display = 'flex';
+            } else {
+                c.style.display = 'none';
+            }
+        });
+    }
+}
+</script>

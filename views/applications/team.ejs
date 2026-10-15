@@ -64,43 +64,56 @@
                         <div style="display: flex; align-items: center; gap: 16px;">
                             
                             <!-- Current Status Badge -->
-                            <div>
+                            <div style="text-align: right;">
                                 <% if (app.status === 'ACCEPTED') { %>
                                     <span class="badge badge-success" style="padding: 6px 14px; font-size: 12px;">ACCEPTED</span>
-                                <% } else if (app.status === 'INTERVIEWING') { %>
-                                    <span class="badge badge-info" style="padding: 6px 14px; font-size: 12px;">INTERVIEWING</span>
-                                <% } else if (app.status === 'REJECTED') { %>
-                                    <span class="badge badge-danger" style="padding: 6px 14px; font-size: 12px;">REJECTED</span>
+                                    <div style="font-size: 11px; color: #64748b; margin-top: 4px;">Awaiting candidate confirmation</div>
+                                <% } else if (app.status === 'LOCKED') { %>
+                                    <span class="badge" style="background: #059669; color: #fff; padding: 6px 14px; font-size: 12px;">🔒 LOCKED</span>
+                                <% } else if (app.status === 'ROLE_FILLED') { %>
+                                    <span class="badge" style="background: #64748b; color: #fff; padding: 6px 14px; font-size: 12px;">ROLE FILLED</span>
+                                <% } else if (app.status === 'DECLINED' || app.status === 'REJECTED') { %>
+                                    <span class="badge badge-danger" style="padding: 6px 14px; font-size: 12px;">DECLINED</span>
+                                <% } else if (app.status === 'EXPIRED') { %>
+                                    <span class="badge badge-danger" style="padding: 6px 14px; font-size: 12px;">EXPIRED</span>
                                 <% } else { %>
-                                    <span class="badge badge-warning" style="padding: 6px 14px; font-size: 12px;">UNDER REVIEW</span>
+                                    <span class="badge badge-warning" style="padding: 6px 14px; font-size: 12px;">PENDING</span>
                                 <% } %>
                             </div>
 
-                            <!-- Actions Form Dropdown / Buttons -->
-                            <div class="action-buttons-small" style="display: flex; gap: 8px;">
-                                <% if (app.status !== 'ACCEPTED' && app.status !== 'REJECTED') { %>
-                                    <% if (app.status === 'UNDER_REVIEW') { %>
-                                        <form action="/applications/<%= app._id %>/interview" method="POST" style="margin: 0;">
-                                            <button type="submit" class="btn-small-outline" style="color: #0284c7; border-color: #0284c7;">Interview</button>
-                                        </form>
-                                    <% } %>
+                            <!-- Actions Form Controls -->
+                            <div class="action-buttons-small" style="display: flex; gap: 8px; align-items: center;">
+                                <% if (app.status === 'PENDING') { %>
                                     <form action="/applications/<%= app._id %>/accept" method="POST" style="margin: 0;">
+                                        <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
                                         <button type="submit" class="btn-small-primary" style="background-color: #10b981; border-color: #10b981;">Accept</button>
                                     </form>
                                     <form action="/applications/<%= app._id %>/reject" method="POST" style="margin: 0;">
-                                        <button type="submit" class="btn-small-outline" style="color: #ef4444; border-color: #ef4444;">Reject</button>
+                                        <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                                        <button type="submit" class="btn-small-outline" style="color: #ef4444; border-color: #ef4444;">Decline</button>
                                     </form>
-                                <% } else { %>
-                                    <!-- Re-open / Change Status Form -->
-                                    <form action="/applications/<%= app._id %>/status" method="POST" style="margin: 0; display: flex; gap: 6px; align-items: center;">
-                                        <select name="status" style="padding: 4px 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 12px;">
-                                            <option value="UNDER_REVIEW" <%= app.status === 'UNDER_REVIEW' ? 'selected' : '' %>>Under Review</option>
-                                            <option value="INTERVIEWING" <%= app.status === 'INTERVIEWING' ? 'selected' : '' %>>Interviewing</option>
-                                            <option value="ACCEPTED" <%= app.status === 'ACCEPTED' ? 'selected' : '' %>>Accepted</option>
-                                            <option value="REJECTED" <%= app.status === 'REJECTED' ? 'selected' : '' %>>Rejected</option>
-                                        </select>
-                                        <button type="submit" class="btn-small-outline" style="padding: 4px 8px; font-size: 12px;">Update</button>
-                                    </form>
+                                <% } else if (app.status === 'LOCKED') { %>
+                                    <!-- Contact Sharing for Locked Applicants -->
+                                    <% if (app.bothOptedIn) { %>
+                                        <div style="font-size: 12px; color: #065f46; background: #ecfdf5; padding: 6px 12px; border-radius: 6px; border: 1px solid #bbf7d0; text-align: left;">
+                                            <div><strong>Email:</strong> <%= app.applicantId ? app.applicantId.email : '' %></div>
+                                            <% if (app.applicantId && app.applicantId.github) { %>
+                                                <div><strong>GitHub:</strong> <a href="https://github.com/<%= app.applicantId.github %>" target="_blank" style="color: #0284c7;">github.com/<%= app.applicantId.github %></a></div>
+                                            <% } %>
+                                            <% if (app.applicantId && app.applicantId.linkedin) { %>
+                                                <div><strong>LinkedIn:</strong> <a href="<%= app.applicantId.linkedin %>" target="_blank" style="color: #0284c7;">Profile</a></div>
+                                            <% } %>
+                                        </div>
+                                    <% } else { %>
+                                        <form action="/applications/<%= app._id %>/contact-consent" method="POST" style="margin: 0;">
+                                            <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                                            <% if (app.myContactOptIn) { %>
+                                                <span style="font-size: 12px; color: #64748b;">Waiting for candidate consent</span>
+                                            <% } else { %>
+                                                <button type="submit" class="btn-small-outline" style="font-size: 12px; padding: 4px 10px;">Share My Contact Info</button>
+                                            <% } %>
+                                        </form>
+                                    <% } %>
                                 <% } %>
                             </div>
 

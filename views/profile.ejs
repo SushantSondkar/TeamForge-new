@@ -1,124 +1,425 @@
 <% layout("/layouts/boilerplate") -%>
 
-<div class="profile-page" style="padding: 20px 40px; display: grid; grid-template-columns: 320px 1fr; gap: 30px; align-items: start;">
+<div class="profile-page" style="padding: 24px 36px; max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 340px 1fr; gap: 28px; align-items: start;">
     
-    <div style="grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+    <!-- Page Header -->
+    <div style="grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; flex-wrap: wrap; gap: 12px;">
         <div>
-            <h1 style="font-size: 24px; color: #1e293b; margin: 0 0 4px 0;">My Profile</h1>
-            <p style="color: #64748b; font-size: 14px; margin: 0;">Manage your student credentials, skills, and team visibility.</p>
+            <h1 style="font-size: 24px; font-weight: 700; color: #0f172a; margin: 0 0 4px 0;">Student Profile</h1>
+            <p style="color: #64748b; font-size: 14px; margin: 0;">Verified credentials, technical skills, and hackathon portfolio</p>
         </div>
-        <a href="/profile/edit" class="btn-small-primary" style="text-decoration: none; padding: 10px 20px; font-size: 14px; display: inline-flex; align-items: center; gap: 8px;">
-            ✏️ Edit Profile
-        </a>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <a href="/profile/edit" class="btn-small-primary" style="text-decoration: none; padding: 10px 18px; font-size: 13.5px; display: inline-flex; align-items: center; gap: 8px; border-radius: 8px;">
+                ✏️ Edit Profile
+            </a>
+        </div>
     </div>
 
-    <!-- Left Column: Profile Summary Card -->
-    <div class="profile-summary-card" style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 30px 20px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='12' fill='%23e2e8f0'/%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z' fill='%239ca3af'/%3E%3C/svg%3E" alt="Avatar" style="width: 100px; height: 100px; border-radius: 50%; margin-bottom: 16px; border: 4px solid #f8fafc;">
-        <h2 style="margin: 0 0 8px 0; font-size: 20px; color: #1e293b;"><%= currentUser ? currentUser.name : 'Student' %></h2>
-        <div style="color: #3b82f6; font-size: 14px; font-weight: 600; margin-bottom: 4px;"><%= currentUser && currentUser.role ? currentUser.role : 'Member' %></div>
-        <div style="color: #64748b; font-size: 13px; margin-bottom: 20px;"><%= currentUser ? currentUser.email : '' %></div>
+    <!-- Feedback Alerts -->
+    <% if (typeof query !== 'undefined' || typeof req !== 'undefined') { %>
+        <% 
+            const q = (typeof query !== 'undefined') ? query : (typeof req !== 'undefined' && req.query ? req.query : {});
+        %>
+        <% if (q.verified === 'github') { %>
+            <div style="grid-column: 1 / -1; background: #ecfdf5; border: 1px solid #10b981; color: #065f46; padding: 12px 16px; border-radius: 8px; font-size: 13.5px; display: flex; align-items: center; gap: 8px;">
+                ✓ GitHub ownership confirmed via OAuth! Your public repositories, languages, and commit counts have been synced.
+            </div>
+        <% } else if (q.verified === 'linkedin') { %>
+            <div style="grid-column: 1 / -1; background: #eff6ff; border: 1px solid #3b82f6; color: #1e40af; padding: 12px 16px; border-radius: 8px; font-size: 13.5px; display: flex; align-items: center; gap: 8px;">
+                ✓ LinkedIn identity confirmed via OAuth! Honest trust badge "LinkedIn Linked" is now active.
+            </div>
+        <% } else if (q.synced === 'github') { %>
+            <div style="grid-column: 1 / -1; background: #ecfdf5; border: 1px solid #10b981; color: #065f46; padding: 12px 16px; border-radius: 8px; font-size: 13.5px;">
+                ↻ GitHub activity and statistics refreshed successfully.
+            </div>
+        <% } else if (q.unlinked) { %>
+            <div style="grid-column: 1 / -1; background: #f8fafc; border: 1px solid #cbd5e1; color: #475569; padding: 12px 16px; border-radius: 8px; font-size: 13.5px;">
+                Account unlinked successfully.
+            </div>
+        <% } else if (q.error) { %>
+            <div style="grid-column: 1 / -1; background: #fef2f2; border: 1px solid #ef4444; color: #991b1b; padding: 12px 16px; border-radius: 8px; font-size: 13.5px;">
+                <%= q.error %>
+            </div>
+        <% } %>
+    <% } %>
 
-        <!-- Availability Badge -->
-        <div style="margin-bottom: 24px;">
+    <!-- Left Column: Summary & Metrics Card -->
+    <div class="profile-summary-card" style="background: white; border: 1px solid #e2e8f0; border-radius: 14px; padding: 28px 22px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='12' fill='%23e2e8f0'/%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z' fill='%239ca3af'/%3E%3C/svg%3E" alt="Avatar" style="width: 96px; height: 96px; border-radius: 50%; margin-bottom: 14px; border: 3px solid #f1f5f9;">
+        
+        <h2 style="margin: 0 0 4px 0; font-size: 20px; font-weight: 700; color: #0f172a;"><%= currentUser ? currentUser.name : 'Student' %></h2>
+        <div style="color: #2563eb; font-size: 13.5px; font-weight: 600; margin-bottom: 2px;"><%= currentUser && currentUser.role ? currentUser.role : 'Member' %></div>
+        <div style="color: #64748b; font-size: 12.5px; margin-bottom: 12px;"><%= currentUser ? currentUser.email : '' %></div>
+
+        <!-- Tiered Trust Badges: GitHub Verified · LinkedIn Linked -->
+        <div style="display: flex; justify-content: center; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;">
+            <% if (currentUser && currentUser.isGithubVerified) { %>
+                <span class="badge" title="Ownership confirmed via OAuth; repos & commits pulled via REST API" style="background: #0f172a; color: #38bdf8; border: 1px solid #1e293b; font-size: 11.5px; font-weight: 600; padding: 4px 10px; border-radius: 20px; display: inline-flex; align-items: center; gap: 5px;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+                    GitHub Verified
+                </span>
+            <% } %>
+
+            <% if (currentUser && currentUser.isLinkedinLinked) { %>
+                <span class="badge" title="OAuth Identity Linked (Honest label: experiences are self-reported)" style="background: #0077b5; color: #ffffff; font-size: 11.5px; font-weight: 600; padding: 4px 10px; border-radius: 20px; display: inline-flex; align-items: center; gap: 5px;">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+                    LinkedIn Linked
+                </span>
+            <% } %>
+
+            <% if (currentUser && currentUser.portfolio) { %>
+                <span class="badge" title="Self-reported personal website" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; font-size: 11.5px; font-weight: 500; padding: 4px 10px; border-radius: 20px;">
+                    🌐 Portfolio (Self-Reported)
+                </span>
+            <% } %>
+        </div>
+
+        <!-- Academic Badges -->
+        <div style="display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; margin-bottom: 16px;">
+            <% if (currentUser && currentUser.department) { %>
+                <span style="background: #f1f5f9; color: #475569; font-size: 11.5px; font-weight: 600; padding: 4px 10px; border-radius: 12px;">
+                    🎓 <%= currentUser.department %>
+                </span>
+            <% } %>
+            <% if (currentUser && currentUser.year) { %>
+                <span style="background: #f1f5f9; color: #475569; font-size: 11.5px; font-weight: 600; padding: 4px 10px; border-radius: 12px;">
+                    Year: <%= currentUser.year %>
+                </span>
+            <% } %>
+        </div>
+
+        <!-- Status Badges: Availability & Visibility -->
+        <div style="display: flex; justify-content: center; gap: 8px; margin-bottom: 22px; flex-wrap: wrap;">
             <% 
-                let availText = 'Available';
-                if (typeof currentUser?.availability === 'number') {
-                    availText = currentUser.availability >= 0.5 ? 'Available' : 'Busy';
-                } else if (currentUser && currentUser.availability) {
-                    availText = currentUser.availability;
+                const avail = (currentUser && currentUser.availability !== undefined) ? Number(currentUser.availability) : 1.0;
+                let availLabel = "Free (Open)";
+                let availBg = "#dcfce7";
+                let availColor = "#15803d";
+                if (avail === 0.5) {
+                    availLabel = "Partly Free";
+                    availBg = "#fef3c7";
+                    availColor = "#b45309";
+                } else if (avail === 0) {
+                    availLabel = "Busy";
+                    availBg = "#fee2e2";
+                    availColor = "#b91c1c";
                 }
-                const isAvail = String(availText).toLowerCase().includes('available');
             %>
-            <span class="badge" style="background-color: <%= isAvail ? '#dcfce7' : '#fef3c7' %>; color: <%= isAvail ? '#16a34a' : '#d97706' %>; font-size: 12px; padding: 6px 12px; border-radius: 20px; font-weight: 600;">
-                ● <%= availText %>
+            <span style="background-color: <%= availBg %>; color: <%= availColor %>; font-size: 12px; padding: 5px 12px; border-radius: 20px; font-weight: 600;">
+                ● <%= availLabel %>
             </span>
+
+            <% if (currentUser && currentUser.isProfileHidden) { %>
+                <span style="background-color: #f1f5f9; color: #64748b; font-size: 12px; padding: 5px 12px; border-radius: 20px; font-weight: 600;">
+                    🔒 Hidden from Search
+                </span>
+            <% } else { %>
+                <span style="background-color: #e0f2fe; color: #0369a1; font-size: 12px; padding: 5px 12px; border-radius: 20px; font-weight: 600;">
+                    🌐 Public Profile
+                </span>
+            <% } %>
+        </div>
+
+        <!-- Profile Completeness Progress -->
+        <% const compPct = currentUser && currentUser.completenessPercentage ? currentUser.completenessPercentage : 40; %>
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; margin-bottom: 22px; text-align: left;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase;">Profile Completeness</span>
+                <span style="font-size: 13px; font-weight: 700; color: #2563eb;"><%= compPct %>%</span>
+            </div>
+            <div style="background: #e2e8f0; height: 8px; border-radius: 4px; overflow: hidden;">
+                <div style="background: linear-gradient(90deg, #3b82f6, #10b981); height: 100%; width: <%= compPct %>%;"></div>
+            </div>
+            <div style="font-size: 11px; color: #94a3b8; margin-top: 6px;">Used as a tie-breaker in candidate recommendations</div>
+        </div>
+
+        <!-- Social & External Links -->
+        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 22px; text-align: left;">
+            <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 8px 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                <div style="display: flex; align-items: center; gap: 8px; font-size: 13px;">
+                    <strong>GitHub:</strong>
+                    <% if (currentUser && currentUser.isGithubVerified) { %>
+                        <a href="https://github.com/<%= currentUser.githubUsername || currentUser.github %>" target="_blank" rel="noopener" style="color: #0f172a; text-decoration: none; font-weight: 600;">
+                            @<%= currentUser.githubUsername || currentUser.github %> ↗
+                        </a>
+                    <% } else if (currentUser && currentUser.github) { %>
+                        <span><%= currentUser.github %> (Unverified)</span>
+                    <% } else { %>
+                        <span style="color: #94a3b8;">Not connected</span>
+                    <% } %>
+                </div>
+                <% if (!currentUser || !currentUser.isGithubVerified) { %>
+                    <a href="/auth/github" style="font-size: 11.5px; color: #2563eb; font-weight: 600; text-decoration: none;">Verify ↗</a>
+                <% } %>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 8px 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                <div style="display: flex; align-items: center; gap: 8px; font-size: 13px;">
+                    <strong>LinkedIn:</strong>
+                    <% if (currentUser && currentUser.isLinkedinLinked) { %>
+                        <span style="color: #0077b5; font-weight: 600;">Linked</span>
+                    <% } else if (currentUser && currentUser.linkedin) { %>
+                        <span><%= currentUser.linkedin %></span>
+                    <% } else { %>
+                        <span style="color: #94a3b8;">Not linked</span>
+                    <% } %>
+                </div>
+                <% if (currentUser && !currentUser.isLinkedinLinked) { %>
+                    <a href="/auth/linkedin" style="font-size: 11.5px; color: #0077b5; font-weight: 600; text-decoration: none;">Link ↗</a>
+                <% } else if (currentUser && currentUser.isLinkedinLinked) { %>
+                    <form action="/auth/linkedin/unlink" method="POST" style="margin: 0;">
+                        <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                        <button type="submit" style="background: none; border: none; font-size: 11px; color: #ef4444; cursor: pointer; padding: 0;">Unlink</button>
+                    </form>
+                <% } %>
+            </div>
+
+            <% if (currentUser && currentUser.portfolio) { %>
+                <div style="background: #f8fafc; padding: 8px 12px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 13px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <strong>Portfolio:</strong>
+                        <span style="font-size: 11px; color: #64748b;">Self-Reported</span>
+                    </div>
+                    <a href="<%= currentUser.portfolio.startsWith('http') ? currentUser.portfolio : 'https://' + currentUser.portfolio %>" target="_blank" rel="noopener" style="color: #7c3aed; text-decoration: none; word-break: break-all; font-size: 12.5px; display: block; margin-top: 4px;">
+                        <%= currentUser.portfolio %> ↗
+                    </a>
+                </div>
+            <% } %>
         </div>
 
         <!-- Reputation and Credibility -->
-        <div style="text-align: left; border-top: 1px solid #e2e8f0; padding-top: 20px;">
-            <div style="font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;">REPUTATION & METRICS</div>
+        <div style="text-align: left; border-top: 1px solid #f1f5f9; padding-top: 18px;">
+            <div style="font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;">REPUTATION & HONEST TRUST</div>
             
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                <span style="font-size: 13px; color: #64748b;">Credibility Score</span>
-                <span style="font-size: 15px; font-weight: 700; color: #1e293b;"><%= currentUser && currentUser.credibility ? currentUser.credibility : 80 %>%</span>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <span style="font-size: 13px; color: #64748b;">Credibility Score (Term C)</span>
+                <span style="font-size: 14px; font-weight: 700; color: #0f172a;"><%= currentUser && currentUser.credibility ? Math.round(currentUser.credibility * 100) : (currentUser && currentUser.isGithubVerified ? 70 : 30) %>%</span>
             </div>
 
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                 <span style="font-size: 13px; color: #64748b;">Teammate Rating</span>
-                <span style="font-size: 15px; font-weight: 700; color: #1e293b;">★ <%= (currentUser && currentUser.teammateRating) ? Number(currentUser.teammateRating).toFixed(1) : '4.5' %> / 5.0</span>
+                <span style="font-size: 14px; font-weight: 700; color: #0f172a;">★ <%= (currentUser && currentUser.teammateRating) ? Number(currentUser.teammateRating * 5).toFixed(1) : '4.5' %> / 5.0</span>
             </div>
 
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <span style="font-size: 13px; color: #64748b;">Competition Wins</span>
-                <span style="font-size: 15px; font-weight: 700; color: #10b981;">🏆 <%= currentUser && currentUser.competitionWins ? currentUser.competitionWins : 0 %></span>
+                <span style="font-size: 14px; font-weight: 700; color: #10b981;">🏆 <%= currentUser && currentUser.competitionWins ? currentUser.competitionWins : 0 %></span>
             </div>
         </div>
     </div>
 
-    <!-- Right Column: Details & Information -->
-    <div class="settings-sections" style="display: flex; flex-direction: column; gap: 24px;">
+    <!-- Right Column: GitHub Verified Stats, Bio, Skills, Projects, Hackathons -->
+    <div class="settings-sections" style="display: flex; flex-direction: column; gap: 20px;">
         
-        <!-- Basic Info Section -->
-        <div class="settings-card" style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-            <h3 style="margin: 0 0 20px 0; font-size: 16px; color: #1e293b;">Account Information</h3>
-            
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                <div>
-                    <label style="display: block; font-size: 12px; color: #64748b; margin-bottom: 4px; font-weight: 600; text-transform: uppercase;">Full Name</label>
-                    <div style="font-size: 15px; color: #1e293b; font-weight: 600;"><%= currentUser ? currentUser.name : 'N/A' %></div>
+        <!-- Verified GitHub Activity & Repositories Card -->
+        <div class="settings-card" style="background: white; border: 1px solid #e2e8f0; border-radius: 14px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="width: 40px; height: 40px; border-radius: 10px; background: #0f172a; display: flex; align-items: center; justify-content: center; color: white;">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+                    </div>
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: #0f172a;">GitHub Verified Credentials</h3>
+                            <% if (currentUser && currentUser.isGithubVerified) { %>
+                                <span class="badge" style="background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: 600;">Active</span>
+                            <% } %>
+                        </div>
+                        <span style="font-size: 12.5px; color: #64748b;">Direct ownership verification via OAuth · Repositories, languages, & commit metrics</span>
+                    </div>
                 </div>
-                <div>
-                    <label style="display: block; font-size: 12px; color: #64748b; margin-bottom: 4px; font-weight: 600; text-transform: uppercase;">Email Address</label>
-                    <div style="font-size: 15px; color: #1e293b; font-weight: 500;"><%= currentUser ? currentUser.email : 'N/A' %></div>
-                </div>
-                <div>
-                    <label style="display: block; font-size: 12px; color: #64748b; margin-bottom: 4px; font-weight: 600; text-transform: uppercase;">Primary Role</label>
-                    <div style="font-size: 15px; color: #3b82f6; font-weight: 600;"><%= currentUser && currentUser.role ? currentUser.role : 'Member' %></div>
-                </div>
-                <div>
-                    <label style="display: block; font-size: 12px; color: #64748b; margin-bottom: 4px; font-weight: 600; text-transform: uppercase;">Account Created</label>
-                    <div style="font-size: 14px; color: #64748b;"><%= currentUser && currentUser.createdAt ? new Date(currentUser.createdAt).toLocaleDateString() : 'Active' %></div>
-                </div>
+
+                <% if (currentUser && currentUser.isGithubVerified) { %>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <form action="/auth/github/sync" method="POST" style="margin: 0;">
+                            <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                            <button type="submit" class="btn-small-outline" style="font-size: 12px; padding: 5px 12px; display: inline-flex; align-items: center; gap: 4px;">
+                                ↻ Re-sync Stats
+                            </button>
+                        </form>
+                        <form action="/auth/github/unlink" method="POST" style="margin: 0;">
+                            <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                            <button type="submit" class="btn-small-outline" style="font-size: 12px; padding: 5px 12px; color: #ef4444; border-color: #ef4444;" onclick="return confirm('Disconnect your GitHub account?')">
+                                Unlink
+                            </button>
+                        </form>
+                    </div>
+                <% } else { %>
+                    <a href="/auth/github" class="btn-small-primary" style="background: #0f172a; border-color: #0f172a; text-decoration: none; font-size: 12.5px; padding: 7px 16px; display: inline-flex; align-items: center; gap: 6px;">
+                        Connect with GitHub ↗
+                    </a>
+                <% } %>
             </div>
+
+            <% if (currentUser && currentUser.isGithubVerified) { %>
+                <!-- Stats Overview -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 18px;">
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 14px;">
+                        <span style="display: block; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">Public Repos</span>
+                        <strong style="font-size: 18px; color: #0f172a;"><%= (currentUser.githubData && currentUser.githubData.reposCount) || 0 %></strong>
+                    </div>
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 14px;">
+                        <span style="display: block; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">Total Commits</span>
+                        <strong style="font-size: 18px; color: #0f172a;"><%= (currentUser.githubData && currentUser.githubData.totalCommits) || 0 %>+</strong>
+                    </div>
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 14px;">
+                        <span style="display: block; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">GitHub Handle</span>
+                        <strong style="font-size: 15px; color: #2563eb;">@<%= currentUser.githubUsername || currentUser.github %></strong>
+                    </div>
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 14px;">
+                        <span style="display: block; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">Cache Status</span>
+                        <span style="font-size: 12px; color: #059669; font-weight: 600;">
+                            <%= (currentUser.githubData && currentUser.githubData.cachedAt) ? new Date(currentUser.githubData.cachedAt).toLocaleDateString() : 'Active' %>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Languages Detected -->
+                <% if (currentUser.githubData && currentUser.githubData.languages && currentUser.githubData.languages.length > 0) { %>
+                    <div style="margin-bottom: 18px;">
+                        <span style="font-size: 12px; font-weight: 600; color: #475569; display: block; margin-bottom: 8px;">Languages Identified Across Repositories:</span>
+                        <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                            <% currentUser.githubData.languages.forEach(lang => { %>
+                                <span style="background: #eff6ff; color: #1e40af; border: 1px solid #dbeafe; font-size: 11.5px; padding: 3px 9px; border-radius: 6px; font-weight: 600;">
+                                    <%= lang %>
+                                </span>
+                            <% }); %>
+                        </div>
+                    </div>
+                <% } %>
+
+                <!-- Top Repositories -->
+                <% if (currentUser.githubData && currentUser.githubData.topRepos && currentUser.githubData.topRepos.length > 0) { %>
+                    <div>
+                        <span style="font-size: 12px; font-weight: 600; color: #475569; display: block; margin-bottom: 8px;">Top Active Repositories:</span>
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <% currentUser.githubData.topRepos.forEach(repo => { %>
+                                <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 14px;">
+                                    <div>
+                                        <a href="<%= repo.html_url %>" target="_blank" rel="noopener" style="font-size: 13.5px; font-weight: 600; color: #0284c7; text-decoration: none;">
+                                            <%= repo.name %> ↗
+                                        </a>
+                                        <% if (repo.description) { %>
+                                            <p style="font-size: 12px; color: #64748b; margin: 2px 0 0 0;"><%= repo.description.length > 70 ? repo.description.substring(0, 70) + '...' : repo.description %></p>
+                                        <% } %>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <% if (repo.language) { %>
+                                            <span style="font-size: 11px; color: #475569; background: #e2e8f0; padding: 2px 6px; border-radius: 4px;"><%= repo.language %></span>
+                                        <% } %>
+                                        <span style="font-size: 12px; color: #64748b;">★ <%= repo.stargazers_count %></span>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        </div>
+                    </div>
+                <% } %>
+            <% } else { %>
+                <div style="background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 10px; padding: 20px; text-align: center; color: #64748b;">
+                    <p style="font-size: 14px; margin: 0 0 8px 0; color: #334155;">Confirm ownership with GitHub OAuth to verify your coding credentials.</p>
+                    <span style="font-size: 12.5px;">TeamForge will securely pull your public repositories, languages, and commit counts via the REST API to award the <strong>GitHub Verified</strong> badge and boost your match ranking.</span>
+                </div>
+            <% } %>
+        </div>
+        
+        <!-- Bio Card -->
+        <div class="settings-card" style="background: white; border: 1px solid #e2e8f0; border-radius: 14px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+            <h3 style="margin: 0 0 12px 0; font-size: 16px; font-weight: 700; color: #0f172a;">About Me</h3>
+            <% if (currentUser && currentUser.bio) { %>
+                <p style="color: #334155; font-size: 14px; line-height: 1.6; margin: 0;"><%= currentUser.bio %></p>
+            <% } else { %>
+                <p style="color: #94a3b8; font-size: 14px; margin: 0; font-style: italic;">No bio added yet. Add a short summary to boost your profile completeness.</p>
+            <% } %>
         </div>
 
         <!-- Skills Section -->
-        <div class="settings-card" style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                <h3 style="margin: 0; font-size: 16px; color: #1e293b;">Verified Skills</h3>
+        <div class="settings-card" style="background: white; border: 1px solid #e2e8f0; border-radius: 14px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: #0f172a;">Technical Skills</h3>
                 <span style="font-size: 12px; color: #64748b;"><%= (currentUser && currentUser.skills) ? currentUser.skills.length : 0 %> Skills Added</span>
             </div>
-            <p style="font-size: 13px; color: #64748b; margin-bottom: 16px;">These skills determine your match percentage for project recommendations.</p>
             
-            <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
                 <% if (currentUser && currentUser.skills && currentUser.skills.length > 0) { %>
                     <% currentUser.skills.forEach(skill => { %>
                         <div style="background-color: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; font-size: 13px; padding: 6px 14px; border-radius: 20px; display: inline-flex; align-items: center; gap: 8px;">
                             <strong><%= skill.name %></strong>
-                            <span style="background: #3b82f6; color: white; border-radius: 10px; padding: 1px 6px; font-size: 11px;">Lv <%= skill.level %></span>
+                            <span style="background: #2563eb; color: white; border-radius: 10px; padding: 1px 7px; font-size: 11px; font-weight: bold;">Lv <%= skill.level %></span>
                         </div>
                     <% }); %>
                 <% } else { %>
-                    <p style="color: #94a3b8; font-size: 14px;">No skills added yet. Click Edit Profile to add skills.</p>
+                    <p style="color: #94a3b8; font-size: 14px; margin: 0;">No skills listed. Click Edit Profile to add skills.</p>
                 <% } %>
             </div>
         </div>
 
+        <!-- Projects Section -->
+        <div class="settings-card" style="background: white; border: 1px solid #e2e8f0; border-radius: 14px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+            <h3 style="margin: 0 0 16px 0; font-size: 16px; font-weight: 700; color: #0f172a;">Projects</h3>
+            <% if (currentUser && currentUser.projects && currentUser.projects.length > 0) { %>
+                <div style="display: grid; gap: 14px;">
+                    <% currentUser.projects.forEach(proj => { %>
+                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px;">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 6px;">
+                                <strong style="font-size: 15px; color: #0f172a;"><%= proj.title %></strong>
+                                <% if (proj.link) { %>
+                                    <a href="<%= proj.link.startsWith('http') ? proj.link : 'https://' + proj.link %>" target="_blank" rel="noopener" style="font-size: 12px; color: #2563eb; text-decoration: none;">View Project ↗</a>
+                                <% } %>
+                            </div>
+                            <% if (proj.description) { %>
+                                <p style="font-size: 13px; color: #475569; margin: 0 0 8px 0;"><%= proj.description %></p>
+                            <% } %>
+                            <% if (proj.techStack) { %>
+                                <span style="font-size: 11.5px; color: #64748b; background: #e2e8f0; padding: 3px 8px; border-radius: 6px;">Tech: <%= proj.techStack %></span>
+                            <% } %>
+                        </div>
+                    <% }); %>
+                </div>
+            <% } else { %>
+                <p style="color: #94a3b8; font-size: 14px; margin: 0;">No projects added yet. Showcase your work in Edit Profile.</p>
+            <% } %>
+        </div>
+
+        <!-- Past Hackathons Section -->
+        <div class="settings-card" style="background: white; border: 1px solid #e2e8f0; border-radius: 14px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+            <h3 style="margin: 0 0 16px 0; font-size: 16px; font-weight: 700; color: #0f172a;">Past Hackathons & Competitions</h3>
+            <% if (currentUser && currentUser.pastHackathons && currentUser.pastHackathons.length > 0) { %>
+                <div style="display: grid; gap: 12px;">
+                    <% currentUser.pastHackathons.forEach(hack => { %>
+                        <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 16px;">
+                            <div>
+                                <strong style="font-size: 14.5px; color: #0f172a;"><%= hack.name %></strong>
+                                <div style="font-size: 12.5px; color: #64748b;">
+                                    Role: <%= hack.role || 'Member' %> · Project: <%= hack.projectTitle || 'N/A' %> (<%= hack.year || 'Past' %>)
+                                </div>
+                            </div>
+                            <% if (hack.placement) { %>
+                                <span style="background: #fef3c7; color: #b45309; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 12px;">
+                                    🏅 <%= hack.placement %>
+                                </span>
+                            <% } %>
+                        </div>
+                    <% }); %>
+                </div>
+            <% } else { %>
+                <p style="color: #94a3b8; font-size: 14px; margin: 0;">No past hackathons listed yet.</p>
+            <% } %>
+        </div>
+
         <!-- Locked Events Section -->
-        <div class="settings-card" style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-            <h3 style="margin: 0 0 12px 0; font-size: 16px; color: #1e293b;">Locked Hackathons / Events</h3>
-            <p style="font-size: 13px; color: #64748b; margin-bottom: 16px;">Events you are committed to. You cannot receive competing invites for locked events.</p>
+        <div class="settings-card" style="background: white; border: 1px solid #e2e8f0; border-radius: 14px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+            <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 700; color: #0f172a;">Locked Event Commitments</h3>
+            <p style="font-size: 13px; color: #64748b; margin-bottom: 14px;">Locks are per-event. Confirmed teams lock you only for that specific event.</p>
             
             <div>
                 <% if (currentUser && currentUser.lockedEvents && currentUser.lockedEvents.length > 0) { %>
                     <div style="display: flex; flex-wrap: wrap; gap: 10px;">
                         <% currentUser.lockedEvents.forEach(evt => { %>
-                            <span class="badge badge-urgent" style="font-size: 12px; padding: 6px 12px;">🔒 <%= evt %></span>
+                            <span class="badge badge-urgent" style="font-size: 12px; padding: 6px 12px; border-radius: 8px;">🔒 <%= evt %></span>
                         <% }); %>
                     </div>
                 <% } else { %>
-                    <p style="color: #64748b; font-size: 14px; margin: 0;">No locked events. You are free to join or apply to any event!</p>
+                    <p style="color: #64748b; font-size: 13.5px; margin: 0;">No locked events. You are currently eligible for team invitations and applications across all events.</p>
                 <% } %>
             </div>
         </div>

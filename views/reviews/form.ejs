@@ -1,0 +1,172 @@
+<% layout("/layouts/boilerplate") -%>
+
+<div class="review-form-page" style="padding: 24px 36px; max-width: 800px; margin: 0 auto;">
+    
+    <div style="margin-bottom: 20px;">
+        <a href="/reviews" style="color: #64748b; text-decoration: none; font-size: 13.5px; display: inline-flex; align-items: center; gap: 6px; font-weight: 500;">
+            ← Back to Reviews
+        </a>
+    </div>
+
+    <!-- Header Card -->
+    <div style="background: white; border: 1px solid #e2e8f0; border-radius: 14px; padding: 24px; margin-bottom: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+        <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 12px; margin-bottom: 12px;">
+            <div>
+                <span class="label-text" style="color: #4f46e5; font-size: 11px; font-weight: 700; text-transform: uppercase;">DOUBLE-BLIND PEER REVIEW</span>
+                <h1 style="font-size: 22px; font-weight: 700; color: #0f172a; margin: 4px 0 6px 0;"><%= event ? event.name : 'Hackathon Event' %></h1>
+                <p style="color: #64748b; font-size: 13.5px; margin: 0;">
+                    Project Team: <strong><%= team ? team.projectName : 'Collaborative Team' %></strong> · 
+                    Event Concluded: <strong><%= event && event.date ? new Date(event.date).toLocaleDateString() : '' %></strong>
+                </p>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px; background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px 14px; border-radius: 10px;">
+                <div style="width: 36px; height: 36px; border-radius: 50%; background: #e0e7ff; color: #4338ca; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 15px;">
+                    <%= peer ? peer.name.charAt(0) : 'T' %>
+                </div>
+                <div>
+                    <strong style="display: block; font-size: 14px; color: #0f172a;"><%= peer ? peer.name : 'Teammate' %></strong>
+                    <span style="font-size: 12px; color: #64748b;"><%= peer ? peer.department : '' %> (<%= peer ? peer.year : '' %>)</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Double Blind Confidentiality Notice -->
+        <div style="background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 8px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; margin-top: 14px;">
+            <div style="width: 32px; height: 32px; border-radius: 50%; background: #4f46e5; color: white; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            </div>
+            <div>
+                <strong style="color: #1e1b4b; font-size: 13.5px; display: block;">Double-Blind Integrity Guarantee</strong>
+                <span style="color: #4338ca; font-size: 12.5px;">Your ratings and feedback remain 100% confidential until both you and <%= peer.name %> submit your reviews. Neither party can view the other's review beforehand.</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Review Form -->
+    <div style="background: white; border: 1px solid #e2e8f0; border-radius: 14px; padding: 28px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+        <form action="/events/<%= event._id %>/review/<%= peer._id %>" method="POST" style="display: flex; flex-direction: column; gap: 24px;">
+            <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+
+            <h3 style="margin: 0; font-size: 17px; font-weight: 700; color: #0f172a;">1. Performance Criteria (Rate 1 to 5)</h3>
+
+            <!-- Criteria 1: Technical Contribution -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
+                    <div>
+                        <strong style="font-size: 14.5px; color: #0f172a; display: block;">Technical Contribution</strong>
+                        <span style="font-size: 12.5px; color: #64748b;">Code output, problem-solving, debugging, and feature delivery.</span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 16px; align-items: center; margin-top: 10px;">
+                    <% for (let r = 1; r <= 5; r++) { %>
+                        <label style="display: flex; align-items: center; gap: 6px; font-size: 13.5px; font-weight: 600; color: #334155; cursor: pointer;">
+                            <input type="radio" name="technicalContribution" value="<%= r %>" <%= r === 4 ? 'checked' : '' %> required>
+                            <span><%= r %> ★</span>
+                        </label>
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- Criteria 2: Reliability -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
+                    <div>
+                        <strong style="font-size: 14.5px; color: #0f172a; display: block;">Reliability & Punctuality</strong>
+                        <span style="font-size: 12.5px; color: #64748b;">Meeting project milestones, showing up on time, and delivering agreed commitments.</span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 16px; align-items: center; margin-top: 10px;">
+                    <% for (let r = 1; r <= 5; r++) { %>
+                        <label style="display: flex; align-items: center; gap: 6px; font-size: 13.5px; font-weight: 600; color: #334155; cursor: pointer;">
+                            <input type="radio" name="reliability" value="<%= r %>" <%= r === 4 ? 'checked' : '' %> required>
+                            <span><%= r %> ★</span>
+                        </label>
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- Criteria 3: Communication -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
+                    <div>
+                        <strong style="font-size: 14.5px; color: #0f172a; display: block;">Communication Clarity</strong>
+                        <span style="font-size: 12.5px; color: #64748b;">Proactive updates, constructive feedback, and listening to team members.</span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 16px; align-items: center; margin-top: 10px;">
+                    <% for (let r = 1; r <= 5; r++) { %>
+                        <label style="display: flex; align-items: center; gap: 6px; font-size: 13.5px; font-weight: 600; color: #334155; cursor: pointer;">
+                            <input type="radio" name="communication" value="<%= r %>" <%= r === 5 ? 'checked' : '' %> required>
+                            <span><%= r %> ★</span>
+                        </label>
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- Criteria 4: Teamwork -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
+                    <div>
+                        <strong style="font-size: 14.5px; color: #0f172a; display: block;">Teamwork & Collaboration</strong>
+                        <span style="font-size: 12.5px; color: #64748b;">Composure under pressure, willingness to help peers, and cooperative mindset.</span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 16px; align-items: center; margin-top: 10px;">
+                    <% for (let r = 1; r <= 5; r++) { %>
+                        <label style="display: flex; align-items: center; gap: 6px; font-size: 13.5px; font-weight: 600; color: #334155; cursor: pointer;">
+                            <input type="radio" name="teamwork" value="<%= r %>" <%= r === 4 ? 'checked' : '' %> required>
+                            <span><%= r %> ★</span>
+                        </label>
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- Qualitative Feedback -->
+            <div>
+                <label for="feedback" style="display: block; font-size: 14px; font-weight: 600; color: #334155; margin-bottom: 6px;">
+                    Constructive Feedback & Highlights (Optional)
+                </label>
+                <textarea id="feedback" name="feedback" rows="3" placeholder="Share specific strengths or highlights from this hackathon (revealed to teammate only after both submit)..."
+                          style="width: 100%; box-sizing: border-box; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; font-family: inherit;"></textarea>
+            </div>
+
+            <!-- 2. Peer Skill Verification Section -->
+            <div style="border-top: 1px solid #e2e8f0; padding-top: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
+                    <h3 style="margin: 0; font-size: 17px; font-weight: 700; color: #0f172a;">2. Peer Skill Verification</h3>
+                    <span style="font-size: 12px; color: #059669; font-weight: 600; background: #ecfdf5; padding: 3px 8px; border-radius: 6px;">Unlocks After Event Date</span>
+                </div>
+                
+                <p style="font-size: 13px; color: #64748b; margin: 0 0 16px 0; line-height: 1.5;">
+                    Tick <strong>only the skills you personally observed</strong> <%= peer.name %> demonstrate during the hackathon. 
+                    <span style="color: #334155; font-weight: 600;">Unticked skills stay unverified and are never penalized or marked as "rejected".</span>
+                </p>
+
+                <% if (peer.skills && peer.skills.length > 0) { %>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px;">
+                        <% peer.skills.forEach(skill => { %>
+                            <label style="display: flex; align-items: center; gap: 10px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 14px; cursor: pointer; transition: all 0.2s ease;">
+                                <input type="checkbox" name="observedSkills" value="<%= skill.name %>" style="width: 18px; height: 18px; cursor: pointer;">
+                                <div>
+                                    <strong style="font-size: 14px; color: #1e293b; display: block;"><%= skill.name %></strong>
+                                    <span style="font-size: 11.5px; color: #64748b;">Claimed Level <%= skill.level %> / 5</span>
+                                </div>
+                            </label>
+                        <% }); %>
+                    </div>
+                <% } else { %>
+                    <p style="color: #94a3b8; font-size: 13px; font-style: italic;">This student has not listed technical skills on their profile.</p>
+                <% } %>
+            </div>
+
+            <!-- Submit Button -->
+            <div style="display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid #e2e8f0; padding-top: 20px;">
+                <a href="/reviews" class="btn-small-outline" style="text-decoration: none; padding: 10px 20px; font-size: 14px;">Cancel</a>
+                <button type="submit" class="btn-small-primary" style="background: #4f46e5; border-color: #4f46e5; padding: 10px 24px; font-size: 14px; font-weight: 600;">
+                    Submit Confidential Review
+                </button>
+            </div>
+        </form>
+    </div>
+
+</div>
