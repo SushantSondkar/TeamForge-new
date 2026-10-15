@@ -162,7 +162,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // 3. Received Invites - Accept & Decline inline handling
-    const receivedInvitesCard = document.querySelectorAll('.dashboard-card-new')[3];
+    const receivedInvitesCard = document.getElementById('invites-received-card') || document.querySelectorAll('.dashboard-card-new')[3];
     if (receivedInvitesCard) {
         receivedInvitesCard.addEventListener('click', async (e) => {
             const acceptBtn = e.target.closest('.btn-accept-invite');

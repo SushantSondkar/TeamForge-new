@@ -85,7 +85,7 @@ async function createAction({ senderId, receiverId, teamRequirementId, role, dir
           teamRequirementId,
           actionId: action._id
         },
-        { upsert: true, new: true }
+        { returnDocument: 'after' }
       );
       // Update candidate's unique shortlisters count
       const uniqueCount = await Shortlist.countDocuments({ candidateId: receiverId });
@@ -128,6 +128,11 @@ async function acceptAction(actionId, userId) {
 
   if (!action) {
     throw new Error("Action not found.");
+  }
+
+  // Idempotent: If already ACCEPTED or LOCKED, return action safely
+  if (action.status === "ACCEPTED" || action.status === "LOCKED") {
+    return action;
   }
 
   if (action.status !== "PENDING") {
@@ -189,6 +194,11 @@ async function confirmAction(actionId, userId) {
     throw new Error("Action not found.");
   }
 
+  // Idempotent: If already LOCKED, return immediately without re-decrementing
+  if (action.status === "LOCKED") {
+    return action;
+  }
+
   if (action.status !== "ACCEPTED") {
     throw new Error(`Cannot confirm action with status ${action.status}. It must be in ACCEPTED state.`);
   }
@@ -214,21 +224,38 @@ async function confirmAction(actionId, userId) {
     throw new Error("Candidate is already locked into another team for this event.");
   }
 
-  // Find role and check openings
+  // Safely find and decrement role opening atomically
   let roleFilled = false;
-  if (Array.isArray(team.roles)) {
-    const roleObj = team.roles.find(r => r.title.toLowerCase().trim() === action.role.toLowerCase().trim());
-    if (roleObj) {
-      if (roleObj.openings > 0) {
-        roleObj.openings -= 1;
-        await team.save();
-        console.log(`Decreased openings for role ${roleObj.title} in ${team.projectName}. Remaining: ${roleObj.openings}`);
-        if (roleObj.openings === 0) {
-          roleFilled = true;
-        }
-      } else {
-        throw new Error("This role has no openings remaining.");
-      }
+  const updatedTeam = await TeamRequirement.findOneAndUpdate(
+    {
+      _id: team._id,
+      "roles.title": { $regex: new RegExp(`^${action.role.trim()}$`, "i") },
+      "roles.openings": { $gt: 0 }
+    },
+    {
+      $inc: { "roles.$.openings": -1 }
+    },
+    { returnDocument: 'after' }
+  );
+
+  if (!updatedTeam) {
+    // If atomic findOneAndUpdate failed, check why: was the role already 0 or title variant?
+    const checkRole = (team.roles || []).find(r => r.title.toLowerCase().trim() === action.role.toLowerCase().trim());
+    if (checkRole && checkRole.openings <= 0) {
+      throw new Error("This role has no openings remaining.");
+    }
+    // Fallback: direct decrement if title match was loose
+    if (checkRole && checkRole.openings > 0) {
+      checkRole.openings -= 1;
+      await team.save();
+      if (checkRole.openings === 0) roleFilled = true;
+    } else {
+      throw new Error("This role has no openings remaining.");
+    }
+  } else {
+    const updatedRole = updatedTeam.roles.find(r => r.title.toLowerCase().trim() === action.role.toLowerCase().trim());
+    if (updatedRole && updatedRole.openings === 0) {
+      roleFilled = true;
     }
   }
 

@@ -14,6 +14,7 @@ if (!process.env.SESSION_SECRET) {
   process.exit(1);
 }
 
+const mongoose = require("mongoose");
 const connectDB = require("./models/db");
 const User = require("./models/User");
 
@@ -35,6 +36,12 @@ connectDB();
 app.set("view engine", "ejs");
 app.engine("ejs", ejsMate);
 
+// Trust reverse proxy in production (e.g., NGINX, Cloudflare)
+const isProduction = process.env.NODE_ENV === "production";
+if (isProduction) {
+  app.set("trust proxy", 1);
+}
+
 // Static files
 app.use(express.static("public"));
 
@@ -47,20 +54,20 @@ const cookieSecret = (process.env.COOKIE_SECRET || process.env.SESSION_SECRET ||
 app.use(cookieParser(cookieSecret));
 
 // Persistent Session Store via MongoDB
-const mongoURI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/teamforge";
 app.use(session({
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
   store: MongoStore.create({
-    mongoUrl: mongoURI,
+    clientPromise: connectDB().then(m => m.connection.getClient()),
     collectionName: "sessions",
     ttl: 24 * 60 * 60 // 24 hours
   }),
   cookie: {
     maxAge: 1000 * 60 * 60 * 24, // 24 hours
     httpOnly: true,
-    sameSite: "lax"
+    sameSite: "lax",
+    secure: isProduction
   }
 }));
 

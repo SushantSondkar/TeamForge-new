@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "start": "node app.js",
-    "test": "node tests/matchingEngine.test.js && node tests/phase5StateMachine.test.js && node tests/phase6GithubVerification.test.js && node tests/phase7PostEventReviews.test.js && node tests/phase8Leaderboard.test.js"
+    "test": "node tests/matchingEngine.test.js && node tests/phase5StateMachine.test.js && node tests/phase6GithubVerification.test.js && node tests/phase7PostEventReviews.test.js && node tests/phase8Leaderboard.test.js && node tests/integration.test.js",
+    "test:integration": "node tests/integration.test.js",
+    "setup-admin": "node scripts/setupAdmin.js"
   },
   "keywords": [],
   "author": "",
@@ -22,5 +24,8 @@
     "express-session": "^1.19.0",
     "mongoose": "^9.10.3",
     "tiny-csrf": "^1.1.6"
+  },
+  "devDependencies": {
+    "mongodb-memory-server": "^11.3.0"
   }
 }

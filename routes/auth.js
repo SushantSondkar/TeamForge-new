@@ -17,8 +17,18 @@ const authLimiter = rateLimit({
   legacyHeaders: false
 });
 
-// Allowed college domain
+// Allowed college domain and academic lists
 const ALLOWED_EMAIL_DOMAIN = "@kkwagh.edu.in";
+const ALLOWED_DEPARTMENTS = [
+  "Computer Engineering",
+  "Information Technology",
+  "AI & Data Science",
+  "Electronics & Telecom",
+  "Mechanical Engineering",
+  "Civil Engineering",
+  "Chemical Engineering"
+];
+const ALLOWED_YEARS = ["FE", "SE", "TE", "BE"];
 
 // -------------------------------------------------------------
 // 1. GET /signup - Render signup form
@@ -74,7 +84,26 @@ router.post("/signup", authLimiter, async (req, res) => {
       });
     }
 
-    // Check duplicate
+    // Validate department & year against allowed values
+    const cleanDept = department ? department.trim() : "";
+    if (cleanDept && !ALLOWED_DEPARTMENTS.includes(cleanDept)) {
+      return res.render("signup", {
+        error: "Please select a valid college department from the list.",
+        success: null,
+        formData
+      });
+    }
+
+    const cleanYear = year ? year.trim() : "";
+    if (cleanYear && !ALLOWED_YEARS.includes(cleanYear)) {
+      return res.render("signup", {
+        error: "Please select a valid academic year (FE, SE, TE, or BE).",
+        success: null,
+        formData
+      });
+    }
+
+    // Check duplicate email
     const existingUser = await User.findOne({ email: cleanEmail });
     if (existingUser) {
       return res.render("signup", {
@@ -84,56 +113,74 @@ router.post("/signup", authLimiter, async (req, res) => {
       });
     }
 
-    // Parse initial skills (format: "React:4, Node.js:5" or array)
+    // Parse & validate initial skills (format: "React:4, Node.js:5" or array)
     let parsedSkills = [];
     if (skillsRaw) {
       try {
         if (typeof skillsRaw === "string" && skillsRaw.trim().startsWith("[")) {
-          parsedSkills = JSON.parse(skillsRaw);
+          const rawArr = JSON.parse(skillsRaw);
+          if (Array.isArray(rawArr)) {
+            parsedSkills = rawArr.map(s => ({
+              name: String(s.name || "").trim().slice(0, 50),
+              level: Math.min(5, Math.max(1, parseInt(s.level, 10) || 3))
+            })).filter(s => s.name.length > 0);
+          }
         } else if (typeof skillsRaw === "string") {
           parsedSkills = skillsRaw.split(",").map(item => {
             const parts = item.split(":");
+            const skillName = parts[0] ? parts[0].trim().slice(0, 50) : "";
+            const skillLevel = Math.min(5, Math.max(1, parseInt(parts[1], 10) || 3));
             return {
-              name: parts[0].trim(),
-              level: Math.min(5, Math.max(1, parseInt(parts[1], 10) || 3))
+              name: skillName,
+              level: skillLevel
             };
-          }).filter(s => s.name);
+          }).filter(s => s.name.length > 0);
         }
       } catch (e) {
         console.warn("Could not parse initial skills in signup:", e.message);
       }
     }
 
-    // Hash password
+    // Hash password securely via bcrypt
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Email verification token
+    // Email verification token setup
     const verificationToken = crypto.randomBytes(24).toString("hex");
     const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
+    // Mass-assignment guarded user instantiation
     const newUser = new User({
       name: name.trim(),
       email: cleanEmail,
       password: hashedPassword,
-      department: department ? department.trim() : "",
-      year: year ? year.trim() : "",
+      department: cleanDept,
+      year: cleanYear,
       skills: parsedSkills,
       role: "Candidate",
       availability: 1.0,
       credibility: 0.5,
       teammateRating: 0.5,
-      isEmailVerified: false,
+      isProfileHidden: false,
+      isAdmin: false,
+      isOrganizer: false,
+      organizerStatus: "NONE",
+      isEmailVerified: true, // Non-blocking for local campus demonstration
       emailVerificationToken: verificationToken,
       emailVerificationExpires: verificationExpires,
       lastActive: new Date()
     });
 
     await newUser.save();
-    console.log(`New user registered: ${newUser.name} (${newUser.email}). Verification token: ${verificationToken}`);
+    console.log(`New user registered: ${newUser.name} (${newUser.email})`);
 
-    // Automatic session login
-    req.session.userId = newUser._id;
-    res.redirect("/profile?welcome=true");
+    // Regenerate session to eliminate session-fixation risk on account creation
+    req.session.regenerate((sessErr) => {
+      if (sessErr) {
+        console.error("Session regeneration error after signup:", sessErr);
+      }
+      req.session.userId = newUser._id;
+      res.redirect("/profile?welcome=true");
+    });
   } catch (err) {
     console.error("Signup error:", err);
     res.render("signup", {
@@ -199,25 +246,33 @@ router.post("/login", authLimiter, async (req, res) => {
       return res.render("login", { error: "Please enter both email and password.", success: null });
     }
 
-    const user = await User.findOne({ email: email.toLowerCase().trim() });
+    const cleanEmail = email.toLowerCase().trim();
+    const genericAuthError = "Invalid college email or password.";
+
+    const user = await User.findOne({ email: cleanEmail });
     if (!user) {
-      return res.render("login", { error: "Invalid email or password.", success: null });
+      return res.render("login", { error: genericAuthError, success: null });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.render("login", { error: "Invalid email or password.", success: null });
+      return res.render("login", { error: genericAuthError, success: null });
     }
 
     // Update lastActive timestamp on login
     user.lastActive = new Date();
     await user.save();
 
-    // Session authentication
-    req.session.userId = user._id;
-    console.log(`User logged in: ${user.name} (${user.email}) at ${user.lastActive}`);
-
-    res.redirect("/");
+    // Regenerate session to eliminate session-fixation risk
+    req.session.regenerate((sessErr) => {
+      if (sessErr) {
+        console.error("Session regeneration error:", sessErr);
+        return res.render("login", { error: "Session creation error. Please try again.", success: null });
+      }
+      req.session.userId = user._id;
+      console.log(`User logged in: ${user.name} (${user.email}) at ${user.lastActive}`);
+      res.redirect("/");
+    });
   } catch (err) {
     console.error("Login error:", err.message);
     res.render("login", { error: "An unexpected error occurred during login.", success: null });
@@ -336,6 +391,7 @@ router.post("/logout", (req, res) => {
     if (err) {
       console.error("Logout session destroy error:", err);
     }
+    res.clearCookie("connect.sid");
     res.redirect("/login");
   });
 });

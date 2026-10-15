@@ -18,8 +18,7 @@
             </div>
             <div class="stat-col">
                 <span class="stat-label">Total Members</span>
-                <!-- Temporary count until full user/member schema is connected -->
-                <span class="stat-value">1 / <%= latestTeam.teamSize %> Active</span>
+                <span class="stat-value"><%= typeof activeMemberCount !== 'undefined' ? activeMemberCount : 1 %> / <%= latestTeam.teamSize %> Active</span>
             </div>
             <div class="stat-col">
                 <span class="stat-label">Project Deadline</span>
@@ -364,43 +363,40 @@
         <div class="dashboard-card-new">
             <h3 class="card-title-new">Event Deadlines</h3>
             <div class="list-container">
-                
-                <div class="list-item">
-                    <div class="item-main">
-                        <div class="item-details">
-                            <strong>PCCOE Hackathon Phase 1 Submission</strong>
-                            <div class="item-meta-row">
-                                <span class="text-gray">2 Hours Remaining</span>
+                <% if (typeof upcomingDeadlines !== 'undefined' && upcomingDeadlines && upcomingDeadlines.length > 0) { %>
+                    <% upcomingDeadlines.forEach(evt => { %>
+                        <%
+                            const now = new Date();
+                            const dl = new Date(evt.deadline);
+                            const diffDays = Math.ceil((dl - now) / (1000 * 60 * 60 * 24));
+                            let badgeClass = "badge-success-light";
+                            let badgeText = "OPEN";
+                            let timeText = diffDays > 0 ? (diffDays + (diffDays === 1 ? " Day Left" : " Days Left")) : "Deadline Today";
+                            if (diffDays <= 1) {
+                                badgeClass = "badge-urgent";
+                                badgeText = "CLOSING SOON";
+                            } else if (diffDays <= 3) {
+                                badgeClass = "badge-warning";
+                                badgeText = "CLOSING SOON";
+                            }
+                        %>
+                        <div class="list-item">
+                            <div class="item-main">
+                                <div class="item-details">
+                                    <strong><a href="/events/<%= evt._id %>" style="color: inherit; text-decoration: none;"><%= evt.name %></a></strong>
+                                    <div class="item-meta-row">
+                                        <span class="text-gray"><%= timeText %> · <%= dl.toLocaleDateString() %></span>
+                                    </div>
+                                </div>
                             </div>
+                            <span class="badge <%= badgeClass %>"><%= badgeText %></span>
                         </div>
+                    <% }); %>
+                <% } else { %>
+                    <div class="list-item">
+                        <span class="text-gray" style="padding: 10px 0;">No upcoming event deadlines.</span>
                     </div>
-                    <span class="badge badge-urgent">URGENT</span>
-                </div>
-
-                <div class="list-item">
-                    <div class="item-main">
-                        <div class="item-details">
-                            <strong>Aithon Hackathon (Sangamner)</strong>
-                            <div class="item-meta-row">
-                                <span class="text-gray">2 Days Left</span>
-                            </div>
-                        </div>
-                    </div>
-                    <span class="badge badge-warning">CLOSING SOON</span>
-                </div>
-
-                <div class="list-item">
-                    <div class="item-main">
-                        <div class="item-details">
-                            <strong>Open Source Contribution Day</strong>
-                            <div class="item-meta-row">
-                                <span class="text-gray">1 Week Left</span>
-                            </div>
-                        </div>
-                    </div>
-                    <span class="badge badge-success-light">OPEN</span>
-                </div>
-
+                <% } %>
             </div>
         </div>
 

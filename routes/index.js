@@ -11,6 +11,17 @@ const { getRecommendedCandidates, getRecommendedOpportunities } = require('../ut
 const { checkTimeoutsAndExpiries } = require('../utils/actionStateMachine');
 const requireLogin = require('../middleware/auth');
 
+const ALLOWED_DEPARTMENTS = [
+  "Computer Engineering",
+  "Information Technology",
+  "AI & Data Science",
+  "Electronics & Telecom",
+  "Mechanical Engineering",
+  "Civil Engineering",
+  "Chemical Engineering"
+];
+const ALLOWED_YEARS = ["FE", "SE", "TE", "BE"];
+
 // -------------------------------------------------------------
 // 1. GET / - Dashboard (Protected)
 // -------------------------------------------------------------
@@ -93,8 +104,22 @@ router.get("/", requireLogin, async (req, res) => {
     // 9. Promoted Hackathons & Competitions
     const promotedEvents = await Event.find({ isPromoted: true }).sort({ date: 1 }).limit(3);
 
+    // 10. Real upcoming deadlines from database
+    const upcomingDeadlines = await Event.find().sort({ deadline: 1 }).limit(4);
+
+    // 11. Real active member count (1 creator + locked candidates)
+    let activeMemberCount = 1;
+    if (latestTeam) {
+      const lockedCount = await TeamRequestAction.countDocuments({
+        teamRequirementId: latestTeam._id,
+        status: "LOCKED"
+      });
+      activeMemberCount = 1 + lockedCount;
+    }
+
     res.render("home", {
       latestTeam,
+      activeMemberCount,
       recommendedCandidates,
       recommendedOpportunities,
       myApplications,
@@ -103,12 +128,14 @@ router.get("/", requireLogin, async (req, res) => {
       receivedInvites,
       awaitingConfirmation,
       promotedEvents,
+      upcomingDeadlines,
       currentUser
     });
   } catch (error) {
     console.error("Error fetching dashboard data:", error.message);
     res.render("home", {
       latestTeam: null,
+      activeMemberCount: 1,
       recommendedCandidates: [],
       recommendedOpportunities: [],
       myApplications: [],
@@ -117,6 +144,7 @@ router.get("/", requireLogin, async (req, res) => {
       receivedInvites: [],
       awaitingConfirmation: [],
       promotedEvents: [],
+      upcomingDeadlines: [],
       currentUser: req.user || null
     });
   }
@@ -225,8 +253,18 @@ router.post("/profile/edit", requireLogin, async (req, res) => {
 
     if (name && name.trim()) user.name = name.trim();
     if (role && role.trim()) user.role = role.trim();
-    if (department !== undefined) user.department = department.trim();
-    if (year !== undefined) user.year = year.trim();
+    if (department !== undefined) {
+      const cleanDept = department.trim();
+      if (!cleanDept || ALLOWED_DEPARTMENTS.includes(cleanDept)) {
+        user.department = cleanDept;
+      }
+    }
+    if (year !== undefined) {
+      const cleanYear = year.trim();
+      if (!cleanYear || ALLOWED_YEARS.includes(cleanYear)) {
+        user.year = cleanYear;
+      }
+    }
     if (bio !== undefined) user.bio = bio.trim();
     if (github !== undefined) user.github = github.trim();
     if (linkedin !== undefined) user.linkedin = linkedin.trim();
