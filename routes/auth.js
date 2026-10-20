@@ -35,7 +35,7 @@ const ALLOWED_YEARS = ["FE", "SE", "TE", "BE"];
 // -------------------------------------------------------------
 router.get("/signup", (req, res) => {
   if (req.session && req.session.userId) {
-    return res.redirect("/");
+    return res.redirect("/dashboard");
   }
   res.render("signup", { error: null, success: null, formData: {} });
 });
@@ -230,7 +230,7 @@ router.get("/verify-email", async (req, res) => {
 // -------------------------------------------------------------
 router.get("/login", (req, res) => {
   if (req.session && req.session.userId) {
-    return res.redirect("/");
+    return res.redirect("/dashboard");
   }
   res.render("login", { error: null, success: null });
 });
@@ -271,7 +271,7 @@ router.post("/login", authLimiter, async (req, res) => {
       }
       req.session.userId = user._id;
       console.log(`User logged in: ${user.name} (${user.email}) at ${user.lastActive}`);
-      res.redirect("/");
+      res.redirect("/dashboard");
     });
   } catch (err) {
     console.error("Login error:", err.message);

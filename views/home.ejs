@@ -18,7 +18,7 @@
             </div>
             <div class="stat-col">
                 <span class="stat-label">Total Members</span>
-                <span class="stat-value"><%= typeof activeMemberCount !== 'undefined' ? activeMemberCount : 1 %> / <%= latestTeam.teamSize %> Active</span>
+                <span class="stat-value"><%= typeof activeMemberCount !== 'undefined' ? activeMemberCount : (1 + (latestTeam.existingMembers ? latestTeam.existingMembers.length : 0)) %> / <%= latestTeam.teamSize %> Active</span>
             </div>
             <div class="stat-col">
                 <span class="stat-label">Project Deadline</span>

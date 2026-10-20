@@ -23,9 +23,9 @@ const ALLOWED_DEPARTMENTS = [
 const ALLOWED_YEARS = ["FE", "SE", "TE", "BE"];
 
 // -------------------------------------------------------------
-// 1. GET / - Dashboard (Protected)
+// Dashboard Rendering Helper Function
 // -------------------------------------------------------------
-router.get("/", requireLogin, async (req, res) => {
+async function renderDashboard(req, res) {
   try {
     const currentUser = req.user;
 
@@ -148,6 +148,35 @@ router.get("/", requireLogin, async (req, res) => {
       currentUser: req.user || null
     });
   }
+}
+
+// -------------------------------------------------------------
+// 1. GET / - Public Landing Page
+// -------------------------------------------------------------
+router.get("/", (req, res) => {
+  return res.render("landing", {
+    currentUser: req.user || null,
+    hideSidebar: true,
+    pageTitle: "Find Your People. Build Something Great."
+  });
+});
+
+// -------------------------------------------------------------
+// 1b. GET /dashboard - Explicit Dashboard Route (Protected)
+// -------------------------------------------------------------
+router.get("/dashboard", requireLogin, async (req, res) => {
+  return renderDashboard(req, res);
+});
+
+// -------------------------------------------------------------
+// 1c. GET /landing - Explicit Public Landing Page Route
+// -------------------------------------------------------------
+router.get("/landing", (req, res) => {
+  return res.render("landing", {
+    currentUser: req.user || null,
+    hideSidebar: true,
+    pageTitle: "Find Your People. Build Something Great."
+  });
 });
 
 // -------------------------------------------------------------

@@ -60,6 +60,24 @@ http://localhost:8080
 
 ## 3. Step-by-Step Live Demonstration Walkthrough
 
+### Step 0: The Public Landing Page (First Impression for Professor)
+1. Open a clean browser or private window and navigate to:
+   ```
+   http://localhost:8080
+   ```
+2. **Point out to the Professor**:
+   * **Hero Section**: Clean value proposition (*"Find Your People. Build Something Great."*) with active institutional branding for **K.K. Wagh Institute of Engineering Education & Research**.
+   * **Live Match Engine Preview**: The interactive card on the right demonstrating TeamForge's transparent 5-term mathematical formula:
+     $$\text{MatchScore} = \text{Term S (40)} + \text{Term C (25)} + \text{Term R (20)} + \text{Term A (10)} + \text{Term T (5)}$$
+   * **The 4 Core Values**: Institutional community, skills-based discovery, transparent explainability, and mutual locks.
+   * **Problem vs Solution Matrix**: 3 clear cards illustrating real college pain points (WhatsApp chaos, scattered event posters, ghosting/double-booking) and how TeamForge addresses each.
+   * **4-Step User Journey**: Create profile → Discover teams → Two-way invites → Lock & double-blind review.
+   * **Platform Feature Matrix**: Responsive grid highlighting all 9 engineering modules.
+   * **Privacy & Ethical Safeguards**: Institutional `@kkwagh.edu.in` enforcement, contact number protection until mutual lock, and profile visibility toggles.
+3. Click the primary **"Get Started Free"** or **"Sign Up"** button in the header to begin the live demo.
+
+---
+
 ### Step 1: Register Student B (Candidate Account)
 1. In your browser (or Incognito Window 1), go to `http://localhost:8080/signup`.
 2. Fill in:

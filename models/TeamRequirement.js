@@ -34,7 +34,7 @@ const teamRequirementSchema = new mongoose.Schema({
   eventId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Event",
-    required: [true, 'Event is required']
+    required: false
   },
   theme: {
     type: String,
@@ -66,7 +66,11 @@ const teamRequirementSchema = new mongoose.Schema({
     type: [roleSchema],
     required: [true, 'At least one role is required'],
     validate: [v => v.length > 0, 'Roles cannot be empty']
-  }
+  },
+  existingMembers: [{
+    name: { type: String, required: true },
+    role: { type: String, default: "Team Member" }
+  }]
 }, {
   timestamps: true
 });

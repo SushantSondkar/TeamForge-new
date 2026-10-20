@@ -57,7 +57,8 @@ router.post("/new/define-team", requireLogin, async (req, res) => {
     deliverables: req.body.deliverables || '',
     teamSize: req.body.teamSize || 4,
     deadline: req.body.deadline || (event && event.deadline ? event.deadline.toISOString().slice(0, 10) : ''),
-    rolesJson: req.body.rolesJson || ''
+    rolesJson: req.body.rolesJson || '',
+    existingMembersJson: req.body.existingMembersJson || '[]'
   };
   res.render("team-requirement/define-team", { teamData });
 });
@@ -103,12 +104,23 @@ router.post("/new/review", requireLogin, async (req, res) => {
     event = await Event.findById(req.body.eventId);
   }
 
+  let parsedExistingMembers = [];
+  if (req.body.existingMembersJson) {
+    try {
+      parsedExistingMembers = typeof req.body.existingMembersJson === 'string' ? JSON.parse(req.body.existingMembersJson) : req.body.existingMembersJson;
+      if (!Array.isArray(parsedExistingMembers)) parsedExistingMembers = [];
+    } catch (err) {
+      console.warn("Failed to parse existingMembersJson in review:", err.message);
+    }
+  }
+
   res.render("team-requirement/review", {
     teamData: {
       ...req.body,
       eventName: event ? event.name : ''
     },
-    roles: parsedRoles
+    roles: parsedRoles,
+    existingMembers: parsedExistingMembers
   });
 });
 
@@ -120,21 +132,30 @@ router.post("/submit", requireLogin, async (req, res, next) => {
       parsedRoles = typeof req.body.rolesJson === 'string' ? JSON.parse(req.body.rolesJson) : req.body.rolesJson;
     }
 
+    let parsedExistingMembers = [];
+    if (req.body.existingMembersJson) {
+      try {
+        parsedExistingMembers = typeof req.body.existingMembersJson === 'string' ? JSON.parse(req.body.existingMembersJson) : req.body.existingMembersJson;
+        if (!Array.isArray(parsedExistingMembers)) parsedExistingMembers = [];
+      } catch (err) {
+        console.warn("Failed to parse existingMembersJson in submit:", err.message);
+      }
+    }
+
     const { eventId, theme, projectName, projectRequirement, deliverables, teamSize, deadline } = req.body;
 
-    // Validate event
-    if (!eventId) {
-      return res.status(400).send("Validation Error: Team requirement must belong to a valid Event.");
-    }
+    // Optional event validation
+    let event = null;
+    if (eventId) {
+      event = await Event.findById(eventId);
+      if (!event) {
+        return res.status(400).send("Validation Error: Selected event does not exist.");
+      }
 
-    const event = await Event.findById(eventId);
-    if (!event) {
-      return res.status(400).send("Validation Error: Selected event does not exist.");
-    }
-
-    // Check if user is already locked into this event
-    if (req.user.lockedEvents && req.user.lockedEvents.includes(event._id.toString())) {
-      return res.status(400).send("Validation Error: You are already committed to another team for this event.");
+      // Check if user is already locked into this event
+      if (req.user.lockedEvents && req.user.lockedEvents.includes(event._id.toString())) {
+        return res.status(400).send("Validation Error: You are already committed to another team for this event.");
+      }
     }
 
     // Validate main required fields
@@ -149,26 +170,27 @@ router.post("/submit", requireLogin, async (req, res, next) => {
 
     const requirementData = {
       createdBy: req.user._id,
-      eventId: event._id,
+      eventId: event ? event._id : null,
       theme,
       projectName,
       projectRequirement,
       deliverables,
       teamSize: Number(teamSize),
       deadline: new Date(deadline),
-      roles: parsedRoles
+      roles: parsedRoles,
+      existingMembers: parsedExistingMembers
     };
 
     const teamRequirement = new TeamRequirement(requirementData);
     await teamRequirement.save();
 
-    // Lock creator into this event
-    if (!req.user.lockedEvents.includes(event._id.toString())) {
+    // Lock creator into this event if attached to an event
+    if (event && !req.user.lockedEvents.includes(event._id.toString())) {
       req.user.lockedEvents.push(event._id.toString());
       await req.user.save();
     }
 
-    console.log("Team requirement created successfully:", teamRequirement._id, "for event:", event.name, "by:", req.user.email);
+    console.log("Team requirement created successfully:", teamRequirement._id, event ? ("for event: " + event.name) : "without specific event", "by:", req.user.email);
     res.redirect("/?teamId=" + teamRequirement._id);
   } catch (err) {
     console.error("Database or Validation Error:", err.message);

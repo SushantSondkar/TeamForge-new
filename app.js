@@ -79,9 +79,33 @@ app.use((req, res, next) => {
   next();
 });
 
+// Extend CSRF cookie lifetime to match session (24h) with sameSite: lax (Safari friendly)
+app.use((req, res, next) => {
+  const origCookie = res.cookie.bind(res);
+  res.cookie = function (name, val, options) {
+    if (name === "csrfToken" && val !== null) {
+      options = Object.assign({}, options, {
+        maxAge: 24 * 60 * 60 * 1000, // 24 hours (prevents 5-min timeout)
+        sameSite: "lax",
+        secure: isProduction
+      });
+    }
+    return origCookie(name, val, options);
+  };
+  next();
+});
+
 // CSRF Protection via tiny-csrf (32-character secret)
+// Intermediate wizard steps are excluded from strict token verification so back/forward navigation never drops,
+// while final actions (/team-requirement/submit, /login, /signup, etc.) remain strictly validated.
 const csrfSecret = (process.env.CSRF_SECRET || process.env.SESSION_SECRET).slice(0, 32).padEnd(32, "0");
-app.use(csurf(csrfSecret, ["POST", "PUT", "PATCH", "DELETE"]));
+const wizardIntermediateUrls = [
+  "/team-requirement/new",
+  "/team-requirement/new/define-team",
+  "/team-requirement/new/open-roles",
+  "/team-requirement/new/review"
+];
+app.use(csurf(csrfSecret, ["POST", "PUT", "PATCH", "DELETE"], wizardIntermediateUrls));
 
 // Global Current User & CSRF Token Middleware
 app.use(async (req, res, next) => {
@@ -150,11 +174,12 @@ app.use((req, res, next) => {
 // Global Error Handling Middleware
 app.use((err, req, res, next) => {
   if (err.message && err.message.includes("CSRF token")) {
-    console.error("CSRF Validation Error:", err.message);
+    console.warn("CSRF Warning:", err.message);
     if (req.xhr || req.headers.accept?.includes("application/json")) {
-      return res.status(403).json({ error: "Invalid or missing CSRF token. Please refresh and try again." });
+      return res.status(403).json({ error: "Session token expired. Please refresh and try again." });
     }
-    return res.status(403).send("CSRF verification failed. Please go back, refresh the page, and submit again.");
+    const redirectUrl = req.headers.referer || "/";
+    return res.redirect(redirectUrl);
   }
 
   console.error("Global Error Handler caught:", err);

@@ -41,6 +41,7 @@
             <input type="hidden" name="eventId" value="<%= teamData.eventId || '' %>">
             <input type="hidden" name="theme" value="<%= teamData.theme || 'hackathon' %>">
             <input type="hidden" name="rolesJson" value="<%= teamData.rolesJson || '' %>">
+            <input type="hidden" name="existingMembersJson" id="existingMembersJson" value="<%= (typeof teamData !== 'undefined' && teamData.existingMembersJson) ? teamData.existingMembersJson : '[]' %>">
 
             <div class="form-group-new">
                 <label>Project Name</label>
@@ -68,17 +69,42 @@
             </div>
 
             <div class="form-group-new">
-                <label>Current Members</label>
-                <div class="member-list-new">
-                    <div class="member-item-new">
-                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='12' fill='%23e2e8f0'/%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z' fill='%239ca3af'/%3E%3C/svg%3E" alt="Sushant Sondkar" class="member-avatar-new">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <label style="margin: 0;">Current Members (<span id="member-count-label">1</span>)</label>
+                    <span style="font-size: 12px; color: #64748b;">Confirmed team roster</span>
+                </div>
+
+                <div class="member-list-new" id="member-list-container">
+                    <!-- Team Creator (Always Lead Coordinator) -->
+                    <div class="member-item-new" style="background-color: #f8fafc; border-color: #cbd5e1;">
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='12' fill='%23e2e8f0'/%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z' fill='%239ca3af'/%3E%3C/svg%3E" alt="Avatar" class="member-avatar-new">
                         <div class="member-info-new">
-                            <strong>Sushant Sondkar (You)</strong>
-                            <span class="member-role-badge">Lead Coordinator</span>
+                            <strong style="color: #0f172a;"><%= currentUser ? currentUser.name : 'You' %> (You)</strong>
+                            <span class="member-role-badge" style="background: #e0f2fe; color: #0369a1; font-weight: 600; padding: 3px 10px; border-radius: 12px; font-size: 11.5px;">Lead Coordinator</span>
                         </div>
                     </div>
+
+                    <!-- Dynamic container for additional existing teammates -->
+                    <div id="additional-members-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
                 </div>
-                <p style="font-size: 12px; color: #64748b; margin-top: 6px;">You will be assigned as the team creator and initial active member.</p>
+
+                <!-- Add existing teammate input row -->
+                <div style="background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 14px; margin-top: 10px;">
+                    <span style="display: block; font-size: 12.5px; font-weight: 700; color: #334155; margin-bottom: 8px;">
+                        + Add a Teammate Already in This Team
+                    </span>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <input type="text" id="new-member-name" placeholder="Teammate Full Name (e.g. Sneha Patel)" class="form-control-new" style="flex: 1.5; min-width: 180px; margin-bottom: 0;">
+                        <input type="text" id="new-member-role" placeholder="Role (e.g. Frontend Lead, ML Dev)" class="form-control-new" style="flex: 1; min-width: 140px; margin-bottom: 0;">
+                        <button type="button" id="btn-add-existing-member" class="btn-small-primary" style="padding: 9px 18px; font-size: 13px; border-radius: 6px; white-space: nowrap; cursor: pointer;">
+                            Add Member
+                        </button>
+                    </div>
+                </div>
+
+                <p style="font-size: 12px; color: #64748b; margin-top: 8px;">
+                    Add any classmates or peers who have already agreed to join your team. In Step 3, you'll specify the open roles you still need to recruit for.
+                </p>
             </div>
 
             <% 

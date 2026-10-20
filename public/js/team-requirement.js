@@ -254,4 +254,105 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initial check of role numbers on load
     updateRoleNumbers();
+
+    // -------------------------------------------------------------
+    // 3. STEP 2 (Define Team): Add & Remove Existing Teammates
+    // -------------------------------------------------------------
+    const existingMembersInput = document.getElementById('existingMembersJson');
+    const addMemberBtn = document.getElementById('btn-add-existing-member');
+    const newMemberName = document.getElementById('new-member-name');
+    const newMemberRole = document.getElementById('new-member-role');
+    const additionalMembersList = document.getElementById('additional-members-list');
+    const memberCountLabel = document.getElementById('member-count-label');
+
+    if (existingMembersInput && additionalMembersList) {
+        let members = [];
+        try {
+            members = JSON.parse(existingMembersInput.value || '[]');
+            if (!Array.isArray(members)) members = [];
+        } catch (e) {
+            members = [];
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text || '';
+            return div.innerHTML;
+        }
+
+        function renderMembers() {
+            additionalMembersList.innerHTML = '';
+            members.forEach((m, idx) => {
+                const item = document.createElement('div');
+                item.className = 'member-item-new';
+                item.style.display = 'flex';
+                item.style.alignItems = 'center';
+                item.style.justifyContent = 'space-between';
+                item.style.padding = '10px 14px';
+                item.style.background = '#ffffff';
+                item.style.border = '1px solid #cbd5e1';
+                item.style.borderRadius = '8px';
+
+                item.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='12' fill='%23e2e8f0'/%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z' fill='%239ca3af'/%3E%3C/svg%3E" alt="Avatar" style="width: 28px; height: 28px; border-radius: 50%;">
+                        <div>
+                            <strong style="color: #0f172a; font-size: 13.5px;">${escapeHtml(m.name)}</strong>
+                            <span style="background: #f1f5f9; color: #475569; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 10px; margin-left: 6px;">${escapeHtml(m.role || 'Team Member')}</span>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-remove-member" data-index="${idx}" style="background: none; border: none; color: #ef4444; font-size: 18px; font-weight: bold; cursor: pointer; padding: 2px 8px; line-height: 1;" title="Remove Member">&times;</button>
+                `;
+
+                const removeBtn = item.querySelector('.btn-remove-member');
+                removeBtn.addEventListener('click', () => {
+                    members.splice(idx, 1);
+                    existingMembersInput.value = JSON.stringify(members);
+                    renderMembers();
+                });
+
+                additionalMembersList.appendChild(item);
+            });
+
+            if (memberCountLabel) {
+                memberCountLabel.textContent = 1 + members.length;
+            }
+            existingMembersInput.value = JSON.stringify(members);
+        }
+
+        renderMembers();
+
+        if (addMemberBtn && newMemberName) {
+            addMemberBtn.addEventListener('click', () => {
+                const name = newMemberName.value.trim();
+                const role = (newMemberRole ? newMemberRole.value.trim() : '') || 'Team Member';
+
+                if (!name) {
+                    newMemberName.focus();
+                    return;
+                }
+
+                members.push({ name, role });
+                newMemberName.value = '';
+                if (newMemberRole) newMemberRole.value = '';
+                renderMembers();
+            });
+
+            newMemberName.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addMemberBtn.click();
+                }
+            });
+
+            if (newMemberRole) {
+                newMemberRole.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addMemberBtn.click();
+                    }
+                });
+            }
+        }
+    }
 });

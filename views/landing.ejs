@@ -1,0 +1,483 @@
+<% layout("layouts/boilerplate") %>
+
+<div class="landing-page-root">
+
+    <!-- 1. HERO SECTION -->
+    <section class="landing-hero-section">
+        <div class="landing-container">
+            <div class="landing-hero-grid">
+                
+                <!-- Hero Left: Value Proposition & Call to Action -->
+                <div class="landing-hero-content">
+                    <div class="landing-pill">
+                        <span class="pill-dot"></span>
+                        <span>Built for K.K. Wagh Institute of Engineering Education & Research</span>
+                    </div>
+
+                    <h1 class="landing-hero-title">
+                        Find Your People.<br>
+                        <span class="gradient-text">Build Something Great.</span>
+                    </h1>
+
+                    <p class="landing-hero-subtitle">
+                        Discover teammates who complement your skills, join hackathon teams, and turn your ideas into real projects. TeamForge helps students connect through verified capabilities, campus opportunities, and shared goals.
+                    </p>
+
+                    <div class="landing-cta-group">
+                        <% if (currentUser) { %>
+                            <a href="/dashboard" class="landing-btn landing-btn-primary">
+                                <span>Go to Your Dashboard</span>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                            </a>
+                            <a href="/events" class="landing-btn landing-btn-secondary">
+                                <span>Browse Campus Events</span>
+                            </a>
+                        <% } else { %>
+                            <a href="/signup" class="landing-btn landing-btn-primary">
+                                <span>Get Started Free</span>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                            </a>
+                            <a href="#how-it-works" class="landing-btn landing-btn-secondary">
+                                <span>Explore How It Works</span>
+                            </a>
+                        <% } %>
+                    </div>
+
+                    <!-- Trust indicators -->
+                    <div class="landing-hero-stats">
+                        <div class="hero-stat-item">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span>Institutional Domain Security</span>
+                        </div>
+                        <div class="hero-stat-item">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span>Mathematical Explainable Matching</span>
+                        </div>
+                        <div class="hero-stat-item">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span>Double-Blind Peer Reviews</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hero Right: Realistic Illustrative Product Preview Card -->
+                <div class="landing-hero-visual">
+                    <div class="preview-badge-container">
+                        <span class="preview-badge-label">Live Match Engine Preview</span>
+                    </div>
+
+                    <div class="preview-card-wrapper">
+                        <!-- Candidate Match Card Mockup -->
+                        <div class="preview-candidate-card">
+                            <div class="preview-card-header">
+                                <div class="preview-avatar">AP</div>
+                                <div class="preview-candidate-meta">
+                                    <div class="preview-name-row">
+                                        <h3 class="preview-name">Aarav Patel</h3>
+                                        <span class="preview-badge-verified" title="Verified via GitHub OAuth">
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                            GitHub Verified
+                                        </span>
+                                    </div>
+                                    <p class="preview-sub">SE · Computer Engineering · Backend Engineer</p>
+                                </div>
+                                <div class="preview-score-bubble">
+                                    <span class="preview-score-val">92%</span>
+                                    <span class="preview-score-lbl">MATCH</span>
+                                </div>
+                            </div>
+
+                            <!-- Match Breakdown Formula Chips -->
+                            <div class="preview-breakdown-box">
+                                <div class="preview-breakdown-title">
+                                    <span>Formula Breakdown</span>
+                                    <span class="formula-caption">Score = S (40) + C (25) + R (20) + A (10) + T (5)</span>
+                                </div>
+                                <div class="breakdown-bars">
+                                    <div class="breakdown-bar-item">
+                                        <div class="bar-label-group">
+                                            <span>Term S (Skills Match)</span>
+                                            <strong>36 / 40 pts</strong>
+                                        </div>
+                                        <div class="bar-track"><div class="bar-fill" style="width: 90%; background: #3b82f6;"></div></div>
+                                    </div>
+                                    <div class="breakdown-bar-item">
+                                        <div class="bar-label-group">
+                                            <span>Term C (Credibility & Verifications)</span>
+                                            <strong>24 / 25 pts</strong>
+                                        </div>
+                                        <div class="bar-track"><div class="bar-fill" style="width: 96%; background: #10b981;"></div></div>
+                                    </div>
+                                    <div class="breakdown-bar-item">
+                                        <div class="bar-label-group">
+                                            <span>Term R (Reputation & Reviews)</span>
+                                            <strong>18 / 20 pts</strong>
+                                        </div>
+                                        <div class="bar-track"><div class="bar-fill" style="width: 90%; background: #8b5cf6;"></div></div>
+                                    </div>
+                                    <div class="breakdown-bar-item">
+                                        <div class="bar-label-group">
+                                            <span>Term A (Availability for Event)</span>
+                                            <strong>10 / 10 pts</strong>
+                                        </div>
+                                        <div class="bar-track"><div class="bar-fill" style="width: 100%; background: #06b6d4;"></div></div>
+                                    </div>
+                                    <div class="breakdown-bar-item">
+                                        <div class="bar-label-group">
+                                            <span>Term T (Recency & Active Status)</span>
+                                            <strong>4 / 5 pts</strong>
+                                        </div>
+                                        <div class="bar-track"><div class="bar-fill" style="width: 80%; background: #f59e0b;"></div></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Skills Chips -->
+                            <div class="preview-skills-row">
+                                <span class="preview-skill-tag matched">Node.js · 5★</span>
+                                <span class="preview-skill-tag matched">Express · 4★</span>
+                                <span class="preview-skill-tag matched">MongoDB · 4★</span>
+                                <span class="preview-skill-tag">Docker · 3★</span>
+                                <span class="preview-skill-tag">TypeScript · 4★</span>
+                            </div>
+
+                            <!-- Team Action Snapshot -->
+                            <div class="preview-action-footer">
+                                <div class="preview-role-target">
+                                    <span class="role-target-label">Open Role:</span>
+                                    <span class="role-target-val">Backend Developer (1 opening)</span>
+                                </div>
+                                <span class="preview-btn-mock">Send Team Invite</span>
+                            </div>
+                        </div>
+
+                        <p class="preview-disclaimer">
+                            Illustrative preview based on the TeamForge mathematical candidate recommendation engine.
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- 2. TRUST & INSTITUTIONAL VALUES -->
+    <section class="landing-section bg-light">
+        <div class="landing-container">
+            <div class="landing-section-header">
+                <span class="section-tag">Core Principles</span>
+                <h2 class="section-title">Designed for Engineering Excellence and Trust</h2>
+                <p class="section-desc">
+                    TeamForge replaces chaotic group chats with an accountable, skills-first ecosystem built directly around academic and competitive engineering standards.
+                </p>
+            </div>
+
+            <div class="landing-grid-4">
+                <div class="value-card">
+                    <div class="value-icon-box bg-blue-subtle">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                    </div>
+                    <h3 class="value-title">Institutional Community</h3>
+                    <p class="value-desc">
+                        Restricted to verified students of K.K. Wagh Institute of Engineering Education & Research. Real peers from your own departments and batches.
+                    </p>
+                </div>
+
+                <div class="value-card">
+                    <div class="value-icon-box bg-emerald-subtle">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+                    </div>
+                    <h3 class="value-title">Skills-Based Discovery</h3>
+                    <p class="value-desc">
+                        Team recommendations depend strictly on complementary technical stacks, verified repositories, and observed proficiencies — never social popularity.
+                    </p>
+                </div>
+
+                <div class="value-card">
+                    <div class="value-icon-box bg-violet-subtle">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                    </div>
+                    <h3 class="value-title">Transparent Explainability</h3>
+                    <p class="value-desc">
+                        No opaque algorithms. Every match score displays the exact 5-term mathematical breakdown so you understand why candidates are recommended.
+                    </p>
+                </div>
+
+                <div class="value-card">
+                    <div class="value-icon-box bg-amber-subtle">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    </div>
+                    <h3 class="value-title">Mutual Deliberate Locks</h3>
+                    <p class="value-desc">
+                        Team commitments require double-consent. Once confirmed, students are locked specifically for that event, preventing double-booking and dropouts.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3. THE PROBLEM WE SOLVE -->
+    <section class="landing-section">
+        <div class="landing-container">
+            <div class="landing-section-header">
+                <span class="section-tag">The Challenge</span>
+                <h2 class="section-title">Why Student Team Formation Usually Breaks Down</h2>
+                <p class="section-desc">
+                    Every semester, talented engineering students miss hackathons or submit rushed projects because team assembly is fragmented and unpredictable.
+                </p>
+            </div>
+
+            <div class="landing-grid-3">
+                <div class="problem-card">
+                    <div class="problem-badge">Problem 01</div>
+                    <h3 class="problem-heading">The Scramble on WhatsApp</h3>
+                    <p class="problem-text">
+                        Students spam batch groups with messages like "Need 1 backend dev!". Without verified profiles, teams end up with redundant skills, unverified claims, or mismatched commitment levels.
+                    </p>
+                    <div class="solution-link-box">
+                        <span class="solution-tag">TeamForge Fix:</span>
+                        <p class="solution-text">Structured role requirements with required & preferred skills, backed by verified GitHub language metrics.</p>
+                    </div>
+                </div>
+
+                <div class="problem-card">
+                    <div class="problem-badge">Problem 02</div>
+                    <h3 class="problem-heading">Scattered Opportunities</h3>
+                    <p class="problem-text">
+                        Campus hackathons, national design competitions, and capstone requirements are posted across flyers, department bulletin boards, or buried email threads.
+                    </p>
+                    <div class="solution-link-box">
+                        <span class="solution-tag">TeamForge Fix:</span>
+                        <p class="solution-text">A unified campus event hub with verified organizer postings, real countdown deadlines, and open team openings.</p>
+                    </div>
+                </div>
+
+                <div class="problem-card">
+                    <div class="problem-badge">Problem 03</div>
+                    <h3 class="problem-heading">Ghosting & Double-Booking</h3>
+                    <p class="problem-text">
+                        Verbal agreements fail at the last minute when a teammate joins another team or disappears on the submission day, leaving the remaining students stranded.
+                    </p>
+                    <div class="solution-link-box">
+                        <span class="solution-tag">TeamForge Fix:</span>
+                        <p class="solution-text">Event-scoped participation locks with 24-hour response reminders and mutual confirmation safeguards.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 4. HOW IT WORKS -->
+    <section id="how-it-works" class="landing-section bg-light">
+        <div class="landing-container">
+            <div class="landing-section-header">
+                <span class="section-tag">Step-by-Step Flow</span>
+                <h2 class="section-title">How TeamForge Works</h2>
+                <p class="section-desc">
+                    From student registration to post-event peer validation, TeamForge provides a structured, four-step journey.
+                </p>
+            </div>
+
+            <div class="steps-container">
+                <div class="step-card">
+                    <div class="step-number-circle">1</div>
+                    <h3 class="step-title">Create Your Student Profile</h3>
+                    <p class="step-desc">
+                        Register with your KKWIEER college credentials. Add your technical skills with ratings (1–5), link GitHub for automated repository verification, and list past hackathon wins.
+                    </p>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-number-circle">2</div>
+                    <h3 class="step-title">Discover Teams & Opportunities</h3>
+                    <p class="step-desc">
+                        Post a team requirement for a hackathon with defined roles, or browse open vacancies. The matching engine automatically ranks the best candidates for your open positions.
+                    </p>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-number-circle">3</div>
+                    <h3 class="step-title">Exchange Two-Way Requests</h3>
+                    <p class="step-desc">
+                        Send team invitations or apply directly to posted vacancies. TeamForge manages request statuses (PENDING → ACCEPTED → CONFIRMED) with 24-hour response windows.
+                    </p>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-number-circle">4</div>
+                    <h3 class="step-title">Lock Commitment & Review</h3>
+                    <p class="step-desc">
+                        Mutual confirmation locks your roster for the event date and shares contact info. After the event, teammates submit double-blind reviews and verify peer skills.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 5. PLATFORM FEATURES GRID -->
+    <section id="features" class="landing-section">
+        <div class="landing-container">
+            <div class="landing-section-header">
+                <span class="section-tag">Platform Features</span>
+                <h2 class="section-title">Built with Comprehensive Engineering Features</h2>
+                <p class="section-desc">
+                    Every capability in TeamForge is designed to make campus collaboration accountable, transparent, and fair.
+                </p>
+            </div>
+
+            <div class="landing-feature-grid">
+                
+                <!-- Feature 1 -->
+                <div class="feature-item">
+                    <div class="feature-icon bg-blue-subtle">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="m4.93 4.93 4.24 4.24"></path><path d="m14.83 9.17 4.24-4.24"></path><path d="m14.83 14.83 4.24 4.24"></path><path d="m9.17 14.83-4.24 4.24"></path></svg>
+                    </div>
+                    <h3 class="feature-title">Candidate Recommendation Engine</h3>
+                    <p class="feature-text">
+                        Ranks peers using a 5-term mathematical formula: Skills match (40%), Credibility (25%), Reputation (20%), Event availability (10%), and Recency (5%).
+                    </p>
+                </div>
+
+                <!-- Feature 2 -->
+                <div class="feature-item">
+                    <div class="feature-icon bg-indigo-subtle">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    </div>
+                    <h3 class="feature-title">Team Requirement Builder</h3>
+                    <p class="feature-text">
+                        A multi-step wizard supporting Hackathons, Engineering Competitions, College Deliverables, and Independent Projects with custom open roles.
+                    </p>
+                </div>
+
+                <!-- Feature 3 -->
+                <div class="feature-item">
+                    <div class="feature-icon bg-emerald-subtle">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="18" y2="10"></line></svg>
+                    </div>
+                    <h3 class="feature-title">Campus Event Directory</h3>
+                    <p class="feature-text">
+                        Discover official institute hackathons and tech fests. Organizers can promote events and highlight team formation opportunities directly to students.
+                    </p>
+                </div>
+
+                <!-- Feature 4 -->
+                <div class="feature-item">
+                    <div class="feature-icon bg-cyan-subtle">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0891b2" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                    </div>
+                    <h3 class="feature-title">Unified Action State Machine</h3>
+                    <p class="feature-text">
+                        Handles both Team Invites and Student Applications with state-driven transitions, automatic vacancy decrements, and 24-hour expiry reminders.
+                    </p>
+                </div>
+
+                <!-- Feature 5 -->
+                <div class="feature-item">
+                    <div class="feature-icon bg-amber-subtle">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    </div>
+                    <h3 class="feature-title">Event-Scoped Participation Locks</h3>
+                    <p class="feature-text">
+                        Once locked for a specific hackathon date, a student cannot join conflicting teams for that same event, while remaining eligible for other calendar dates.
+                    </p>
+                </div>
+
+                <!-- Feature 6 -->
+                <div class="feature-item">
+                    <div class="feature-icon bg-slate-subtle">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
+                    </div>
+                    <h3 class="feature-title">GitHub & Social Verification</h3>
+                    <p class="feature-text">
+                        OAuth integration reads public repositories and language statistics to verify coding claims with tiered badges and honest trust indicators.
+                    </p>
+                </div>
+
+                <!-- Feature 7 -->
+                <div class="feature-item">
+                    <div class="feature-icon bg-purple-subtle">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9333ea" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    </div>
+                    <h3 class="feature-title">Double-Blind Peer Reviews</h3>
+                    <p class="feature-text">
+                        Evaluates teammates on technical contribution, reliability, communication, and teamwork. Reviews remain confidential until both sides have submitted.
+                    </p>
+                </div>
+
+                <!-- Feature 8 -->
+                <div class="feature-item">
+                    <div class="feature-icon bg-emerald-subtle">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                    </div>
+                    <h3 class="feature-title">Peer Skill Verification</h3>
+                    <p class="feature-text">
+                        Teammates tick only the skills they personally observed during the project. Unticked skills remain unverified rather than rejected, preserving fairness.
+                    </p>
+                </div>
+
+                <!-- Feature 9 -->
+                <div class="feature-item">
+                    <div class="feature-icon bg-yellow-subtle">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ca8a04" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                    </div>
+                    <h3 class="feature-title">Merit Leaderboard</h3>
+                    <p class="feature-text">
+                        Combines Reputation (70%) and Platform Activity (30%) with a rigorous 5-stage tie-breaking hierarchy (Score → Raw Wins → Shortlists → Completeness → Name).
+                    </p>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- 6. PRIVACY & INSTITUTIONAL TRUST -->
+    <section class="landing-section bg-light">
+        <div class="landing-container">
+            <div class="landing-privacy-card">
+                <div class="privacy-icon-badge">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                </div>
+                <div class="privacy-content">
+                    <h3 class="privacy-title">Built with Student Privacy & Ethical Controls</h3>
+                    <p class="privacy-desc">
+                        TeamForge was designed from the ground up to protect students from spam and unwanted solicitations.
+                    </p>
+                    <div class="privacy-features-row">
+                        <div class="priv-item">
+                            <strong>Profile Visibility Toggle:</strong> Hide your profile from candidate discovery anytime with one click in your settings.
+                        </div>
+                        <div class="priv-item">
+                            <strong>Protected Contact Info:</strong> Mobile numbers and private email addresses are revealed <em>only after mutual team confirmation</em>.
+                        </div>
+                        <div class="priv-item">
+                            <strong>No Retaliation Ratings:</strong> Double-blind reviews ensure peer evaluations cannot be biased by reading the other person's review first.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 7. FINAL CALL TO ACTION -->
+    <section class="landing-cta-section">
+        <div class="landing-container">
+            <div class="landing-cta-box">
+                <h2 class="cta-heading">Ready to Forge Your Next Winning Team?</h2>
+                <p class="cta-sub">
+                    Join hundreds of engineering students at KKWIEER assembling hackathon squads and building real-world projects.
+                </p>
+                <div class="cta-btn-group">
+                    <% if (currentUser) { %>
+                        <a href="/dashboard" class="landing-btn landing-btn-primary">Go to Dashboard</a>
+                        <a href="/team-requirement/new" class="landing-btn landing-btn-secondary">Create a Team Requirement</a>
+                    <% } else { %>
+                        <a href="/signup" class="landing-btn landing-btn-primary">Create Your Student Account</a>
+                        <a href="/events" class="landing-btn landing-btn-secondary">Explore Active Events</a>
+                    <% } %>
+                </div>
+                <p class="cta-note">No credit card required. Exclusive to students with college email IDs.</p>
+            </div>
+        </div>
+    </section>
+
+</div>

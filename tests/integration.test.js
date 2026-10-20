@@ -32,20 +32,35 @@ const {
 } = require("../utils/actionStateMachine");
 const { getRecommendedCandidates } = require("../utils/recommendations");
 
-let mongod;
+let mongod = null;
+let isMemoryServer = false;
 
 async function setup() {
-  mongod = await MongoMemoryServer.create();
-  const uri = mongod.getUri() + "teamforge_test";
+  let uri;
+  try {
+    mongod = await MongoMemoryServer.create();
+    uri = mongod.getUri() + "teamforge_test";
+    isMemoryServer = true;
+  } catch (memErr) {
+    uri = process.env.TEST_MONGODB_URI || "mongodb://127.0.0.1:27017/teamforge_test";
+  }
   await mongoose.connect(uri);
+  if (mongoose.connection && mongoose.connection.db) {
+    await mongoose.connection.db.dropDatabase();
+  }
   console.log("=================================================");
   console.log("RUNNING TEAMFORGE INTEGRATION & LIVE WORKFLOW TESTS");
   console.log("=================================================");
 }
 
 async function teardown() {
+  if (mongoose.connection && mongoose.connection.db) {
+    await mongoose.connection.db.dropDatabase();
+  }
   await mongoose.disconnect();
-  await mongod.stop();
+  if (isMemoryServer && mongod) {
+    await mongod.stop();
+  }
   console.log("\n=================================================");
   console.log("ALL TEAMFORGE INTEGRATION TESTS PASSED (100%)");
   console.log("=================================================\n");
