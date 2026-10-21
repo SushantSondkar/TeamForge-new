@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 48" width="200" height="48" fill="none">
+  <defs>
+    <linearGradient id="tfGradH" x1="0" y1="4" x2="40" y2="44" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1E3A8A"/>
+      <stop offset="100%" stop-color="#2563EB"/>
+    </linearGradient>
+  </defs>
+  <!-- Icon -->
+  <rect x="0" y="4" width="40" height="40" rx="9" fill="url(#tfGradH)"/>
+  <rect x="1.5" y="5.5" width="37" height="37" rx="7.5" stroke="#38BDF8" stroke-opacity="0.3" stroke-width="1"/>
+  <path d="M10 15h10M15 15v18" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M21 15h9M21 22h6M21 15v18" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="31" cy="15" r="2" fill="#14B8A6"/>
+  <!-- Wordmark -->
+  <text x="50" y="32" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="22" font-weight="800" letter-spacing="-0.5">
+    <tspan fill="#0F172A">Team</tspan><tspan fill="#2563EB">Forge</tspan>
+  </text>
+</svg>

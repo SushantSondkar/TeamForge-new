@@ -5,6 +5,7 @@ const { assertValidEnv } = require("./utils/validateEnv");
 assertValidEnv();
 
 const express = require("express");
+const path = require("path");
 const app = express();
 const helmet = require("helmet");
 const ejsMate = require("ejs-mate");
@@ -91,7 +92,12 @@ app.set("view engine", "ejs");
 app.engine("ejs", ejsMate);
 
 // Static files
-app.use(express.static("public"));
+// Serve /images with long Cache-Control (immutable 30-day cache)
+app.use("/images", express.static(path.join(__dirname, "public", "images"), {
+  maxAge: "30d",
+  immutable: true
+}));
+app.use(express.static(path.join(__dirname, "public")));
 
 // Request Parsers
 app.use(express.json());
@@ -168,6 +174,10 @@ app.use(async (req, res, next) => {
   // Expose OAuth configuration status to views so Connect buttons can be hidden when keys are missing
   res.locals.isGithubOAuthConfigured = Boolean(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET);
   res.locals.isLinkedinOAuthConfigured = Boolean(process.env.LINKEDIN_CLIENT_ID && process.env.LINKEDIN_CLIENT_SECRET);
+
+  // Expose application base URL and current path for SEO, Open Graph and brand asset references
+  res.locals.appBaseUrl = (process.env.APP_BASE_URL || "http://localhost:8080").replace(/\/+$/, "");
+  res.locals.currentPath = req.path || "";
 
   // Hide sidebar and title bar nav options on authentication pages
   const isAuthPage = ["/signup", "/login", "/forgot-password", "/reset-password", "/verify-email", "/check-inbox", "/resend-verification"].some(p => req.path === p || req.path.startsWith(p + "/"));

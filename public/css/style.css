@@ -3250,4 +3250,28 @@ h1 {
     }
 }
 
+/* Responsive Navbar Brand Logo */
+.navbar-brand-full {
+    display: block;
+    height: 36px;
+    width: auto;
+    max-width: 170px;
+}
+
+.navbar-brand-icon {
+    display: none;
+    height: 34px;
+    width: 34px;
+}
+
+@media (max-width: 480px) {
+    .navbar-brand-full {
+        display: none !important;
+    }
+    .navbar-brand-icon {
+        display: block !important;
+    }
+}
+
+
 

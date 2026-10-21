@@ -29,6 +29,9 @@ function getBaseUrl() {
  * @returns {string} Rendered HTML string
  */
 function renderEmailLayout({ title, heading, bodyHtml, buttonText, actionUrl, disclaimer }) {
+  const baseUrl = getBaseUrl();
+  const logoUrl = `${baseUrl}/images/logo-horizontal.png`;
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -44,8 +47,10 @@ function renderEmailLayout({ title, heading, bodyHtml, buttonText, actionUrl, di
           <!-- Header -->
           <tr>
             <td style="background-color: #0f172a; padding: 24px 32px;">
-              <span style="font-size: 20px; font-weight: 700; color: #ffffff; letter-spacing: -0.5px;">TeamForge</span>
-              <span style="display: block; font-size: 12px; color: #94a3b8; margin-top: 4px;">KKWIEER Campus Hackathon Platform</span>
+              <a href="${baseUrl}" style="text-decoration: none; display: inline-block;">
+                <img src="${logoUrl}" alt="TeamForge" width="160" height="38" style="display: block; border: 0; max-height: 38px; width: auto; color: #ffffff; font-size: 20px; font-weight: 700;">
+              </a>
+              <span style="display: block; font-size: 12px; color: #94a3b8; margin-top: 6px;">KKWIEER Campus Hackathon Platform</span>
             </td>
           </tr>
           <!-- Body Content -->
