@@ -38,6 +38,9 @@ const eventRoutes = require("./routes/events");
 const reviewRoutes = require("./routes/reviews");
 const leaderboardRoutes = require("./routes/leaderboard");
 const organizerRoutes = require("./routes/organizers");
+const adminRoutes = require("./routes/admin");
+const feedbackRoutes = require("./routes/feedback");
+const Announcement = require("./models/Announcement");
 
 const { startScheduler } = require("./utils/scheduler");
 
@@ -181,6 +184,13 @@ app.use(async (req, res, next) => {
   res.locals.currentPath = req.path || "";
   res.locals.supportEmail = (process.env.SUPPORT_EMAIL && process.env.SUPPORT_EMAIL.trim()) ? process.env.SUPPORT_EMAIL.trim() : null;
 
+  // Active Pinned Announcement for Dashboard (Event-Day Banner)
+  try {
+    res.locals.activeAnnouncement = await Announcement.findOne({ active: true, expiresAt: { $gt: new Date() } }).sort({ createdAt: -1 });
+  } catch (err) {
+    res.locals.activeAnnouncement = null;
+  }
+
   // Session Flash Messages (transient success / error alerts)
   res.locals.success = (req.session && req.session.success) || (req.query && req.query.success) || null;
   res.locals.error = (req.session && req.session.error) || (req.query && req.query.error) || null;
@@ -254,6 +264,8 @@ app.use("/reviews", reviewRoutes);
 app.use("/", reviewRoutes);
 app.use("/leaderboard", leaderboardRoutes);
 app.use("/", organizerRoutes);
+app.use("/", adminRoutes);
+app.use("/", feedbackRoutes);
 
 // 404 Route Handler - Friendly Error Page
 app.use((req, res, next) => {

@@ -1,230 +1,125 @@
-# TeamForge — Live Demonstration Guide 🎓
-**Project:** Design Thinking (DT) Final Project  
-**Institution:** K.K. Wagh Institute of Engineering Education and Research (KKWIEER), Nashik  
-**Target Audience:** DT Course Professor & Evaluation Panel  
+# TeamForge — 5-Minute Live Demonstration & Evaluation Guide 🎓
+
+**Project:** TeamForge — Collegiate Hackathon Team Matching & Collaboration Platform  
+**Target Audience:** Design Thinking Evaluation Panel, Department Faculty & Pilot Reviewers  
+**Platform URL:** `https://<your-app-name>.onrender.com` (or `http://localhost:8080` locally)  
 
 ---
 
-## 1. Quick Setup & Starting the Application
+## ⏱️ The 5-Minute Live Demo Script (Minute-by-Minute)
 
-### Prerequisites
-* **Node.js**: v18 or later (tested on Node.js v24)
-* **MongoDB**: Either local MongoDB service OR the built-in embedded MongoDB engine (automatic zero-config fallback)
+This demo script follows two real student accounts across the complete matchmaking and competition lifecycle on the live deployed site.
 
-### Step 1: Install Dependencies
-Open PowerShell or your terminal in the project directory:
-```bash
-npm install
-```
-
-### Step 2: Environment Configuration
-Ensure `.env` exists in the project root (copied from `.env.example`):
-```env
-PORT=8080
-MONGODB_URI=mongodb://127.0.0.1:27017/teamforge
-SESSION_SECRET=<generate_a_random_32_char_secret>
-COOKIE_SECRET=<generate_a_random_32_char_secret>
-CSRF_SECRET=<generate_a_random_32_char_secret>
-SEED=false
-```
-
-### Step 3: Start the Application
-Run the start command:
-```bash
-npm start
-```
-* **Expected Terminal Output**:
-  ```
-  MongoDB connected successfully via MONGODB_URI
-  Server is running on port 8080
-  ```
-  *(If local MongoDB service is not running on port 27017, TeamForge's resilient embedded database engine will automatically start and log: `Starting embedded local database engine for development/demo... Embedded MongoDB connected successfully`)*
-
-### Step 4: Open in Browser
-Navigate to:
-```
-http://localhost:8080
+```text
+[0:00 - 1:00] Landing Page & Campus Authentication Gatekeeper
+[1:00 - 2:00] Profile Completeness Bar, Missing Fields & GitHub Verification
+[2:00 - 3:00] Team Creation Wizard & Server-Side Discover Search
+[3:00 - 4:00] Two-Way Request Lifecycle: 24h Timer, Mutual Confirmation Lock & Feedback
+[4:00 - 5:00] Double-Blind Peer Reviews, Campus Leaderboard & Admin Live Stats
 ```
 
 ---
 
-## 2. Test / Demonstration Accounts
-*Do not use hardcoded or pre-cooked credentials. Register two fresh student accounts live through the registration form to prove genuine database persistence.*
-
-| Role | Suggested Name | Suggested Institutional Email | Password | Department | Year | Skills |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Student A (Team Creator)** | Sushant Patil | `sushant_comp@kkwagh.edu.in` | `DemoPass123#` | Computer Engineering | TE | `Node.js:5, Express:4, MongoDB:4` |
-| **Student B (Candidate)** | Aaradhya Wabale | `aaradhya_it@kkwagh.edu.in` | `DemoPass123#` | Information Technology | TE | `React:5, TypeScript:4, Tailwind:4` |
-
----
-
-## 3. Step-by-Step Live Demonstration Walkthrough
-
-### Step 0: The Public Landing Page (First Impression for Professor)
-1. Open a clean browser or private window and navigate to:
-   ```
-   http://localhost:8080
-   ```
-2. **Point out to the Professor**:
-   * **Hero Section**: Clean value proposition (*"Find Your People. Build Something Great."*) with active institutional branding for **K.K. Wagh Institute of Engineering Education & Research**.
-   * **Live Match Engine Preview**: The interactive card on the right demonstrating TeamForge's transparent 5-term mathematical formula:
-     $$\text{MatchScore} = \text{Term S (40)} + \text{Term C (25)} + \text{Term R (20)} + \text{Term A (10)} + \text{Term T (5)}$$
-   * **The 4 Core Values**: Institutional community, skills-based discovery, transparent explainability, and mutual locks.
-   * **Problem vs Solution Matrix**: 3 clear cards illustrating real college pain points (WhatsApp chaos, scattered event posters, ghosting/double-booking) and how TeamForge addresses each.
-   * **4-Step User Journey**: Create profile → Discover teams → Two-way invites → Lock & double-blind review.
-   * **Platform Feature Matrix**: Responsive grid highlighting all 9 engineering modules.
-   * **Privacy & Ethical Safeguards**: Institutional `@kkwagh.edu.in` enforcement, contact number protection until mutual lock, and profile visibility toggles.
-3. Click the primary **"Get Started Free"** or **"Sign Up"** button in the header to begin the live demo.
+### Minute 1 (0:00 – 1:00): First Impression & Campus Email Gatekeeper
+1. **Open the live application**:
+   - Navigate to `https://<your-app-name>.onrender.com/` (or `http://localhost:8080`).
+2. **Point out the value proposition**:
+   - *"TeamForge eliminates WhatsApp chaos and last-minute spreadsheet scrambles by providing an institutional hackathon matchmaking platform."*
+   - Show the **Interactive Match Engine Formula**:
+     $$\text{MatchScore} = 40\% S + 25\% C + 20\% R + 10\% A + 5\% T$$
+3. **Demonstrate Campus Email Verification**:
+   - Click **Sign Up**. Attempt to enter an external email (`test@gmail.com`).
+   - Point out the instant client and server rejection: only authorized `@<ALLOWED_DOMAIN>` emails (e.g. `@kkwagh.edu.in`) are allowed.
+   - Log in with real student account **Student A** (`sushant_comp@kkwagh.edu.in`).
 
 ---
 
-### Step 1: Register Student B (Candidate Account)
-1. In your browser (or Incognito Window 1), go to `http://localhost:8080/signup`.
-2. Fill in:
-   * **Full Name**: `Aaradhya Wabale`
-   * **College Email**: `aaradhya_it@kkwagh.edu.in` *(Note: Point out the `@kkwagh.edu.in` institutional restriction to your professor)*
-   * **Department**: `Information Technology`
-   * **Academic Year**: `TE (Third Year)`
-   * **Core Skills & Proficiency**: `React:5, TypeScript:4, Tailwind:4`
-   * **Password**: `DemoPass123#`
-   * **Confirm Password**: `DemoPass123#`
-3. Click **Create Account**.
-4. **Expected Result**: The account is securely hashed with bcrypt and persisted in MongoDB. The browser is redirected to `/profile?welcome=true` with session established.
-5. Click **Logout** in the navigation bar to return to `/login`.
+### Minute 2 (1:00 – 2:00): Profile Completeness & GitHub Verification
+1. **Navigate to `/profile`**:
+   - Highlight the **Profile Completeness Bar** ($20\% + 15\% + 15\% + 20\% + 15\% + 15\% = 100\%$).
+   - Point out that this percentage matches the exact 5th-stage tie-breaker used in the matching engine.
+   - Point out the **Missing Fields Guide**: clearly shows what remaining details (e.g. Bio, external portfolio, GitHub link) are needed to reach 100%.
+2. **Showcase Verified GitHub Integration**:
+   - Show the blue **Verified GitHub Profile** badge (`github.com/username`).
+   - Explain: *"TeamForge pulls public repos and commit activity via GitHub OAuth to prove genuine coding skills, preventing fake resumes."*
+3. **Show Privacy Control**:
+   - Point to the **"Hide my profile"** toggle. Explain that students can take a break from hackathons and vanish from public searches and leaderboard with one click without losing existing team locks.
 
 ---
 
-### Step 2: Register Student A (Team Creator Account)
-1. Go to `http://localhost:8080/signup`.
-2. Fill in:
-   * **Full Name**: `Sushant Patil`
-   * **College Email**: `sushant_comp@kkwagh.edu.in`
-   * **Department**: `Computer Engineering`
-   * **Academic Year**: `TE (Third Year)`
-   * **Core Skills & Proficiency**: `Node.js:5, Express:4, MongoDB:4`
-   * **Password**: `DemoPass123#`
-   * **Confirm Password**: `DemoPass123#`
-3. Click **Create Account**.
-4. **Expected Result**: Student A is registered in MongoDB and logged into their dashboard at `http://localhost:8080/`.
+### Minute 3 (2:00 – 3:00): Wizard Creation & Algorithmic Search
+1. **Open the 4-Step Team Requirement Wizard** (`/team-requirement/new`):
+   - Step 1: Select Event (`Smart India Hackathon 2026`).
+   - Step 2: Define Project (`Smart Campus Transit`, Team Size: 4).
+   - Step 3: Add Open Roles (`Frontend Developer`, Required: `React, TypeScript`, Openings: 1).
+   - Step 4: Review & Submit.
+2. **Demonstrate Discover Search** (`/discover`):
+   - Switch to the **Search Teams** tab.
+   - Type `React` in the search box; select `Smart India Hackathon` from the event dropdown.
+   - Point out that the query uses safe regex escaping and dynamic filters populated from active database requirements.
+   - Show candidate cards with the detailed **Match Score breakdown** pills (`Skills: 92%`, `Cred: 85%`, `Rep: 90%`).
 
 ---
 
-### Step 3: Create an Event-Specific Team Requirement (Wizard)
-1. On the Dashboard or top navbar, click **+ Create Team Requirement** (or go to `/team-requirement/new`).
-2. **Context Step**:
-   * If an event is listed (e.g. Smart India Hackathon), select it. If no event exists, visit `/events/new` to create one (e.g. `SIH 2026 - Hardware & Software Edition`).
-   * Click **Next: Define Team**.
-3. **Define Team Step**:
-   * **Project Name**: `Smart Campus Tracker`
-   * **Team Size**: `4`
-   * **Theme**: `Smart Automation`
-   * **Project Requirement**: `Automate lab inventory and student verification`
-   * **Deliverables**: `Working prototype and presentation`
-   * Click **Next: Add Roles**.
-4. **Add Roles Step**:
-   * **Role Title**: `Frontend Developer`
-   * **Required Skills**: `React, TypeScript`
-   * **Preferred Skills**: `Tailwind`
-   * **Proficiency**: `Intermediate`
-   * **Openings**: `1`
-   * Click **Add Role**, then click **Next: Review**.
-5. **Review & Submit Step**:
-   * Review all entered data.
-   * Click **Confirm & Submit**.
-6. **Expected Result**: 
-   * The team requirement is validated and saved to MongoDB.
-   * Student A is locked into this event (`lockedEvents` in DB).
-   * The browser redirects to Dashboard (`/?teamId=...`).
-   * The **Active Team Status** card now shows `Smart Campus Tracker`, `1 / 4 Active`, and role `Frontend Developer (1 Opening)`.
+### Minute 4 (3:00 – 4:00): Unified Request Lifecycle & Mutual Lock
+1. **Send an Invitation**:
+   - From Student A's dashboard, click **Invite** on candidate **Student B** (`aaradhya_it@kkwagh.edu.in`).
+   - The button transitions smoothly to `Invited` and queues a transactional notification.
+2. **Accept Invitation (as Student B)**:
+   - Log in as Student B in an incognito window.
+   - Click the **Notifications** bell with the visible unread count badge.
+   - Click **Accept** on the invite.
+   - Point out the critical engineering safeguard:
+     > *"Under TeamForge's action state machine, acceptance does NOT immediately lock candidate availability. The initiating lead must confirm to prevent double-booking."*
+3. **Confirm & Lock**:
+   - Back on Student A's dashboard, the purple action banner displays: `Action Required: Confirm Candidate`.
+   - Click **Confirm & Lock**.
+   - Show the dynamic update: Status becomes `🔒 LOCKED`, Role Openings decrement from 1 to 0, and the candidate is locked for this specific competition.
+   - Highlight the **"Rate experience ★"** link prompting student feedback.
 
 ---
 
-### Step 4: Discover Candidates & Explain Matching Formula
-1. On the Dashboard, locate the **Recommended Candidates** card.
-2. Observe candidate **Aaradhya Wabale**:
-   * **Match Score**: Calculated dynamically using the TeamForge formula:
-     $$\text{Match Score} = \text{round}(100 \times (0.40S + 0.25C + 0.20R + 0.10A + 0.05T))$$
-   * Notice the breakdown tags:
-     * `Skills: %` (Term S: React & TypeScript coverage)
-     * `Cred: %` (Term C: Baseline & credentials)
-     * `Rep: %` (Term R: Reviews and shortlists)
-     * `Active: %` (Term T: Fresh login timestamp)
-3. Explain to your professor:
-   > *"TeamForge does not use random or mock data. The matching engine evaluates skill overlap against role requirements, checks institutional eligibility, filters out candidates already committed to other teams in this event, and prioritizes active students."*
+### Minute 5 (4:00 – 5:00): Reviews, Leaderboard & Admin Live Telemetry
+1. **Double-Blind Peer Reviews** (`/reviews`):
+   - Explain how post-event reviews remain masked until both teammates submit, eliminating retaliation and encouraging honest feedback.
+2. **Campus Leaderboard** (`/leaderboard`):
+   - Show ranked students filtered by department, year of study, and technical skill.
+   - Point out that hidden profiles are completely absent from rankings.
+3. **Admin Live Stats Telemetry** (`/admin/stats`):
+   - Log in as the Campus Administrator.
+   - Navigate to **Live Stats**:
+     - Real counts for Registered Users, Verified Profiles, GitHub Verified, Open Roles, and **Teams LOCKED**.
+     - Side-by-side **Last 7 Days** column demonstrating live pilot momentum for faculty evaluation.
+   - Click **Export Stats CSV** to demonstrate instant institutional reporting.
+   - Open **Student Feedback** (`/admin/feedback`) showing anonymous satisfaction scores and pilot comments.
 
 ---
 
-### Step 5: Send Invitation to Candidate
-1. Click the **Invite** button next to Aaradhya Wabale.
-2. The button updates to **Invited** (green).
-3. **Expected Result in DB**:
-   * A `TeamRequestAction` document is created with `status: "PENDING"` and `direction: "INVITE"`.
-   * A persistent `Notification` document is inserted for Aaradhya Wabale.
-   * The candidate is logged in the `Shortlists` collection.
-4. Click **Logout** from Student A's account.
+## 📸 High-Resolution Screenshot Checklist for Submission Report
+
+Capture and include these 9 clean screenshots in your final project report or presentation deck:
+
+| # | Screen Name | URL Path | Key Elements to Showcase |
+|---|---|---|---|
+| 1 | **Landing Page Hero** | `/` or `/landing` | Institutional branding, CTAs, and interactive Match Formula preview card |
+| 2 | **Campus Email Signup** | `/signup` | `@ALLOWED_DOMAIN` placeholder and client/server validation message |
+| 3 | **Student Profile & Badges** | `/profile` | Completeness percentage, missing fields checklist, and Verified GitHub badge |
+| 4 | **Team Requirement Wizard** | `/team-requirement/new` | 4-step progress tracker, role openings, and required/preferred skills |
+| 5 | **Discover Search Engine** | `/discover` | Search text input, dynamic skill dropdown, event filter, and match breakdown tags |
+| 6 | **Mutual Request Lock** | `/dashboard` or `/home` | `🔒 LOCKED` badge, contact sharing opt-in, and `Rate experience ★` link |
+| 7 | **Double-Blind Peer Review** | `/reviews` | Event selector, star ratings for teammates, and peer skill endorsement checkboxes |
+| 8 | **Admin Live Stats** | `/admin/stats` | High-level summary cards, detailed table with "Last 7 Days" column, and Export CSV button |
+| 9 | **Event-Day Announcement** | `/dashboard` (with banner) | Amber pinned announcement card with broadcast icon, notice text, and expiry date |
 
 ---
 
-### Step 6: Log in as Student B & Accept Invitation
-1. Go to `http://localhost:8080/login`.
-2. Enter:
-   * **Email**: `aaradhya_it@kkwagh.edu.in`
-   * **Password**: `DemoPass123#`
-3. Click **Log In**.
-4. Look at the **New Invites Received** card on the dashboard (or click the bell icon in navbar).
-5. You will see:
-   * **Project**: `Smart Campus Tracker`
-   * **Role**: `Frontend Developer`
-   * **Sender**: `Sushant Patil`
-   * Action buttons: `[Accept]` and `[Decline]`
-6. Click **Accept**.
-7. **Expected Result**:
-   * Status transitions to `ACCEPTED`.
-   * Notice the badge: `ACCEPTED · Awaiting lead confirmation`.
-   * Point out to your professor:
-     > *"Under TeamForge's unified state machine, candidate acceptance never prematurely locks a candidate. The initiating team lead must confirm to prevent double-booking."*
-8. Click **Logout**.
+## 💡 Evaluation Panel Q&A Cheat Sheet
 
----
+- **Q: How does TeamForge prevent students from ghosting or committing to multiple teams in the same hackathon?**  
+  *A: TeamForge enforces an atomic, event-scoped locking mechanism in MongoDB (`lockedEvents` array). Once a student is confirmed into a team for an event, they are disqualified from appearing in candidate recommendations or accepting conflicting invites for that specific event.*
 
-### Step 7: Log back in as Student A & Confirm Candidate
-1. Go to `http://localhost:8080/login`.
-2. Log in with `sushant_comp@kkwagh.edu.in` / `DemoPass123#`.
-3. Look at the Dashboard:
-   * A prominent purple banner appears: **Action Required: Pending Match Confirmations (1)**.
-   * `Aaradhya Wabale accepted your invite! Please confirm to lock into Smart Campus Tracker.`
-4. Click **🔒 Confirm & Lock Match**.
-5. **Expected Result**:
-   * Status transitions: `ACCEPTED` $\rightarrow$ `CONFIRMED` $\rightarrow$ `LOCKED`.
-   * **Role Openings** in MongoDB decrements from `1` to `0`.
-   * Student B's user profile now has the event ID in `lockedEvents`.
-   * The Active Team Status card updates dynamically to **`2 / 4 Active`**!
-   * Both students receive mutual match lock notifications with contact sharing enabled.
+- **Q: How are skill ratings verified to prevent self-reported exaggeration?**  
+  *A: Skills are validated through two independent channels: (1) GitHub OAuth verification analyzing real commit volume and repository languages, and (2) Post-event double-blind peer endorsements from verified teammates.*
 
----
-
-### Step 8: Verify Event Locking & Security
-1. Log out and try to access `http://localhost:8080/profile` without logging in:
-   * **Expected Result**: Redirected immediately to `/login` (Protected Route middleware).
-2. Log back in as Student B (`aaradhya_it@kkwagh.edu.in`):
-   * Student B is locked for this specific SIH event, but their availability remains unlocked for other distinct competitions (event-scoped locking).
-
----
-
-## 4. Resetting Data for Another Demo Run
-To clear demo records and start fresh:
-1. Stop the application (`Ctrl+C` in terminal).
-2. If using embedded MongoDB, restarting `npm start` automatically resets the in-memory database.
-3. If using persistent local MongoDB service, you can run:
-   ```bash
-   node -e "const mongoose = require('mongoose'); (async () => { await mongoose.connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/teamforge'); await mongoose.connection.dropDatabase(); console.log('Database reset clean!'); process.exit(0); })();"
-   ```
-
----
-
-## 5. Summary of Architecture for Professor Q&A
-* **Frontend**: Vanilla HTML5/CSS3 + EJS templates (no heavy single-page-app overhead, easy to inspect and maintain).
-* **Backend**: Node.js & Express 5 with modular RESTful routing.
-* **Authentication**: Password hashing with bcrypt, session fixation protection (`session.regenerate()`), secure HTTP-only cookies, and CSRF validation on all state-changing endpoints.
-* **Database**: MongoDB & Mongoose with schema validations and atomic increments/decrements.
-* **Matching Engine**: Deterministic multi-factor scoring (Skills 40%, Credibility 25%, Reputation 20%, Availability 10%, Recency 5%) with a strict 50% required-skill coverage eligibility gate.
+- **Q: Can user contact details leak before students agree to work together?**  
+  *A: Never. Student phone numbers and personal emails remain strictly masked until both parties have mutual agreement and explicitly click "Share Contacts".*

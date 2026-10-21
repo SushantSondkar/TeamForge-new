@@ -40,6 +40,16 @@
             <a href="/profile" class="sidebar-link" style="color: #475569; font-weight: 500; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: block; text-decoration: none;">
                 <span>Profile & Settings</span>
             </a>
+
+            <a href="/feedback" class="sidebar-link" style="color: #475569; font-weight: 500; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: block; text-decoration: none;">
+                <span>Give Feedback</span>
+            </a>
+
+            <% if (currentUser.isAdmin) { %>
+            <a href="/admin/stats" class="sidebar-link" style="color: #1e3a8a; font-weight: 600; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: block; text-decoration: none;">
+                <span>Live Stats (Admin)</span>
+            </a>
+            <% } %>
         <% } else { %>
             <a href="/events" class="sidebar-link" style="color: #475569; font-weight: 500; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: block; text-decoration: none;">
                 <span>Events & Hackathons</span>

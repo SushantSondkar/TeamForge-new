@@ -35,6 +35,7 @@
         <% if (currentUser) { %>
             <a href="/reviews" class="nav-item-link">Reviews</a>
             <% if (currentUser.isAdmin) { %>
+                <a href="/admin/stats" class="nav-item-link" style="color: #2563eb; font-weight: 600;">Stats</a>
                 <a href="/admin/organizers" class="nav-item-link" style="color: #dc2626; font-weight: 600;">Admin</a>
             <% } else { %>
                 <a href="/organizer/apply" class="nav-item-link">Organizer</a>
