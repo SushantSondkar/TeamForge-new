@@ -8,11 +8,27 @@ const GITHUB_AUTH_URL = "https://github.com/login/oauth/authorize";
 const GITHUB_TOKEN_URL = "https://github.com/login/oauth/access_token";
 const GITHUB_API_BASE = "https://api.github.com";
 
+let customFetch = null;
+
+/**
+ * Returns the active fetch implementation (custom injected or global)
+ */
+function getFetch() {
+  return customFetch || globalThis.fetch;
+}
+
+/**
+ * Allows injecting a fake or custom fetch function (for unit and integration tests)
+ */
+function setFetch(fn) {
+  customFetch = fn;
+}
+
 /**
  * Returns the GitHub OAuth authorization URL
  */
 function getAuthorizationUrl(state, redirectUri) {
-  const clientId = process.env.GITHUB_CLIENT_ID || "demo_github_client_id";
+  const clientId = process.env.GITHUB_CLIENT_ID || "";
   const params = new URLSearchParams({
     client_id: clientId,
     scope: "read:user,repo",
@@ -32,12 +48,7 @@ async function exchangeCodeForToken(code, redirectUri) {
   const clientSecret = process.env.GITHUB_CLIENT_SECRET;
 
   if (!clientId || !clientSecret) {
-    // In dev / test mode without real secrets, return simulated token
-    return {
-      access_token: `mock_gh_token_${Date.now()}`,
-      token_type: "bearer",
-      scope: "read:user,repo"
-    };
+    throw new Error("GitHub OAuth credentials (GITHUB_CLIENT_ID / GITHUB_CLIENT_SECRET) are missing.");
   }
 
   const payload = {
@@ -49,7 +60,8 @@ async function exchangeCodeForToken(code, redirectUri) {
     payload.redirect_uri = redirectUri;
   }
 
-  const response = await fetch(GITHUB_TOKEN_URL, {
+  const fetchFn = getFetch();
+  const response = await fetchFn(GITHUB_TOKEN_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -70,8 +82,8 @@ async function exchangeCodeForToken(code, redirectUri) {
  * Checks response headers for GitHub rate limiting
  */
 function checkRateLimit(headers) {
-  const remaining = headers.get("x-ratelimit-remaining");
-  const reset = headers.get("x-ratelimit-reset");
+  const remaining = headers && typeof headers.get === "function" ? headers.get("x-ratelimit-remaining") : null;
+  const reset = headers && typeof headers.get === "function" ? headers.get("x-ratelimit-reset") : null;
 
   if (remaining !== null && parseInt(remaining, 10) === 0 && reset) {
     const resetDate = new Date(parseInt(reset, 10) * 1000);
@@ -81,28 +93,25 @@ function checkRateLimit(headers) {
 }
 
 /**
- * Fetches authenticated user's profile from GitHub REST API
+ * Fetches authenticated or public user's profile from GitHub REST API
  */
-async function fetchUserProfile(accessToken) {
-  if (accessToken.startsWith("mock_gh_token")) {
-    return {
-      id: "998877",
-      login: "kkwagh-coder",
-      name: "KKWagh Dev",
-      html_url: "https://github.com/kkwagh-coder",
-      public_repos: 12
-    };
+async function fetchUserProfile(accessToken, username) {
+  const fetchFn = getFetch();
+  const url = accessToken
+    ? `${GITHUB_API_BASE}/user`
+    : `${GITHUB_API_BASE}/users/${encodeURIComponent(username)}`;
+
+  const headers = {
+    "Accept": "application/vnd.github.v3+json",
+    "User-Agent": "TeamForge-KKWagh"
+  };
+  if (accessToken) {
+    headers["Authorization"] = `Bearer ${accessToken}`;
   }
 
-  const res = await fetch(`${GITHUB_API_BASE}/user`, {
-    headers: {
-      "Authorization": `Bearer ${accessToken}`,
-      "Accept": "application/vnd.github.v3+json",
-      "User-Agent": "TeamForge-KKWagh"
-    }
-  });
-
+  const res = await fetchFn(url, { headers });
   const rateCheck = checkRateLimit(res.headers);
+
   if (!res.ok) {
     if (res.status === 403 || res.status === 429) {
       throw new Error(`GitHub rate limit exceeded. Resets at ${rateCheck.resetDate || "shortly"}`);
@@ -117,42 +126,20 @@ async function fetchUserProfile(accessToken) {
  * Fetches user repositories from GitHub REST API
  */
 async function fetchUserRepos(accessToken, username) {
-  if (accessToken.startsWith("mock_gh_token")) {
-    return [
-      {
-        name: "CampusConnect",
-        html_url: "https://github.com/kkwagh-coder/CampusConnect",
-        description: "Campus social and events platform",
-        stargazers_count: 5,
-        language: "JavaScript",
-        updated_at: new Date().toISOString()
-      },
-      {
-        name: "ML-Disease-Prediction",
-        html_url: "https://github.com/kkwagh-coder/ML-Disease-Prediction",
-        description: "Machine learning model for healthcare prediction",
-        stargazers_count: 8,
-        language: "Python",
-        updated_at: new Date().toISOString()
-      },
-      {
-        name: "SmartAttendance",
-        html_url: "https://github.com/kkwagh-coder/SmartAttendance",
-        description: "Attendance management system using OpenCV",
-        stargazers_count: 3,
-        language: "Python",
-        updated_at: new Date().toISOString()
-      }
-    ];
+  const fetchFn = getFetch();
+  const url = accessToken
+    ? `${GITHUB_API_BASE}/user/repos?per_page=100&sort=updated&affiliation=owner`
+    : `${GITHUB_API_BASE}/users/${encodeURIComponent(username)}/repos?per_page=100&sort=updated`;
+
+  const headers = {
+    "Accept": "application/vnd.github.v3+json",
+    "User-Agent": "TeamForge-KKWagh"
+  };
+  if (accessToken) {
+    headers["Authorization"] = `Bearer ${accessToken}`;
   }
 
-  const res = await fetch(`${GITHUB_API_BASE}/user/repos?per_page=100&sort=updated&affiliation=owner`, {
-    headers: {
-      "Authorization": `Bearer ${accessToken}`,
-      "Accept": "application/vnd.github.v3+json",
-      "User-Agent": "TeamForge-KKWagh"
-    }
-  });
+  const res = await fetchFn(url, { headers });
 
   if (!res.ok) {
     const rateCheck = checkRateLimit(res.headers);
@@ -173,12 +160,14 @@ async function fetchUserRepos(accessToken, username) {
  */
 function extractLanguages(repos) {
   const languageCounts = {};
-  repos.forEach(repo => {
-    if (repo.language && typeof repo.language === 'string') {
-      const lang = repo.language.trim();
-      languageCounts[lang] = (languageCounts[lang] || 0) + 1;
-    }
-  });
+  if (Array.isArray(repos)) {
+    repos.forEach(repo => {
+      if (repo && repo.language && typeof repo.language === "string") {
+        const lang = repo.language.trim();
+        languageCounts[lang] = (languageCounts[lang] || 0) + 1;
+      }
+    });
+  }
 
   return Object.keys(languageCounts).sort((a, b) => languageCounts[b] - languageCounts[a]);
 }
@@ -187,17 +176,21 @@ function extractLanguages(repos) {
  * Estimates total commits authored by the user
  */
 async function fetchUserCommitCount(accessToken, username) {
-  if (accessToken.startsWith("mock_gh_token")) {
-    return 142; // Simulated commit count
+  const fetchFn = getFetch();
+  const headers = {
+    "User-Agent": "TeamForge-KKWagh"
+  };
+  if (accessToken) {
+    headers["Authorization"] = `Bearer ${accessToken}`;
   }
 
   try {
-    const res = await fetch(`${GITHUB_API_BASE}/search/commits?q=author:${username}`, {
-      headers: {
-        "Authorization": `Bearer ${accessToken}`,
-        "Accept": "application/vnd.github.cloak-preview+json",
-        "User-Agent": "TeamForge-KKWagh"
-      }
+    const searchHeaders = {
+      ...headers,
+      "Accept": "application/vnd.github.cloak-preview+json"
+    };
+    const res = await fetchFn(`${GITHUB_API_BASE}/search/commits?q=author:${encodeURIComponent(username)}`, {
+      headers: searchHeaders
     });
 
     if (res.ok) {
@@ -207,17 +200,17 @@ async function fetchUserCommitCount(accessToken, username) {
       }
     }
   } catch (err) {
-    console.warn("Could not fetch commit search count:", err.message);
+    // Continue to fallback
   }
 
-  // Fallback: estimate from recent user events
+  // Fallback: estimate from public user events
   try {
-    const eventsRes = await fetch(`${GITHUB_API_BASE}/users/${username}/events/public?per_page=100`, {
-      headers: {
-        "Authorization": `Bearer ${accessToken}`,
-        "Accept": "application/vnd.github.v3+json",
-        "User-Agent": "TeamForge-KKWagh"
-      }
+    const eventsHeaders = {
+      ...headers,
+      "Accept": "application/vnd.github.v3+json"
+    };
+    const eventsRes = await fetchFn(`${GITHUB_API_BASE}/users/${encodeURIComponent(username)}/events/public?per_page=100`, {
+      headers: eventsHeaders
     });
     if (eventsRes.ok) {
       const events = await eventsRes.json();
@@ -232,7 +225,7 @@ async function fetchUserCommitCount(accessToken, username) {
       }
     }
   } catch (err) {
-    console.warn("Could not fetch user events:", err.message);
+    // Continue
   }
 
   return 25; // Sensible baseline fallback
@@ -241,8 +234,9 @@ async function fetchUserCommitCount(accessToken, username) {
 /**
  * Syncs and caches GitHub data on user document
  * Checks 24-hour cache freshness and handles rate limit backoff.
+ * Does NOT persist or store access token in database.
  */
-async function syncUserGithubData(user, force = false) {
+async function syncUserGithubData(user, accessToken = null, force = false) {
   const now = new Date();
 
   // 1. Check if user is currently rate-limited
@@ -268,15 +262,17 @@ async function syncUserGithubData(user, force = false) {
     }
   }
 
-  if (!user.githubAccessToken) {
-    throw new Error("No GitHub access token found for user.");
+  const targetUsername = user.githubUsername || user.github;
+  if (!accessToken && !targetUsername) {
+    throw new Error("No GitHub access token or username found for user.");
   }
 
   try {
-    const profile = await fetchUserProfile(user.githubAccessToken);
-    const repos = await fetchUserRepos(user.githubAccessToken, profile.login);
+    const profile = await fetchUserProfile(accessToken, targetUsername);
+    const resolvedUsername = profile.login || targetUsername;
+    const repos = await fetchUserRepos(accessToken, resolvedUsername);
     const languages = extractLanguages(repos);
-    const totalCommits = await fetchUserCommitCount(user.githubAccessToken, profile.login);
+    const totalCommits = await fetchUserCommitCount(accessToken, resolvedUsername);
 
     const topRepos = repos.slice(0, 5).map(r => ({
       name: r.name || "",
@@ -288,9 +284,11 @@ async function syncUserGithubData(user, force = false) {
     }));
 
     user.isGithubVerified = true;
-    user.githubId = String(profile.id || "");
-    user.githubUsername = profile.login || "";
-    user.github = profile.login || user.github;
+    if (profile.id) {
+      user.githubId = String(profile.id);
+    }
+    user.githubUsername = resolvedUsername;
+    user.github = resolvedUsername;
 
     user.githubData = {
       reposCount: repos.length || profile.public_repos || 0,
@@ -301,7 +299,9 @@ async function syncUserGithubData(user, force = false) {
       rateLimitedUntil: null
     };
 
-    await user.save();
+    if (typeof user.save === "function") {
+      await user.save();
+    }
 
     return {
       cached: false,
@@ -312,7 +312,9 @@ async function syncUserGithubData(user, force = false) {
     if (err.rateLimitedUntil) {
       user.githubData = user.githubData || {};
       user.githubData.rateLimitedUntil = err.rateLimitedUntil;
-      await user.save();
+      if (typeof user.save === "function") {
+        await user.save();
+      }
     }
     // Return existing cached data on error if present
     if (user.githubData && user.githubData.cachedAt) {
@@ -335,5 +337,6 @@ module.exports = {
   extractLanguages,
   fetchUserCommitCount,
   syncUserGithubData,
-  checkRateLimit
+  checkRateLimit,
+  setFetch
 };

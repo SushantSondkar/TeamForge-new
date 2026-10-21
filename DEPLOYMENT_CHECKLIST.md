@@ -42,6 +42,39 @@ LINKEDIN_CALLBACK_URL=https://teamforge.kkwagh.edu.in/auth/linkedin/callback
 - [ ] `SEED=false` in production.
 - [ ] Production callback URLs configured in GitHub and LinkedIn Developer Consoles.
 
+### OAuth Application Setup (GitHub & LinkedIn)
+
+#### GitHub OAuth App Creation Steps:
+1. Log into GitHub and go to **Settings > Developer settings > OAuth Apps > New OAuth App** (or visit `https://github.com/settings/applications/new`).
+2. Fill in the application registration details:
+   - **Application name**: `TeamForge — KKWIEER`
+   - **Homepage URL**: `https://teamforge.kkwagh.edu.in` (Production) or `http://localhost:8080` (Local Development)
+   - **Application description**: `Campus Hackathon Matching Platform for KKWIEER Students`
+   - **Authorization callback URL**:
+     - **Production**: `https://teamforge.kkwagh.edu.in/auth/github/callback`
+     - **Local Development**: `http://localhost:8080/auth/github/callback`
+3. Click **Register application**.
+4. Under the application dashboard:
+   - Copy the **Client ID** and set `GITHUB_CLIENT_ID` in `.env`.
+   - Click **Generate a new client secret**, copy the secret value, and set `GITHUB_CLIENT_SECRET` in `.env`.
+
+#### LinkedIn OAuth App Creation Steps:
+1. Log into the LinkedIn Developer Portal at `https://www.linkedin.com/developers/` and click **Create App**.
+2. Fill in the app registration details:
+   - **App name**: `TeamForge — KKWIEER`
+   - **LinkedIn Page**: Associate with the official KKWIEER college or organization page.
+   - **Privacy policy URL**: `https://teamforge.kkwagh.edu.in/privacy` (or institutional URL).
+   - **App logo**: Upload the official TeamForge emblem.
+3. Click **Create app**.
+4. In the app management dashboard:
+   - Navigate to the **Products** tab and request access to **Sign In with LinkedIn using OpenID Connect** (enables `openid`, `profile`, `email` scopes).
+   - Navigate to the **Auth** tab:
+     - Under **OAuth 2.0 settings**, add the exact Authorized redirect URLs for your app:
+       - **Production**: `https://teamforge.kkwagh.edu.in/auth/linkedin/callback`
+       - **Local Development**: `http://localhost:8080/auth/linkedin/callback`
+     - Copy the **Client ID** and set `LINKEDIN_CLIENT_ID` in `.env`.
+     - Copy the **Primary Client Secret** and set `LINKEDIN_CLIENT_SECRET` in `.env`.
+
 ---
 
 ## 2. Database & Schema Verification

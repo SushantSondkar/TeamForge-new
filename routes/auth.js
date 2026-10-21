@@ -745,6 +745,13 @@ router.post("/logout", (req, res) => {
 
 // 11. GET /auth/github - Initiate GitHub OAuth flow
 router.get("/auth/github", requireLogin, (req, res) => {
+  if (!process.env.GITHUB_CLIENT_ID || !process.env.GITHUB_CLIENT_SECRET) {
+    return res.status(200).render("oauth-unavailable", {
+      serviceName: "GitHub",
+      message: "This verification is not available right now."
+    });
+  }
+
   const state = crypto.randomBytes(16).toString("hex");
   req.session.githubOAuthState = state;
 
@@ -759,6 +766,13 @@ router.get("/auth/github", requireLogin, (req, res) => {
 // 12. GET /auth/github/callback - GitHub OAuth callback
 router.get("/auth/github/callback", requireLogin, async (req, res) => {
   try {
+    if (!process.env.GITHUB_CLIENT_ID || !process.env.GITHUB_CLIENT_SECRET) {
+      return res.status(200).render("oauth-unavailable", {
+        serviceName: "GitHub",
+        message: "This verification is not available right now."
+      });
+    }
+
     const { code, state, error, error_description } = req.query;
 
     if (error) {
@@ -766,7 +780,8 @@ router.get("/auth/github/callback", requireLogin, async (req, res) => {
       return res.redirect("/profile?error=" + encodeURIComponent(error_description || error));
     }
 
-    if (!state || state !== req.session.githubOAuthState) {
+    if (!state || !req.session.githubOAuthState || state !== req.session.githubOAuthState) {
+      delete req.session.githubOAuthState;
       console.warn("GitHub OAuth state mismatch. Possible CSRF.");
       return res.redirect("/profile?error=" + encodeURIComponent("Security check failed. State parameter mismatch."));
     }
@@ -782,11 +797,8 @@ router.get("/auth/github/callback", requireLogin, async (req, res) => {
     const tokenData = await githubService.exchangeCodeForToken(code, redirectUri);
     const accessToken = tokenData.access_token;
 
-    // Attach token to current user
-    req.user.githubAccessToken = accessToken;
-
-    // Pull profile, repos, languages, commit counts and cache them
-    await githubService.syncUserGithubData(req.user, true);
+    // Pull profile, repos, languages, commit counts and cache them in memory - do NOT store accessToken in DB
+    await githubService.syncUserGithubData(req.user, accessToken, true);
 
     res.redirect("/profile?verified=github");
   } catch (err) {
@@ -798,11 +810,11 @@ router.get("/auth/github/callback", requireLogin, async (req, res) => {
 // 13. POST /auth/github/sync - Re-sync GitHub data (cache refresh)
 router.post("/auth/github/sync", requireLogin, async (req, res) => {
   try {
-    if (!req.user.isGithubVerified || !req.user.githubAccessToken) {
+    if (!req.user.isGithubVerified || !req.user.githubUsername) {
       return res.redirect("/profile?error=" + encodeURIComponent("GitHub account not linked."));
     }
 
-    const result = await githubService.syncUserGithubData(req.user, true);
+    const result = await githubService.syncUserGithubData(req.user, null, true);
     if (result.rateLimited) {
       return res.redirect("/profile?warning=" + encodeURIComponent("GitHub API is rate limited. Displaying cached data."));
     }
@@ -818,7 +830,6 @@ router.post("/auth/github/sync", requireLogin, async (req, res) => {
 router.post("/auth/github/unlink", requireLogin, async (req, res) => {
   try {
     req.user.isGithubVerified = false;
-    req.user.githubAccessToken = "";
     req.user.githubId = "";
     req.user.githubUsername = "";
     req.user.githubData = {
@@ -844,6 +855,13 @@ router.post("/auth/github/unlink", requireLogin, async (req, res) => {
 
 // 15. GET /auth/linkedin - Initiate LinkedIn OAuth flow
 router.get("/auth/linkedin", requireLogin, (req, res) => {
+  if (!process.env.LINKEDIN_CLIENT_ID || !process.env.LINKEDIN_CLIENT_SECRET) {
+    return res.status(200).render("oauth-unavailable", {
+      serviceName: "LinkedIn",
+      message: "This verification is not available right now."
+    });
+  }
+
   const state = crypto.randomBytes(16).toString("hex");
   req.session.linkedinOAuthState = state;
 
@@ -858,6 +876,13 @@ router.get("/auth/linkedin", requireLogin, (req, res) => {
 // 16. GET /auth/linkedin/callback - LinkedIn OAuth callback
 router.get("/auth/linkedin/callback", requireLogin, async (req, res) => {
   try {
+    if (!process.env.LINKEDIN_CLIENT_ID || !process.env.LINKEDIN_CLIENT_SECRET) {
+      return res.status(200).render("oauth-unavailable", {
+        serviceName: "LinkedIn",
+        message: "This verification is not available right now."
+      });
+    }
+
     const { code, state, error, error_description } = req.query;
 
     if (error) {
@@ -865,7 +890,8 @@ router.get("/auth/linkedin/callback", requireLogin, async (req, res) => {
       return res.redirect("/profile?error=" + encodeURIComponent(error_description || error));
     }
 
-    if (!state || state !== req.session.linkedinOAuthState) {
+    if (!state || !req.session.linkedinOAuthState || state !== req.session.linkedinOAuthState) {
+      delete req.session.linkedinOAuthState;
       console.warn("LinkedIn OAuth state mismatch.");
       return res.redirect("/profile?error=" + encodeURIComponent("Security check failed. State parameter mismatch."));
     }

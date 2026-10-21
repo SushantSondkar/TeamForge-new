@@ -50,10 +50,6 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: ""
   },
-  githubAccessToken: {
-    type: String,
-    default: ""
-  },
   githubData: {
     reposCount: { type: Number, default: 0 },
     totalCommits: { type: Number, default: 0 },

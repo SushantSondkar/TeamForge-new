@@ -148,7 +148,7 @@
                         <span style="color: #94a3b8;">Not connected</span>
                     <% } %>
                 </div>
-                <% if (!currentUser || !currentUser.isGithubVerified) { %>
+                <% if ((!currentUser || !currentUser.isGithubVerified) && typeof isGithubOAuthConfigured !== 'undefined' && isGithubOAuthConfigured) { %>
                     <a href="/auth/github" style="font-size: 11.5px; color: #2563eb; font-weight: 600; text-decoration: none;">Verify ↗</a>
                 <% } %>
             </div>
@@ -165,7 +165,9 @@
                     <% } %>
                 </div>
                 <% if (currentUser && !currentUser.isLinkedinLinked) { %>
-                    <a href="/auth/linkedin" style="font-size: 11.5px; color: #0077b5; font-weight: 600; text-decoration: none;">Link ↗</a>
+                    <% if (typeof isLinkedinOAuthConfigured !== 'undefined' && isLinkedinOAuthConfigured) { %>
+                        <a href="/auth/linkedin" style="font-size: 11.5px; color: #0077b5; font-weight: 600; text-decoration: none;">Link ↗</a>
+                    <% } %>
                 <% } else if (currentUser && currentUser.isLinkedinLinked) { %>
                     <form action="/auth/linkedin/unlink" method="POST" style="margin: 0;">
                         <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
@@ -245,9 +247,11 @@
                         </form>
                     </div>
                 <% } else { %>
-                    <a href="/auth/github" class="btn-small-primary" style="background: #0f172a; border-color: #0f172a; text-decoration: none; font-size: 12.5px; padding: 7px 16px; display: inline-flex; align-items: center; gap: 6px;">
-                        Connect with GitHub ↗
-                    </a>
+                    <% if (typeof isGithubOAuthConfigured !== 'undefined' && isGithubOAuthConfigured) { %>
+                        <a href="/auth/github" class="btn-small-primary" style="background: #0f172a; border-color: #0f172a; text-decoration: none; font-size: 12.5px; padding: 7px 16px; display: inline-flex; align-items: center; gap: 6px;">
+                            Connect with GitHub ↗
+                        </a>
+                    <% } %>
                 <% } %>
             </div>
 

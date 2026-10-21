@@ -125,6 +125,10 @@ app.use(async (req, res, next) => {
     res.locals.csrfToken = "";
   }
 
+  // Expose OAuth configuration status to views so Connect buttons can be hidden when keys are missing
+  res.locals.isGithubOAuthConfigured = Boolean(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET);
+  res.locals.isLinkedinOAuthConfigured = Boolean(process.env.LINKEDIN_CLIENT_ID && process.env.LINKEDIN_CLIENT_SECRET);
+
   // Hide sidebar and title bar nav options on authentication pages
   const isAuthPage = ["/signup", "/login", "/forgot-password", "/reset-password", "/verify-email", "/check-inbox", "/resend-verification"].some(p => req.path === p || req.path.startsWith(p + "/"));
   if (isAuthPage) {

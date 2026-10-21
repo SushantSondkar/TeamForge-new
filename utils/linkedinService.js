@@ -7,11 +7,27 @@ const LINKEDIN_AUTH_URL = "https://www.linkedin.com/oauth/v2/authorization";
 const LINKEDIN_TOKEN_URL = "https://www.linkedin.com/oauth/v2/accessToken";
 const LINKEDIN_USERINFO_URL = "https://api.linkedin.com/v2/userinfo";
 
+let customFetch = null;
+
+/**
+ * Returns the active fetch implementation (custom injected or global)
+ */
+function getFetch() {
+  return customFetch || globalThis.fetch;
+}
+
+/**
+ * Allows injecting a fake or custom fetch function (for unit and integration tests)
+ */
+function setFetch(fn) {
+  customFetch = fn;
+}
+
 /**
  * Returns LinkedIn OAuth authorization URL
  */
 function getAuthorizationUrl(state, redirectUri) {
-  const clientId = process.env.LINKEDIN_CLIENT_ID || "demo_linkedin_client_id";
+  const clientId = process.env.LINKEDIN_CLIENT_ID || "";
   const params = new URLSearchParams({
     response_type: "code",
     client_id: clientId,
@@ -30,11 +46,7 @@ async function exchangeCodeForToken(code, redirectUri) {
   const clientSecret = process.env.LINKEDIN_CLIENT_SECRET;
 
   if (!clientId || !clientSecret) {
-    // In dev / test mode without real secrets, return simulated token
-    return {
-      access_token: `mock_linkedin_token_${Date.now()}`,
-      expires_in: 3600
-    };
+    throw new Error("LinkedIn OAuth credentials (LINKEDIN_CLIENT_ID / LINKEDIN_CLIENT_SECRET) are missing.");
   }
 
   const params = new URLSearchParams({
@@ -45,7 +57,8 @@ async function exchangeCodeForToken(code, redirectUri) {
     client_secret: clientSecret
   });
 
-  const res = await fetch(LINKEDIN_TOKEN_URL, {
+  const fetchFn = getFetch();
+  const res = await fetchFn(LINKEDIN_TOKEN_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded"
@@ -65,16 +78,8 @@ async function exchangeCodeForToken(code, redirectUri) {
  * Fetches basic profile info to verify identity and obtain vanity/name
  */
 async function fetchUserInfo(accessToken) {
-  if (accessToken.startsWith("mock_linkedin_token")) {
-    return {
-      sub: "linkedin_mock_sub_123",
-      name: "KKWagh Student",
-      email: "student@kkwagh.edu.in",
-      vanityName: "kkwagh-student"
-    };
-  }
-
-  const res = await fetch(LINKEDIN_USERINFO_URL, {
+  const fetchFn = getFetch();
+  const res = await fetchFn(LINKEDIN_USERINFO_URL, {
     headers: {
       "Authorization": `Bearer ${accessToken}`,
       "Accept": "application/json"
@@ -91,5 +96,6 @@ async function fetchUserInfo(accessToken) {
 module.exports = {
   getAuthorizationUrl,
   exchangeCodeForToken,
-  fetchUserInfo
+  fetchUserInfo,
+  setFetch
 };
