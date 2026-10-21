@@ -1,0 +1,109 @@
+<% layout("/layouts/boilerplate") -%>
+
+<div class="organizer-apply-page" style="padding: 24px 36px; max-width: 800px; margin: 0 auto;">
+
+    <div style="margin-bottom: 24px;">
+        <h1 style="font-size: 26px; font-weight: 800; color: #0f172a; margin: 0 0 6px 0;">Hackathon Organizer Application</h1>
+        <p style="color: #64748b; font-size: 14.5px; margin: 0;">
+            Request verified organizer privileges to host campus hackathons, manage team participation, and feature promoted events.
+        </p>
+    </div>
+
+    <% if (currentUser && currentUser.organizerStatus === 'APPROVED') { %>
+        <!-- Already Approved Card -->
+        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 24px; margin-bottom: 24px; display: flex; align-items: flex-start; gap: 16px;">
+            <div style="font-size: 32px;">🎖️</div>
+            <div>
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                    <h3 style="font-size: 17px; font-weight: 700; color: #166534; margin: 0;">Approved Campus Organizer</h3>
+                    <span style="background: #16a34a; color: white; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px;">ACTIVE</span>
+                </div>
+                <p style="color: #15803d; font-size: 13.5px; margin: 0 0 14px 0;">
+                    Your account has verified organizer privileges for <strong><%= currentUser.organizationName || 'your student organization' %></strong>. You can publish campus competitions and feature sponsored/promoted hackathons.
+                </p>
+                <div style="display: flex; gap: 12px;">
+                    <a href="/events/new" class="btn-small-primary" style="text-decoration: none; padding: 8px 16px; font-size: 13px; border-radius: 6px;">
+                        + Post New Hackathon
+                    </a>
+                    <a href="/events" class="btn-small-outline" style="text-decoration: none; padding: 8px 16px; font-size: 13px; border-radius: 6px;">
+                        Browse Events
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    <% } else if (currentUser && currentUser.organizerStatus === 'PENDING') { %>
+        <!-- Pending Application Notice -->
+        <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 24px; margin-bottom: 24px; display: flex; align-items: flex-start; gap: 16px;">
+            <div style="font-size: 32px;">⏳</div>
+            <div>
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                    <h3 style="font-size: 17px; font-weight: 700; color: #1e40af; margin: 0;">Application Under Review</h3>
+                    <span style="background: #2563eb; color: white; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px;">PENDING</span>
+                </div>
+                <p style="color: #1d4ed8; font-size: 13.5px; margin: 0;">
+                    Your request for <strong><%= currentUser.organizationName %></strong> was submitted and is pending administrator approval. Per campus integrity policy, only admins approve organizer privileges. You will receive an in-app notification once verified.
+                </p>
+            </div>
+        </div>
+
+    <% } else { %>
+
+        <% if (currentUser && currentUser.organizerStatus === 'REJECTED') { %>
+            <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 16px; margin-bottom: 20px; color: #991b1b; font-size: 13.5px;">
+                <strong>Notice:</strong> Your previous application was not approved. You may revise your organization details and submit again.
+            </div>
+        <% } %>
+
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div style="background-color: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 13.5px;">
+                <%= error %>
+            </div>
+        <% } %>
+
+        <% if (typeof success !== 'undefined' && success) { %>
+            <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 13.5px;">
+                ✓ Application submitted successfully! Administrator review will occur shortly.
+            </div>
+        <% } %>
+
+        <div style="background: white; border: 1px solid #e2e8f0; border-radius: 14px; padding: 28px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+            <form action="/organizer/apply" method="POST">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; font-size: 13.5px; font-weight: 600; color: #334155; margin-bottom: 6px;">
+                        Organization, Club, or Department Name <span style="color: #ef4444;">*</span>
+                    </label>
+                    <input type="text" name="organizationName" required 
+                           value="<%= currentUser ? currentUser.organizationName || '' : '' %>"
+                           placeholder="e.g. KKWIEER ACM Student Chapter, CSI, Debuggers Club" 
+                           style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 14px; box-sizing: border-box;">
+                    <span style="font-size: 12px; color: #64748b; margin-top: 4px; display: block;">Official name of the student chapter or department organizing hackathons.</span>
+                </div>
+
+                <div style="margin-bottom: 24px;">
+                    <label style="display: block; font-size: 13.5px; font-weight: 600; color: #334155; margin-bottom: 6px;">
+                        Reason & Planned Events <span style="color: #ef4444;">*</span>
+                    </label>
+                    <textarea name="organizerReason" rows="4" required
+                              placeholder="Describe your role in the organization and what competitions you plan to host on TeamForge..." 
+                              style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 14px; box-sizing: border-box; resize: vertical;"><%= currentUser ? currentUser.organizerReason || '' : '' %></textarea>
+                </div>
+
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; margin-bottom: 24px; font-size: 12.5px; color: #64748b; line-height: 1.5;">
+                    🔒 <strong>Campus Verification Policy:</strong> Skill claims are peer-verified after events. Organizer status is verified by campus administrators to ensure official collegiate competitions.
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 12px;">
+                    <a href="/events" class="btn-small-outline" style="text-decoration: none; padding: 10px 18px; font-size: 13.5px; border-radius: 8px;">Cancel</a>
+                    <button type="submit" class="btn-small-primary" style="padding: 10px 24px; font-size: 13.5px; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                        Submit Application
+                    </button>
+                </div>
+            </form>
+        </div>
+
+    <% } %>
+
+</div>

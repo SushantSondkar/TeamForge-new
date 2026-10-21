@@ -1,0 +1,144 @@
+<% layout("/layouts/boilerplate") -%>
+
+<div class="reviews-page" style="padding: 24px 36px; max-width: 1000px; margin: 0 auto;">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
+        <div>
+            <h1 style="font-size: 24px; font-weight: 700; color: #0f172a; margin: 0 0 4px 0;">Team Reviews & Peer Verifications</h1>
+            <p style="color: #64748b; font-size: 14px; margin: 0;">Double-blind peer reviews and skill claims verified after hackathon events conclude.</p>
+        </div>
+    </div>
+
+    <!-- Alert Banners -->
+    <% if (typeof query !== 'undefined') { %>
+        <% if (query.submitted === 'true') { %>
+            <div style="background: #ecfdf5; border: 1px solid #10b981; color: #065f46; padding: 12px 18px; border-radius: 8px; margin-bottom: 24px; font-size: 14px; display: flex; align-items: center; gap: 8px;">
+                ✓ Your confidential review has been submitted! It will be revealed automatically as soon as your teammate completes theirs.
+            </div>
+        <% } else if (query.info) { %>
+            <div style="background: #eff6ff; border: 1px solid #3b82f6; color: #1e40af; padding: 12px 18px; border-radius: 8px; margin-bottom: 24px; font-size: 14px;">
+                <%= query.info %>
+            </div>
+        <% } %>
+    <% } %>
+
+    <!-- Section 1: Teammates to Review for Concluded Events -->
+    <div style="background: white; border: 1px solid #e2e8f0; border-radius: 14px; padding: 24px; margin-bottom: 28px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div>
+                <h3 style="margin: 0; font-size: 17px; font-weight: 700; color: #0f172a;">Post-Event Peer Reviews</h3>
+                <span style="font-size: 12.5px; color: #64748b;">Double-blind reviews unlock after the event date passes. Neither side sees the review until both submit.</span>
+            </div>
+        </div>
+
+        <% if (reviewOpportunities && reviewOpportunities.length > 0) { %>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <% reviewOpportunities.forEach(item => { %>
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                                <strong style="font-size: 15px; color: #0f172a;"><%= item.event.name %></strong>
+                                <% if (item.isEventPassed) { %>
+                                    <span style="background: #ecfdf5; color: #059669; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 6px;">Event Concluded</span>
+                                <% } else { %>
+                                    <span style="background: #fffbeb; color: #d97706; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 6px;">Event Date: <%= new Date(item.event.date).toLocaleDateString() %></span>
+                                <% } %>
+                            </div>
+                            <div style="font-size: 13px; color: #64748b;">
+                                Teammate: <strong style="color: #334155;"><%= item.peer ? item.peer.name : 'Student' %></strong> · 
+                                Team: <span><%= item.team ? item.team.projectName : 'Project' %></span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <% if (!item.isEventPassed) { %>
+                                <span style="font-size: 12px; color: #94a3b8; font-style: italic;">
+                                    🔒 Unlocks after event date (<%= new Date(item.event.date).toLocaleDateString() %>)
+                                </span>
+                            <% } else if (!item.myReview) { %>
+                                <a href="/events/<%= item.event._id %>/review/<%= item.peer._id %>" class="btn-small-primary" style="background: #4f46e5; border-color: #4f46e5; text-decoration: none; font-size: 13px; padding: 6px 16px;">
+                                    Submit Review & Verify Skills ↗
+                                </a>
+                            <% } else if (!item.isRevealed) { %>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span class="badge" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; font-size: 12px; padding: 5px 12px;">
+                                        🔒 Submitted · Awaiting <%= item.peer.name %>
+                                    </span>
+                                </div>
+                            <% } else { %>
+                                <div style="text-align: right;">
+                                    <span class="badge" style="background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; font-size: 12px; padding: 5px 12px;">
+                                        ✓ Double-Blind Revealed
+                                    </span>
+                                    <span style="font-size: 12px; color: #64748b; display: block; margin-top: 2px;">Your Rating: <%= item.myReview.overallScore %> ★</span>
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+                <% }); %>
+            </div>
+        <% } else { %>
+            <div style="text-align: center; padding: 36px 20px; color: #64748b;">
+                <p style="font-size: 14.5px; margin: 0 0 4px 0; color: #334155;">No pending reviews</p>
+                <span style="font-size: 13px;">When you commit to a team for a hackathon event and the event date passes, double-blind teammate reviews will appear here.</span>
+            </div>
+        <% } %>
+    </div>
+
+    <!-- Section 2: Revealed Reviews Received by You -->
+    <div style="background: white; border: 1px solid #e2e8f0; border-radius: 14px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+        <h3 style="margin: 0 0 16px 0; font-size: 17px; font-weight: 700; color: #0f172a;">Revealed Peer Ratings & Feedback</h3>
+
+        <% if (receivedReviews && receivedReviews.length > 0) { %>
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+                <% receivedReviews.forEach(rev => { %>
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 18px 20px;">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                            <div>
+                                <strong style="font-size: 15px; color: #0f172a;"><%= rev.reviewerId ? rev.reviewerId.name : 'Anonymous Peer' %></strong>
+                                <div style="font-size: 12.5px; color: #64748b;">
+                                    Event: <%= rev.eventId ? rev.eventId.name : 'Hackathon' %> · <%= new Date(rev.createdAt).toLocaleDateString() %>
+                                </div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 6px; background: #ecfdf5; color: #059669; padding: 4px 10px; border-radius: 8px; font-weight: 700; font-size: 14px;">
+                                ★ <%= rev.overallScore %> / 5.0
+                            </div>
+                        </div>
+
+                        <!-- 4 Breakdown Scores -->
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; margin-bottom: 12px;">
+                            <div style="background: white; border: 1px solid #e2e8f0; padding: 8px 10px; border-radius: 6px; font-size: 12px;">
+                                <span style="color: #64748b; display: block;">Technical:</span>
+                                <strong style="color: #1e293b;"><%= rev.technicalContribution %> / 5 ★</strong>
+                            </div>
+                            <div style="background: white; border: 1px solid #e2e8f0; padding: 8px 10px; border-radius: 6px; font-size: 12px;">
+                                <span style="color: #64748b; display: block;">Reliability:</span>
+                                <strong style="color: #1e293b;"><%= rev.reliability %> / 5 ★</strong>
+                            </div>
+                            <div style="background: white; border: 1px solid #e2e8f0; padding: 8px 10px; border-radius: 6px; font-size: 12px;">
+                                <span style="color: #64748b; display: block;">Communication:</span>
+                                <strong style="color: #1e293b;"><%= rev.communication %> / 5 ★</strong>
+                            </div>
+                            <div style="background: white; border: 1px solid #e2e8f0; padding: 8px 10px; border-radius: 6px; font-size: 12px;">
+                                <span style="color: #64748b; display: block;">Teamwork:</span>
+                                <strong style="color: #1e293b;"><%= rev.teamwork %> / 5 ★</strong>
+                            </div>
+                        </div>
+
+                        <% if (rev.feedback) { %>
+                            <p style="font-size: 13.5px; color: #334155; margin: 0; background: white; padding: 10px 14px; border-radius: 8px; border: 1px solid #e2e8f0; font-style: italic;">
+                                "<%= rev.feedback %>"
+                            </p>
+                        <% } %>
+                    </div>
+                <% }); %>
+            </div>
+        <% } else { %>
+            <div style="text-align: center; padding: 36px 20px; color: #64748b;">
+                <p style="font-size: 14.5px; margin: 0 0 4px 0; color: #334155;">No revealed reviews yet</p>
+                <span style="font-size: 13px;">Once both you and your teammate submit confidential reviews for a concluded hackathon, ratings will be revealed here and update your Term R credibility.</span>
+            </div>
+        <% } %>
+    </div>
+
+</div>

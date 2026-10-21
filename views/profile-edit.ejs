@@ -1,0 +1,190 @@
+<% layout("/layouts/boilerplate") -%>
+
+<div class="profile-edit-page" style="padding: 24px 36px; max-width: 840px; margin: 0 auto;">
+    
+    <div style="margin-bottom: 24px;">
+        <a href="/profile" style="color: #64748b; text-decoration: none; font-size: 13.5px; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 12px; font-weight: 500;">
+            ← Back to Profile
+        </a>
+        <h1 style="font-size: 24px; font-weight: 700; color: #0f172a; margin: 0 0 4px 0;">Edit Student Profile</h1>
+        <p style="color: #64748b; font-size: 14px; margin: 0;">Update your credentials, portfolio links, skills, and visibility settings.</p>
+    </div>
+
+    <% if (typeof error !== 'undefined' && error) { %>
+        <div style="background-color: #fee2e2; border: 1px solid #f87171; color: #b91c1c; padding: 12px 16px; border-radius: 8px; margin-bottom: 24px; font-size: 14px;">
+            <%= error %>
+        </div>
+    <% } %>
+
+    <div class="edit-card" style="background: white; border: 1px solid #e2e8f0; border-radius: 14px; padding: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+        <form action="/profile/edit" method="POST" style="display: flex; flex-direction: column; gap: 20px;">
+            <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+            
+            <!-- Basic Details -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div>
+                    <label for="name" style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Full Name *</label>
+                    <input type="text" id="name" name="name" required value="<%= currentUser ? currentUser.name : '' %>"
+                           style="width: 100%; box-sizing: border-box; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px;">
+                </div>
+                <div>
+                    <label for="role" style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Primary Specialization / Role</label>
+                    <input type="text" id="role" name="role" value="<%= currentUser ? currentUser.role : '' %>"
+                           placeholder="e.g. Fullstack Developer, ML Engineer"
+                           style="width: 100%; box-sizing: border-box; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px;">
+                </div>
+            </div>
+
+            <!-- College Email & Academic Details -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div>
+                    <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Department</label>
+                    <select name="department" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13.5px; background: white;">
+                        <option value="">Select Department</option>
+                        <option value="Computer Engineering" <%= (currentUser && currentUser.department === 'Computer Engineering') ? 'selected' : '' %>>Computer Engineering</option>
+                        <option value="Information Technology" <%= (currentUser && currentUser.department === 'Information Technology') ? 'selected' : '' %>>Information Technology</option>
+                        <option value="AI & Data Science" <%= (currentUser && currentUser.department === 'AI & Data Science') ? 'selected' : '' %>>AI & Data Science</option>
+                        <option value="Electronics & Telecom" <%= (currentUser && currentUser.department === 'Electronics & Telecom') ? 'selected' : '' %>>Electronics & Telecom</option>
+                        <option value="Mechanical Engineering" <%= (currentUser && currentUser.department === 'Mechanical Engineering') ? 'selected' : '' %>>Mechanical Engineering</option>
+                        <option value="Civil Engineering" <%= (currentUser && currentUser.department === 'Civil Engineering') ? 'selected' : '' %>>Civil Engineering</option>
+                        <option value="Chemical Engineering" <%= (currentUser && currentUser.department === 'Chemical Engineering') ? 'selected' : '' %>>Chemical Engineering</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Academic Year</label>
+                    <select name="year" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13.5px; background: white;">
+                        <option value="">Select Year</option>
+                        <option value="FE" <%= (currentUser && currentUser.year === 'FE') ? 'selected' : '' %>>FE (First Year)</option>
+                        <option value="SE" <%= (currentUser && currentUser.year === 'SE') ? 'selected' : '' %>>SE (Second Year)</option>
+                        <option value="TE" <%= (currentUser && currentUser.year === 'TE') ? 'selected' : '' %>>TE (Third Year)</option>
+                        <option value="BE" <%= (currentUser && currentUser.year === 'BE') ? 'selected' : '' %>>BE (Final Year)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Bio -->
+            <div>
+                <label for="bio" style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Short Bio</label>
+                <textarea id="bio" name="bio" rows="3" placeholder="Tell potential teammates about your interests, hackathon goals, and work ethic..."
+                          style="width: 100%; box-sizing: border-box; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; font-family: inherit;"><%= currentUser ? currentUser.bio : '' %></textarea>
+            </div>
+
+            <!-- Availability & Hide Profile Settings -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; background: #f8fafc; padding: 16px; border-radius: 10px; border: 1px solid #e2e8f0;">
+                <div>
+                    <label for="availability" style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Availability Status</label>
+                    <select id="availability" name="availability"
+                            style="width: 100%; box-sizing: border-box; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13.5px; background: white;">
+                        <option value="1" <%= (currentUser && Number(currentUser.availability) >= 0.8) ? 'selected' : '' %>>Free (Actively looking for team)</option>
+                        <option value="0.5" <%= (currentUser && Number(currentUser.availability) > 0.2 && Number(currentUser.availability) < 0.8) ? 'selected' : '' %>>Partly Free (Open to selective invites)</option>
+                        <option value="0" <%= (currentUser && Number(currentUser.availability) <= 0.2) ? 'selected' : '' %>>Busy (Not available right now)</option>
+                    </select>
+                </div>
+                <div style="display: flex; flex-direction: column; justify-content: center;">
+                    <label style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; font-weight: 600; color: #334155; cursor: pointer;">
+                        <input type="checkbox" name="isProfileHidden" value="true" <%= (currentUser && currentUser.isProfileHidden) ? 'checked' : '' %> style="width: 18px; height: 18px; cursor: pointer;">
+                        <span>Hide my profile from Discover & candidate searches</span>
+                    </label>
+                    <span style="font-size: 11.5px; color: #64748b; margin-top: 4px; margin-left: 28px;">Other students will not see your card in candidate recommendations when enabled.</span>
+                </div>
+            </div>
+
+            <!-- External Links: GitHub, LinkedIn, Portfolio -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px;">
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <label for="github" style="font-size: 13px; font-weight: 600; color: #334155;">GitHub</label>
+                        <% if (currentUser && currentUser.isGithubVerified) { %>
+                            <span style="color: #059669; font-size: 11px; font-weight: 600;">✓ Verified</span>
+                        <% } else { %>
+                            <a href="/auth/github" style="color: #2563eb; font-size: 11px; text-decoration: none; font-weight: 600;">Verify OAuth ↗</a>
+                        <% } %>
+                    </div>
+                    <input type="text" id="github" name="github" value="<%= currentUser ? currentUser.github : '' %>"
+                           placeholder="username or URL"
+                           style="width: 100%; box-sizing: border-box; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13.5px;">
+                </div>
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <label for="linkedin" style="font-size: 13px; font-weight: 600; color: #334155;">LinkedIn</label>
+                        <% if (currentUser && currentUser.isLinkedinLinked) { %>
+                            <span style="color: #0077b5; font-size: 11px; font-weight: 600;">✓ Linked</span>
+                        <% } else { %>
+                            <a href="/auth/linkedin" style="color: #0077b5; font-size: 11px; text-decoration: none; font-weight: 600;">Link OAuth ↗</a>
+                        <% } %>
+                    </div>
+                    <input type="text" id="linkedin" name="linkedin" value="<%= currentUser ? currentUser.linkedin : '' %>"
+                           placeholder="profile URL or handle"
+                           style="width: 100%; box-sizing: border-box; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13.5px;">
+                </div>
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <label for="portfolio" style="font-size: 13px; font-weight: 600; color: #334155;">Portfolio</label>
+                        <span style="color: #64748b; font-size: 11px;">Self-Reported</span>
+                    </div>
+                    <input type="text" id="portfolio" name="portfolio" value="<%= currentUser ? currentUser.portfolio : '' %>"
+                           placeholder="https://..."
+                           style="width: 100%; box-sizing: border-box; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13.5px;">
+                </div>
+            </div>
+
+            <!-- Skills -->
+            <div>
+                <label for="skills" style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">
+                    Technical Skills & Proficiency (Skill:Level, comma-separated)
+                </label>
+                <% 
+                    const currentSkillsStr = (currentUser && currentUser.skills) 
+                        ? currentUser.skills.map(s => `${s.name}:${s.level || 3}`).join(', ') 
+                        : '';
+                %>
+                <input type="text" id="skills" name="skills" value="<%= currentSkillsStr %>"
+                       placeholder="e.g. React:5, Node.js:4, MongoDB:4, Python:3"
+                       style="width: 100%; box-sizing: border-box; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px;">
+                <span style="font-size: 11.5px; color: #64748b; margin-top: 4px; display: block;">
+                    Format: <code>Skill:Level</code> from 1 (Beginner) to 5 (Expert). Example: <code>React:5, Node.js:4, Docker:3</code>
+                </span>
+            </div>
+
+            <!-- Projects (Multi-line) -->
+            <div>
+                <label for="projectsRaw" style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">
+                    Projects (One per line: Title | Description | Link | Tech Stack)
+                </label>
+                <%
+                    let projStr = "";
+                    if (currentUser && currentUser.projects && currentUser.projects.length > 0) {
+                        projStr = currentUser.projects.map(p => `${p.title || ''} | ${p.description || ''} | ${p.link || ''} | ${p.techStack || ''}`).join('\n');
+                    }
+                %>
+                <textarea id="projectsRaw" name="projectsRaw" rows="3" placeholder="DevPortal | Campus developer platform | https://github.com/my/project | React, Node.js"
+                          style="width: 100%; box-sizing: border-box; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13.5px; font-family: monospace;"><%= projStr %></textarea>
+                <span style="font-size: 11.5px; color: #64748b; margin-top: 4px; display: block;">Separate fields with pipe (<code>|</code>) character</span>
+            </div>
+
+            <!-- Past Hackathons (Multi-line) -->
+            <div>
+                <label for="pastHackathonsRaw" style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">
+                    Past Hackathons (One per line: Hackathon Name | Year | Project Title | Role | Placement)
+                </label>
+                <%
+                    let hackStr = "";
+                    if (currentUser && currentUser.pastHackathons && currentUser.pastHackathons.length > 0) {
+                        hackStr = currentUser.pastHackathons.map(h => `${h.name || ''} | ${h.year || ''} | ${h.projectTitle || ''} | ${h.role || ''} | ${h.placement || ''}`).join('\n');
+                    }
+                %>
+                <textarea id="pastHackathonsRaw" name="pastHackathonsRaw" rows="3" placeholder="Smart India Hackathon | 2025 | AI Traffic Router | Lead Developer | 1st Place"
+                          style="width: 100%; box-sizing: border-box; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13.5px; font-family: monospace;"><%= hackStr %></textarea>
+                <span style="font-size: 11.5px; color: #64748b; margin-top: 4px; display: block;">Separate fields with pipe (<code>|</code>) character</span>
+            </div>
+
+            <!-- Action Buttons -->
+            <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 10px;">
+                <a href="/profile" class="btn-large-outline" style="text-decoration: none; padding: 10px 20px; font-size: 14px; border-radius: 8px;">Cancel</a>
+                <button type="submit" class="btn-large-primary" style="padding: 10px 24px; font-size: 14px; font-weight: 600; border-radius: 8px; border: none; cursor: pointer; background: #2563eb; color: white;">Save Changes</button>
+            </div>
+
+        </form>
+    </div>
+
+</div>

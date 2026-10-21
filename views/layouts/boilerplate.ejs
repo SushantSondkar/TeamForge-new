@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title><%= typeof pageTitle !== 'undefined' ? pageTitle + ' · TeamForge' : 'TeamForge · Campus Hackathon & Project Teaming' %></title>
+
+    <meta name="csrf-token" content="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+    <link rel="stylesheet" href="/css/style.css">
+    <% if (typeof extraStyles !== 'undefined') { %>
+        <%- extraStyles %>
+    <% } %>
+</head>
+
+<body>
+
+    <%- include("../includes/navbar") %>
+
+    <div class="app-layout <%= (typeof hideSidebar !== 'undefined' && hideSidebar) ? 'app-layout-full' : '' %>">
+
+        <% if (typeof hideSidebar === 'undefined' || !hideSidebar) { %>
+            <%- include("../includes/sidebar") %>
+        <% } %>
+
+        <main class="main-content <%= (typeof hideSidebar !== 'undefined' && hideSidebar) ? 'main-content-full' : '' %>">
+            <%- body %>
+        </main>
+
+    </div>
+
+    <%- include("../includes/footer") %>
+
+    <% if (typeof extraScripts !== 'undefined') { %>
+        <%- extraScripts %>
+    <% } %>
+</body>
+</html>

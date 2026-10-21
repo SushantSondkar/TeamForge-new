@@ -1,0 +1,101 @@
+<% 
+    locals.hideSidebar = true;
+    locals.hideNavOptions = true;
+-%>
+<% layout("/layouts/boilerplate") -%>
+
+<div class="auth-page" style="max-width: 540px; margin: 40px auto; padding: 0 16px;">
+    
+    <div class="dashboard-card-new" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 36px 32px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);">
+        
+        <div style="text-align: center; margin-bottom: 24px;">
+            <div style="background: linear-gradient(135deg, #2563eb, #3b82f6); color: white; width: 48px; height: 48px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 20px; margin-bottom: 12px; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);">TF</div>
+            <h2 style="font-size: 22px; font-weight: 700; color: #0f172a; margin: 0 0 6px 0;">Create Student Account</h2>
+            <p style="color: #64748b; font-size: 13.5px; margin: 0;">Join K.K. Wagh's hackathon and project team network</p>
+        </div>
+
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div style="background-color: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; padding: 11px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
+                <span>⚠️</span>
+                <span><%= error %></span>
+            </div>
+        <% } %>
+
+        <form action="/signup" method="POST" style="display: flex; flex-direction: column; gap: 16px;">
+            <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+            
+            <div>
+                <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Full Name *</label>
+                <input type="text" name="name" required placeholder="e.g. Aaradhya Wabale"
+                       value="<%= typeof formData !== 'undefined' && formData.name ? formData.name : '' %>"
+                       style="width: 100%; box-sizing: border-box; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none;">
+            </div>
+
+            <div>
+                <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">College Email *</label>
+                <input type="email" name="email" required placeholder="e.g. rollno_dept@kkwagh.edu.in"
+                       value="<%= typeof formData !== 'undefined' && formData.email ? formData.email : '' %>"
+                       style="width: 100%; box-sizing: border-box; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none;">
+                <span style="display: block; font-size: 11.5px; color: #64748b; margin-top: 4px;">Must end in <strong>@kkwagh.edu.in</strong></span>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                <div>
+                    <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Department</label>
+                    <select name="department" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13.5px; background: white; outline: none;">
+                        <option value="">Select Department</option>
+                        <option value="Computer Engineering" <%= (typeof formData !== 'undefined' && formData.department === 'Computer Engineering') ? 'selected' : '' %>>Computer Engineering</option>
+                        <option value="Information Technology" <%= (typeof formData !== 'undefined' && formData.department === 'Information Technology') ? 'selected' : '' %>>Information Technology</option>
+                        <option value="AI & Data Science" <%= (typeof formData !== 'undefined' && formData.department === 'AI & Data Science') ? 'selected' : '' %>>AI & Data Science</option>
+                        <option value="Electronics & Telecom" <%= (typeof formData !== 'undefined' && formData.department === 'Electronics & Telecom') ? 'selected' : '' %>>Electronics & Telecom</option>
+                        <option value="Mechanical Engineering" <%= (typeof formData !== 'undefined' && formData.department === 'Mechanical Engineering') ? 'selected' : '' %>>Mechanical Engineering</option>
+                        <option value="Civil Engineering" <%= (typeof formData !== 'undefined' && formData.department === 'Civil Engineering') ? 'selected' : '' %>>Civil Engineering</option>
+                        <option value="Chemical Engineering" <%= (typeof formData !== 'undefined' && formData.department === 'Chemical Engineering') ? 'selected' : '' %>>Chemical Engineering</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Academic Year</label>
+                    <select name="year" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13.5px; background: white; outline: none;">
+                        <option value="">Select Year</option>
+                        <option value="FE" <%= (typeof formData !== 'undefined' && formData.year === 'FE') ? 'selected' : '' %>>FE (First Year)</option>
+                        <option value="SE" <%= (typeof formData !== 'undefined' && formData.year === 'SE') ? 'selected' : '' %>>SE (Second Year)</option>
+                        <option value="TE" <%= (typeof formData !== 'undefined' && formData.year === 'TE') ? 'selected' : '' %>>TE (Third Year)</option>
+                        <option value="BE" <%= (typeof formData !== 'undefined' && formData.year === 'BE') ? 'selected' : '' %>>BE (Final Year)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Core Skills & Proficiency (1 to 5)</label>
+                <input type="text" name="skillsRaw" placeholder="e.g. React:4, Node.js:5, Python:3"
+                       value="<%= typeof formData !== 'undefined' && formData.skillsRaw ? formData.skillsRaw : '' %>"
+                       style="width: 100%; box-sizing: border-box; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none;">
+                <span style="display: block; font-size: 11.5px; color: #64748b; margin-top: 4px;">Format: <code>Skill:Level</code> (1 = Beginner, 5 = Expert), separated by commas</span>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                <div>
+                    <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Password *</label>
+                    <input type="password" name="password" required placeholder="Min 6 characters"
+                           style="width: 100%; box-sizing: border-box; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none;">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Confirm Password *</label>
+                    <input type="password" name="confirmPassword" required placeholder="Re-enter password"
+                           style="width: 100%; box-sizing: border-box; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none;">
+                </div>
+            </div>
+
+            <button type="submit" class="btn-large-primary"
+                    style="margin-top: 10px; width: 100%; justify-content: center; padding: 12px; font-size: 14.5px; font-weight: 600; border-radius: 8px; background-color: #2563eb; color: #ffffff; border: none; cursor: pointer;">
+                Create Account
+            </button>
+        </form>
+
+        <div style="text-align: center; margin-top: 24px; font-size: 13.5px; color: #64748b;">
+            Already have an account? <a href="/login" style="color: #2563eb; text-decoration: none; font-weight: 600;">Log In</a>
+        </div>
+
+    </div>
+
+</div>

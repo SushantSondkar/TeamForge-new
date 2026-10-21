@@ -1,0 +1,533 @@
+<% layout("/layouts/boilerplate") -%>
+
+<div class="dashboard-new">
+
+    <!-- Active Team Status -->
+    <% if (latestTeam) { %>
+    <div class="dashboard-card-new full-width">
+        <div class="card-header-new">
+            <span class="label-text">ACTIVE TEAM STATUS</span>
+            <span class="badge badge-urgent"><%= latestTeam.theme ? latestTeam.theme.toUpperCase() : 'ACTIVE' %></span>
+        </div>
+        <h2 class="team-title"><%= latestTeam.projectName %></h2>
+        
+        <div class="team-stats-row">
+            <div class="stat-col">
+                <span class="stat-label">Current Role Needed</span>
+                <span class="stat-value"><%= (latestTeam.roles && latestTeam.roles.length > 0) ? latestTeam.roles[0].title : 'Open Role' %></span>
+            </div>
+            <div class="stat-col">
+                <span class="stat-label">Total Members</span>
+                <span class="stat-value"><%= typeof activeMemberCount !== 'undefined' ? activeMemberCount : (1 + (latestTeam.existingMembers ? latestTeam.existingMembers.length : 0)) %> / <%= latestTeam.teamSize %> Active</span>
+            </div>
+            <div class="stat-col">
+                <span class="stat-label">Project Deadline</span>
+                <span class="stat-value"><%= new Date(latestTeam.deadline).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) %></span>
+            </div>
+            <div class="stat-col" style="display: flex; justify-content: flex-end; align-items: center;">
+                <a href="/applications/team/<%= latestTeam._id %>" class="btn-small-outline" style="text-decoration: none; padding: 6px 14px; font-size: 13px; white-space: nowrap;">View Applications (<%= teamApplicationCount || 0 %>)</a>
+            </div>
+        </div>
+    </div>
+    <% } else { %>
+    <div class="dashboard-card-new full-width" style="text-align: center; padding: 40px 20px;">
+        <div class="card-header-new" style="justify-content: center; margin-bottom: 12px;">
+            <span class="label-text">ACTIVE TEAM STATUS</span>
+        </div>
+        <h2 class="team-title" style="margin-bottom: 8px;">No Active Team</h2>
+        <p style="color: #64748b; font-size: 14px; margin-bottom: 24px;">Create a team requirement to start finding suitable teammates.</p>
+        <a href="/team-requirement/new" class="btn-large-primary" style="display: inline-block; text-decoration: none;">+ Create Team Requirement</a>
+    </div>
+    <% } %>
+
+    <!-- Pending Requester Action Banner -->
+    <% if (typeof awaitingConfirmation !== 'undefined' && awaitingConfirmation && awaitingConfirmation.length > 0) { %>
+    <div class="dashboard-card-new full-width" style="border: 2px solid #6366f1; background: #eef2ff; margin-bottom: 24px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 40px; height: 40px; border-radius: 50%; background: #4f46e5; display: flex; align-items: center; justify-content: center; color: white;">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                </div>
+                <div>
+                    <strong style="color: #1e1b4b; font-size: 15px; display: block;">Action Required: Pending Match Confirmations (<%= awaitingConfirmation.length %>)</strong>
+                    <span style="color: #4338ca; font-size: 13px;">Accepting never locks. As the requester, you must confirm to officially lock the candidate and role for this event.</span>
+                </div>
+            </div>
+        </div>
+        <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 10px;">
+            <% awaitingConfirmation.forEach(act => { %>
+                <div style="background: white; border: 1px solid #c7d2fe; border-radius: 8px; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                    <div>
+                        <strong style="color: #1e293b; font-size: 14px;"><%= act.direction === 'INVITE' ? (act.receiverId ? act.receiverId.name : 'Candidate') : (act.teamRequirementId ? act.teamRequirementId.projectName : 'Team') %></strong>
+                        <div style="font-size: 12px; color: #64748b; margin-top: 2px;">
+                            <span>Role: <strong><%= act.role %></strong></span>
+                            · <span style="color: #e11d48; font-weight: 500;">Expires: <%= act.confirmationExpiresAt ? new Date(act.confirmationExpiresAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '24h' %></span>
+                        </div>
+                    </div>
+                    <form action="<%= act.direction === 'INVITE' ? ('/invites/' + act._id + '/confirm') : ('/applications/' + act._id + '/confirm') %>" method="POST" style="margin: 0;">
+                        <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                        <button type="submit" class="btn-small-primary" style="background: #4f46e5; border-color: #4f46e5; font-weight: 600; padding: 6px 16px; font-size: 13px;">🔒 Confirm & Lock Match</button>
+                    </form>
+                </div>
+            <% }); %>
+        </div>
+    </div>
+    <% } %>
+
+    <div class="dashboard-grid-new">
+
+        <!-- Recommended Candidates -->
+        <div class="dashboard-card-new">
+            <h3 class="card-title-new">Recommended Candidates</h3>
+            <div class="list-container">
+                <% if (recommendedCandidates && recommendedCandidates.length > 0) { %>
+                    <% recommendedCandidates.forEach(cand => { %>
+                        <div class="list-item">
+                            <div class="item-main">
+                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='12' fill='%23e2e8f0'/%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z' fill='%239ca3af'/%3E%3C/svg%3E" alt="Avatar" class="item-avatar">
+                                <div class="item-details">
+                                    <strong><%= cand.user.name %></strong>
+                                    <div class="item-meta-row" style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                                        <span class="tag tag-blue"><%= cand.user.role ? cand.user.role.toUpperCase() : 'CANDIDATE' %></span>
+                                        <span class="text-green" style="font-weight: 700;"><%= cand.score %>% Match</span>
+                                        <% if (cand.user.isGithubVerified) { %>
+                                            <span class="badge" style="background: #0f172a; color: #38bdf8; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 600;">✓ GitHub Verified</span>
+                                        <% } %>
+                                        <% if (cand.user.isLinkedinLinked) { %>
+                                            <span class="badge" style="background: #0077b5; color: #ffffff; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 600;">🔗 LinkedIn Linked</span>
+                                        <% } %>
+                                    </div>
+                                    <% if (cand.breakdown) { %>
+                                        <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; font-size: 11px;">
+                                            <span style="background: #eff6ff; color: #1d4ed8; padding: 1px 6px; border-radius: 4px; font-weight: 500;" title="Required skills score & preferred bonus">Skills: <%= Math.round(cand.breakdown.S * 100) %>%</span>
+                                            <span style="background: #f0fdf4; color: #15803d; padding: 1px 6px; border-radius: 4px; font-weight: 500;" title="GitHub verification + Peer endorsements">Cred: <%= Math.round(cand.breakdown.C * 100) %>%</span>
+                                            <span style="background: #faf5ff; color: #7e22ce; padding: 1px 6px; border-radius: 4px; font-weight: 500;" title="Wins + Reviews + Shortlists">Rep: <%= Math.round(cand.breakdown.R * 100) %>%</span>
+                                            <span style="background: #fefce8; color: #a16207; padding: 1px 6px; border-radius: 4px; font-weight: 500;" title="Recent Activity">Active: <%= Math.round(cand.breakdown.T * 100) %>%</span>
+                                        </div>
+                                    <% } %>
+                                </div>
+                            </div>
+                            <% if (cand.isInvited) { %>
+                                <button class="btn-small-primary" disabled style="background-color: #10b981; border-color: #10b981;">Invited</button>
+                            <% } else { %>
+                                <button class="btn-small-primary btn-invite-candidate"
+                                        data-receiver-id="<%= cand.user._id %>"
+                                        data-team-id="<%= latestTeam ? latestTeam._id : '' %>"
+                                        data-role="<%= (latestTeam && latestTeam.roles && latestTeam.roles[0]) ? latestTeam.roles[0].title : '' %>">
+                                    Invite
+                                </button>
+                            <% } %>
+                        </div>
+                    <% }); %>
+                <% } else { %>
+                    <div class="list-item">
+                        <span class="text-gray" style="padding: 10px 0;">No matching candidates found.</span>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+
+        <!-- Recommended Opportunities -->
+        <div class="dashboard-card-new">
+            <h3 class="card-title-new">Recommended Opportunities</h3>
+            <div class="list-container">
+                <% if (recommendedOpportunities && recommendedOpportunities.length > 0) { %>
+                    <% recommendedOpportunities.forEach(opp => { %>
+                        <div class="list-item">
+                            <div class="item-main">
+                                <div class="item-details">
+                                    <strong><%= opp.team.projectName %></strong>
+                                    <div class="item-meta-row">
+                                        <span class="text-gray"><%= opp.role.title %></span>
+                                        <span class="text-blue" style="font-weight: 700;"><%= opp.score %>% Match</span>
+                                    </div>
+                                    <% if (opp.breakdown) { %>
+                                        <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; font-size: 11px;">
+                                            <span style="background: #eff6ff; color: #1d4ed8; padding: 1px 6px; border-radius: 4px;">Skills: <%= Math.round(opp.breakdown.S * 100) %>%</span>
+                                            <span style="background: #f0fdf4; color: #15803d; padding: 1px 6px; border-radius: 4px;">Cred: <%= Math.round(opp.breakdown.C * 100) %>%</span>
+                                        </div>
+                                    <% } %>
+                                </div>
+                            </div>
+                            <% if (opp.isApplied) { %>
+                                <button class="btn-small-outline" disabled style="background-color: #10b981; color: white; border-color: #10b981;">Applied</button>
+                            <% } else { %>
+                                <button class="btn-small-outline btn-apply-opportunity"
+                                        data-team-id="<%= opp.team._id %>"
+                                        data-role="<%= opp.role.title %>">
+                                    Apply
+                                </button>
+                            <% } %>
+                        </div>
+                    <% }); %>
+                <% } else { %>
+                    <div class="list-item">
+                        <span class="text-gray" style="padding: 10px 0;">No matching opportunities found.</span>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+
+        <!-- Active Invites Sent -->
+        <div class="dashboard-card-new">
+            <h3 class="card-title-new">Active Invites Sent</h3>
+            <div class="list-container">
+                <% if (sentInvites && sentInvites.length > 0) { %>
+                    <% sentInvites.forEach(inv => { %>
+                        <div class="list-item">
+                            <div class="item-main">
+                                <div class="item-details">
+                                    <strong><%= inv.receiverId ? inv.receiverId.name : 'Candidate' %></strong>
+                                    <div class="item-meta-row">
+                                        <span class="text-gray"><%= inv.role || 'Team Member' %></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <% if (inv.status === 'ACCEPTED') { %>
+                                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+                                        <span class="badge badge-success">ACCEPTED</span>
+                                        <form action="/invites/<%= inv._id %>/confirm" method="POST" style="margin: 0;">
+                                            <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                                            <button type="submit" class="btn-small-primary" style="background: #4f46e5; border-color: #4f46e5; font-size: 11px; padding: 3px 8px;">Confirm & Lock</button>
+                                        </form>
+                                    </div>
+                                <% } else if (inv.status === 'LOCKED') { %>
+                                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+                                        <span class="badge" style="background: #059669; color: #fff;">🔒 LOCKED</span>
+                                        <% if (inv.senderContactOptIn && inv.receiverContactOptIn) { %>
+                                            <div style="font-size: 11px; color: #065f46; background: #ecfdf5; padding: 4px 8px; border-radius: 4px; text-align: right;">
+                                                <strong>Email:</strong> <%= inv.receiverId ? inv.receiverId.email : '' %>
+                                                <% if (inv.receiverId && inv.receiverId.github) { %><br><a href="https://github.com/<%= inv.receiverId.github %>" target="_blank" style="color: #0284c7;">github/<%= inv.receiverId.github %></a><% } %>
+                                            </div>
+                                        <% } else { %>
+                                            <form action="/invites/<%= inv._id %>/contact-consent" method="POST" style="margin: 0;">
+                                                <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                                                <% if (inv.senderContactOptIn) { %>
+                                                    <span style="font-size: 11px; color: #64748b;">Waiting for candidate consent</span>
+                                                <% } else { %>
+                                                    <button type="submit" class="btn-small-outline" style="font-size: 10px; padding: 2px 6px;">Share Contacts</button>
+                                                <% } %>
+                                            </form>
+                                        <% } %>
+                                    </div>
+                                <% } else if (inv.status === 'ROLE_FILLED') { %>
+                                    <span class="badge" style="background: #64748b; color: #fff;">ROLE FILLED</span>
+                                <% } else if (inv.status === 'DECLINED') { %>
+                                    <span class="badge badge-danger">DECLINED</span>
+                                <% } else if (inv.status === 'EXPIRED') { %>
+                                    <span class="badge badge-danger">EXPIRED</span>
+                                <% } else { %>
+                                    <span class="badge badge-warning">PENDING</span>
+                                <% } %>
+                            </div>
+                        </div>
+                    <% }); %>
+                <% } else { %>
+                    <div class="list-item">
+                        <span class="text-gray" style="padding: 10px 0;">No invites sent yet.</span>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+
+        <!-- New Invites Received -->
+        <div class="dashboard-card-new" id="invites-received-card">
+            <h3 class="card-title-new">New Invites Received</h3>
+            <div class="list-container">
+                <% if (receivedInvites && receivedInvites.length > 0) { %>
+                    <% receivedInvites.forEach(inv => { %>
+                        <div class="list-item" data-invite-id="<%= inv._id %>">
+                            <div class="item-main">
+                                <div class="item-details">
+                                    <strong><%= inv.teamRequirementId ? inv.teamRequirementId.projectName : (inv.senderId ? inv.senderId.name : 'Project Team') %></strong>
+                                    <div class="item-meta-row">
+                                        <span class="text-gray"><%= inv.role || 'Collaborator' %></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <% if (inv.status === 'PENDING') { %>
+                                    <div class="action-buttons-small">
+                                        <form action="/invites/<%= inv._id %>/accept" method="POST" style="display:inline; margin:0;">
+                                            <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                                            <button type="submit" class="btn-small-primary btn-accept-invite">Accept</button>
+                                        </form>
+                                        <form action="/invites/<%= inv._id %>/decline" method="POST" style="display:inline; margin:0;">
+                                            <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                                            <button type="submit" class="btn-small-outline btn-decline-invite">Decline</button>
+                                        </form>
+                                    </div>
+                                <% } else if (inv.status === 'ACCEPTED') { %>
+                                    <div style="text-align: right;">
+                                        <span class="badge badge-success">ACCEPTED</span>
+                                        <span style="font-size: 11px; color: #64748b; display: block; margin-top: 2px;">Awaiting lead confirmation</span>
+                                    </div>
+                                <% } else if (inv.status === 'LOCKED') { %>
+                                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+                                        <span class="badge" style="background: #059669; color: #fff;">🔒 LOCKED</span>
+                                        <% if (inv.senderContactOptIn && inv.receiverContactOptIn) { %>
+                                            <div style="font-size: 11px; color: #065f46; background: #ecfdf5; padding: 4px 8px; border-radius: 4px; text-align: right;">
+                                                <strong>Lead:</strong> <%= inv.senderId ? inv.senderId.email : '' %>
+                                                <% if (inv.senderId && inv.senderId.github) { %><br><a href="https://github.com/<%= inv.senderId.github %>" target="_blank" style="color: #0284c7;">github/<%= inv.senderId.github %></a><% } %>
+                                            </div>
+                                        <% } else { %>
+                                            <form action="/invites/<%= inv._id %>/contact-consent" method="POST" style="margin: 0;">
+                                                <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                                                <% if (inv.receiverContactOptIn) { %>
+                                                    <span style="font-size: 11px; color: #64748b;">Waiting for lead consent</span>
+                                                <% } else { %>
+                                                    <button type="submit" class="btn-small-outline" style="font-size: 10px; padding: 2px 6px;">Share Contacts</button>
+                                                <% } %>
+                                            </form>
+                                        <% } %>
+                                    </div>
+                                <% } else { %>
+                                    <span class="badge badge-secondary"><%= inv.status %></span>
+                                <% } %>
+                            </div>
+                        </div>
+                    <% }); %>
+                <% } else { %>
+                    <div class="list-item">
+                        <span class="text-gray" style="padding: 10px 0;">No invites received yet.</span>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+
+        <!-- Pending Applications -->
+        <div class="dashboard-card-new">
+            <h3 class="card-title-new">Pending Applications</h3>
+            <div class="list-container">
+                <% if (myApplications && myApplications.length > 0) { %>
+                    <% myApplications.forEach(app => { %>
+                        <div class="list-item">
+                            <div class="item-main">
+                                <div class="item-details">
+                                    <strong><%= app.teamRequirementId ? app.teamRequirementId.projectName : 'Project Team' %></strong>
+                                    <div class="item-meta-row">
+                                        <span class="text-gray"><%= app.role || 'Member' %></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <% if (app.status === 'ACCEPTED') { %>
+                                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+                                        <span class="badge badge-success">ACCEPTED</span>
+                                        <form action="/applications/<%= app._id %>/confirm" method="POST" style="margin: 0;">
+                                            <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                                            <button type="submit" class="btn-small-primary" style="background: #4f46e5; border-color: #4f46e5; font-size: 11px; padding: 3px 8px;">Confirm Spot</button>
+                                        </form>
+                                    </div>
+                                <% } else if (app.status === 'LOCKED') { %>
+                                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+                                        <span class="badge" style="background: #059669; color: #fff;">🔒 LOCKED</span>
+                                        <% if (app.senderContactOptIn && app.receiverContactOptIn) { %>
+                                            <div style="font-size: 11px; color: #065f46; background: #ecfdf5; padding: 4px 8px; border-radius: 4px; text-align: right;">
+                                                <strong>Lead:</strong> <%= app.receiverId ? app.receiverId.email : '' %>
+                                                <% if (app.receiverId && app.receiverId.github) { %><br><a href="https://github.com/<%= app.receiverId.github %>" target="_blank" style="color: #0284c7;">github/<%= app.receiverId.github %></a><% } %>
+                                            </div>
+                                        <% } else { %>
+                                            <form action="/applications/<%= app._id %>/contact-consent" method="POST" style="margin: 0;">
+                                                <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                                                <% if (app.senderContactOptIn) { %>
+                                                    <span style="font-size: 11px; color: #64748b;">Waiting for lead consent</span>
+                                                <% } else { %>
+                                                    <button type="submit" class="btn-small-outline" style="font-size: 10px; padding: 2px 6px;">Share Contacts</button>
+                                                <% } %>
+                                            </form>
+                                        <% } %>
+                                    </div>
+                                <% } else if (app.status === 'ROLE_FILLED') { %>
+                                    <span class="badge" style="background: #64748b; color: #fff;">ROLE FILLED</span>
+                                <% } else if (app.status === 'DECLINED' || app.status === 'REJECTED') { %>
+                                    <span class="badge badge-danger">DECLINED</span>
+                                <% } else if (app.status === 'EXPIRED') { %>
+                                    <span class="badge badge-danger">EXPIRED</span>
+                                <% } else { %>
+                                    <span class="badge badge-warning">UNDER REVIEW</span>
+                                <% } %>
+                            </div>
+                        </div>
+                    <% }); %>
+                <% } else { %>
+                    <div class="list-item">
+                        <span class="text-gray" style="padding: 10px 0;">No applications yet.</span>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+
+        <!-- Event Deadlines -->
+        <div class="dashboard-card-new">
+            <h3 class="card-title-new">Event Deadlines</h3>
+            <div class="list-container">
+                <% if (typeof upcomingDeadlines !== 'undefined' && upcomingDeadlines && upcomingDeadlines.length > 0) { %>
+                    <% upcomingDeadlines.forEach(evt => { %>
+                        <%
+                            const now = new Date();
+                            const dl = new Date(evt.deadline);
+                            const diffDays = Math.ceil((dl - now) / (1000 * 60 * 60 * 24));
+                            let badgeClass = "badge-success-light";
+                            let badgeText = "OPEN";
+                            let timeText = diffDays > 0 ? (diffDays + (diffDays === 1 ? " Day Left" : " Days Left")) : "Deadline Today";
+                            if (diffDays <= 1) {
+                                badgeClass = "badge-urgent";
+                                badgeText = "CLOSING SOON";
+                            } else if (diffDays <= 3) {
+                                badgeClass = "badge-warning";
+                                badgeText = "CLOSING SOON";
+                            }
+                        %>
+                        <div class="list-item">
+                            <div class="item-main">
+                                <div class="item-details">
+                                    <strong><a href="/events/<%= evt._id %>" style="color: inherit; text-decoration: none;"><%= evt.name %></a></strong>
+                                    <div class="item-meta-row">
+                                        <span class="text-gray"><%= timeText %> · <%= dl.toLocaleDateString() %></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <span class="badge <%= badgeClass %>"><%= badgeText %></span>
+                        </div>
+                    <% }); %>
+                <% } else { %>
+                    <div class="list-item">
+                        <span class="text-gray" style="padding: 10px 0;">No upcoming event deadlines.</span>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Promoted Hackathons & Events Section -->
+    <div class="dashboard-card-new full-width" style="margin-top: 24px; padding: 24px; border: 1px solid #e0e7ff; background: linear-gradient(to right bottom, #ffffff, #f5f3ff);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 10px;">
+            <div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="background: #4f46e5; color: white; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; text-transform: uppercase;">Promoted</span>
+                    <h3 style="font-size: 18px; font-weight: 700; color: #0f172a; margin: 0;">Featured Campus Hackathons</h3>
+                </div>
+                <p style="color: #64748b; font-size: 13.5px; margin: 4px 0 0 0;">Sponsored competitions and verified hackathons seeking KKWIEER student teams.</p>
+            </div>
+            <a href="/events" class="btn-small-outline" style="text-decoration: none; font-size: 13px; padding: 6px 14px; border-radius: 6px; background: white;">All Events &rarr;</a>
+        </div>
+
+        <% if (typeof promotedEvents !== 'undefined' && promotedEvents && promotedEvents.length > 0) { %>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px;">
+                <% promotedEvents.forEach(pe => { %>
+                    <div style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); display: flex; flex-direction: column; justify-content: space-between;">
+                        <div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <span style="background: #fdf2f8; color: #db2777; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px;">
+                                    🏆 <%= pe.prizePool ? pe.prizePool : 'Prize Pool Available' %>
+                                </span>
+                                <span style="font-size: 11.5px; color: #64748b; font-weight: 500;">
+                                    <%= pe.mode || 'Campus' %>
+                                </span>
+                            </div>
+                            <h4 style="font-size: 16px; font-weight: 700; color: #1e293b; margin: 0 0 4px 0;">
+                                <a href="/events/<%= pe._id %>" style="color: inherit; text-decoration: none;"><%= pe.name %></a>
+                            </h4>
+                            <% if (pe.promotedTagline) { %>
+                                <p style="font-size: 13px; color: #4338ca; font-weight: 500; margin: 0 0 10px 0; font-style: italic;">
+                                    "<%= pe.promotedTagline %>"
+                                </p>
+                            <% } %>
+                            <div style="font-size: 12.5px; color: #64748b; margin-bottom: 14px;">
+                                Organizer: <strong style="color: #334155;"><%= pe.organizer %></strong> · Date: <%= new Date(pe.date).toLocaleDateString() %>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <a href="/team-requirement/new?eventId=<%= pe._id %>" class="btn-small-primary" style="text-decoration: none; font-size: 12px; padding: 6px 12px; border-radius: 6px; flex: 1; text-align: center;">
+                                + Build Team
+                            </a>
+                            <a href="/events/<%= pe._id %>" class="btn-small-outline" style="text-decoration: none; font-size: 12px; padding: 6px 12px; border-radius: 6px; text-align: center;">
+                                Details
+                            </a>
+                        </div>
+                    </div>
+                <% }) %>
+            </div>
+        <% } else { %>
+            <div style="background: white; border: 1px dashed #cbd5e1; border-radius: 12px; padding: 24px; text-align: center;">
+                <p style="color: #64748b; font-size: 13.5px; margin: 0 0 10px 0;">Organizing a departmental or club hackathon? Get verified organizer status to promote your competition here.</p>
+                <a href="/organizer/apply" class="btn-small-primary" style="text-decoration: none; font-size: 13px; padding: 8px 16px; border-radius: 6px;">
+                    Apply for Organizer Status
+                </a>
+            </div>
+        <% } %>
+    </div>
+
+    <!-- Campus Success Stories Section -->
+    <div class="dashboard-card-new full-width" style="margin-top: 24px; padding: 24px;">
+        <div style="margin-bottom: 20px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="background: #fef3c7; color: #b45309; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; text-transform: uppercase;">Proven Impact</span>
+                <h3 style="font-size: 18px; font-weight: 700; color: #0f172a; margin: 0;">Campus Hackathon Success Stories</h3>
+            </div>
+            <p style="color: #64748b; font-size: 13.5px; margin: 4px 0 0 0;">How KKWIEER students formed winning teams using honest skill verification on TeamForge.</p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(310px, 1fr)); gap: 18px;">
+            <!-- Story 1 -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                        <span style="font-weight: 700; font-size: 15px; color: #0f172a;">Team ByteCraft</span>
+                        <span style="background: #e0e7ff; color: #4338ca; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 10px;">SIH 2025 Finalists</span>
+                    </div>
+                    <p style="font-size: 13.5px; color: #334155; line-height: 1.5; font-style: italic; margin-bottom: 14px;">
+                        "We needed an experienced backend and ML developer with proven skills. TeamForge's GitHub verification and peer ratings let us form our full team in under 48 hours without misaligned expectations."
+                    </p>
+                </div>
+                <div style="border-top: 1px solid #e2e8f0; padding-top: 10px; font-size: 12px; color: #64748b;">
+                    <strong>Tanmay B.</strong> · Computer Dept (TE)
+                </div>
+            </div>
+
+            <!-- Story 2 -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                        <span style="font-weight: 700; font-size: 15px; color: #0f172a;">Team AgroSense</span>
+                        <span style="background: #fef3c7; color: #b45309; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 10px;">PCCOE 1st Place</span>
+                    </div>
+                    <p style="font-size: 13.5px; color: #334155; line-height: 1.5; font-style: italic; margin-bottom: 14px;">
+                        "The double-blind peer review system kept everyone accountable. Knowing teammates had high reliability scores gave us total confidence going into a 36-hour non-stop hackathon."
+                    </p>
+                </div>
+                <div style="border-top: 1px solid #e2e8f0; padding-top: 10px; font-size: 12px; color: #64748b;">
+                    <strong>Sneha P.</strong> · AI & Data Science (SE)
+                </div>
+            </div>
+
+            <!-- Story 3 -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                        <span style="font-weight: 700; font-size: 15px; color: #0f172a;">Team CyberKnights</span>
+                        <span style="background: #dcfce7; color: #15803d; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 10px;">Nashik Cyber Winners</span>
+                    </div>
+                    <p style="font-size: 13.5px; color: #334155; line-height: 1.5; font-style: italic; margin-bottom: 14px;">
+                        "Event-specific locking solved the biggest campus team problem: people dropping out at the last minute because they double-booked multiple teams. Every teammate was locked in."
+                    </p>
+                </div>
+                <div style="border-top: 1px solid #e2e8f0; padding-top: 10px; font-size: 12px; color: #64748b;">
+                    <strong>Aditya K.</strong> · Information Technology (BE)
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Actions -->
+    <div class="bottom-actions-row">
+        <a href="/team-requirement/new" class="btn-large-primary">+ Create Team Requirement</a>
+        <a href="/discover" class="btn-large-outline">Browse Opportunities</a>
+    </div>
+
+</div>
+<script src='/js/dashboard.js'></script>
+
