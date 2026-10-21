@@ -7,7 +7,7 @@ const requireLogin = require("../middleware/auth");
 // -------------------------------------------------------------
 // 1. GET /events - List all events
 // -------------------------------------------------------------
-router.get("/", async (req, res) => {
+router.get("/", requireLogin, async (req, res) => {
   try {
     const events = await Event.find().sort({ date: 1 });
     const currentUser = req.user || null;
