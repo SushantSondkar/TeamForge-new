@@ -83,7 +83,7 @@ router.post("/new", requireLogin, async (req, res) => {
     });
 
     await event.save();
-    console.log(`New event created: ${event.name} by ${req.user.email}`);
+    console.log(`New event created: ${event.name} by user ID ${req.user._id}`);
 
     res.redirect(`/events/${event._id}`);
   } catch (err) {

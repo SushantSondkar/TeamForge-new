@@ -191,7 +191,7 @@ router.post("/submit", requireLogin, async (req, res, next) => {
       await req.user.save();
     }
 
-    console.log("Team requirement created successfully:", teamRequirement._id, event ? ("for event: " + event.name) : "without specific event", "by:", req.user.email);
+    console.log("Team requirement created successfully:", teamRequirement._id, event ? ("for event: " + event.name) : "without specific event", "by user ID:", req.user._id);
     res.redirect("/?teamId=" + teamRequirement._id);
   } catch (err) {
     console.error("Database or Validation Error:", err.message);

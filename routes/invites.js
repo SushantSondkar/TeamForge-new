@@ -104,7 +104,7 @@ router.post("/send", requireLogin, actionLimiter, async (req, res) => {
       direction: "INVITE"
     });
 
-    console.log(`Unified Action created: INVITE from ${currentUser.name} to ${candidate.name} for ${team.projectName}`);
+    console.log(`Unified Action created: INVITE action ID ${action._id} for team requirement ${team._id}`);
 
     if (req.xhr || req.headers.accept?.includes("application/json") || req.is("json")) {
       return res.json({
@@ -134,7 +134,7 @@ router.post("/send", requireLogin, actionLimiter, async (req, res) => {
 router.post("/:id/accept", requireLogin, async (req, res) => {
   try {
     const action = await acceptAction(req.params.id, req.user._id);
-    console.log(`Action ${action._id} ACCEPTED by ${req.user.name}. Awaiting requester confirmation.`);
+    console.log(`Action ${action._id} ACCEPTED by user ID ${req.user._id}. Awaiting requester confirmation.`);
 
     if (req.xhr || req.headers.accept?.includes("application/json") || req.is("json")) {
       return res.json({ success: true, status: "ACCEPTED", message: "Accepted. Awaiting requester confirmation." });
@@ -157,7 +157,7 @@ router.post("/:id/accept", requireLogin, async (req, res) => {
 router.post("/:id/confirm", requireLogin, async (req, res) => {
   try {
     const action = await confirmAction(req.params.id, req.user._id);
-    console.log(`Action ${action._id} CONFIRMED & LOCKED by ${req.user.name}.`);
+    console.log(`Action ${action._id} CONFIRMED & LOCKED by user ID ${req.user._id}.`);
 
     if (req.xhr || req.headers.accept?.includes("application/json") || req.is("json")) {
       return res.json({ success: true, status: "LOCKED", message: "Match officially locked for this event." });
@@ -180,7 +180,7 @@ router.post("/:id/confirm", requireLogin, async (req, res) => {
 router.post("/:id/decline", requireLogin, async (req, res) => {
   try {
     const action = await declineAction(req.params.id, req.user._id);
-    console.log(`Action ${action._id} DECLINED by ${req.user.name}`);
+    console.log(`Action ${action._id} DECLINED by user ID ${req.user._id}.`);
 
     if (req.xhr || req.headers.accept?.includes("application/json") || req.is("json")) {
       return res.json({ success: true, status: "DECLINED" });

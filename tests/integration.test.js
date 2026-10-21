@@ -717,7 +717,7 @@ async function runTests() {
 
     // 9.1: SuccessStory model validation
     const validStory = new SuccessStory({
-      teamName: "Alpha_coders",
+      teamName: "CampusInnovators",
       eventName: "EQUINOX 2026",
       memberUserIds: [studentA._id, studentB._id],
       summary: "Built a real-time IoT monitoring dashboard using Node and React.",
@@ -725,13 +725,13 @@ async function runTests() {
     });
     await validStory.save();
     assert.strictEqual(validStory.approved, false, "SuccessStory must default to approved: false");
-    assert.strictEqual(validStory.teamName, "Alpha_coders");
+    assert.strictEqual(validStory.teamName, "CampusInnovators");
     assert.strictEqual(validStory.memberUserIds.length, 2);
 
     // 9.2: Summary max length 280 constraint
     const longSummary = "a".repeat(281);
     const invalidStory = new SuccessStory({
-      teamName: "Alpha_coders",
+      teamName: "CampusInnovators",
       eventName: "EQUINOX 2026",
       memberUserIds: [studentA._id],
       summary: longSummary,

@@ -348,24 +348,12 @@ async function confirmAction(actionId, userId) {
   );
 
   if (!updatedTeam) {
-    // If atomic findOneAndUpdate failed, check why: was the role already 0 or title variant?
-    const checkRole = (team.roles || []).find(r => r.title.toLowerCase().trim() === action.role.toLowerCase().trim());
-    if (checkRole && checkRole.openings <= 0) {
-      throw new Error("This role has no openings remaining.");
-    }
-    // Fallback: direct decrement if title match was loose
-    if (checkRole && checkRole.openings > 0) {
-      checkRole.openings -= 1;
-      await team.save();
-      if (checkRole.openings === 0) roleFilled = true;
-    } else {
-      throw new Error("This role has no openings remaining.");
-    }
-  } else {
-    const updatedRole = updatedTeam.roles.find(r => r.title.toLowerCase().trim() === action.role.toLowerCase().trim());
-    if (updatedRole && updatedRole.openings === 0) {
-      roleFilled = true;
-    }
+    throw new Error("This role has no openings remaining.");
+  }
+
+  const updatedRole = updatedTeam.roles.find(r => r.title.toLowerCase().trim() === action.role.toLowerCase().trim());
+  if (updatedRole && updatedRole.openings === 0) {
+    roleFilled = true;
   }
 
   // Lock candidate for this event only
@@ -388,7 +376,7 @@ async function confirmAction(actionId, userId) {
       teamRequirementId: team._id,
       role: action.role,
       _id: { $ne: action._id },
-      status: { $in: ["PENDING", "ACCEPTED"] }
+      status: "PENDING"
     });
 
     for (const other of otherActions) {

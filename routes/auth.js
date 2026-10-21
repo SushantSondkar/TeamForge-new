@@ -308,7 +308,7 @@ router.post("/signup", authLimiter, async (req, res) => {
     });
 
     await newUser.save();
-    console.log(`New user registered (pending verification): ${newUser.name} (${newUser.email})`);
+    console.log(`New user registered (pending verification): user ID ${newUser._id}`);
 
     // Send verification email with raw token link (raw token exists only in emailed link)
     try {
@@ -386,7 +386,7 @@ router.get("/verify-email", async (req, res) => {
     user.emailVerificationExpires = null;
     await user.save();
 
-    console.log(`Email successfully verified for ${user.email}`);
+    console.log(`Email successfully verified for user ID ${user._id}`);
 
     return res.render("verify-email", {
       success: true,
@@ -544,7 +544,7 @@ router.post("/login", authLimiter, async (req, res) => {
       }
       req.session.userId = user._id;
       req.session.createdAt = new Date();
-      console.log(`User logged in: ${user.name} (${user.email}) at ${user.lastActive}`);
+      console.log(`User logged in: user ID ${user._id} at ${user.lastActive}`);
       res.redirect("/dashboard");
     });
   } catch (err) {

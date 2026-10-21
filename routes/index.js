@@ -13,6 +13,7 @@ const {
   getRecommendedOpportunities,
   searchTeamRequirements,
   getAvailableFilterOptions
+} = require('../utils/recommendations');
 const requireLogin = require('../middleware/auth');
 
 const ALLOWED_DEPARTMENTS = [
@@ -474,7 +475,7 @@ router.post("/profile/edit", requireLogin, async (req, res) => {
 
     user.lastActive = new Date();
     await user.save();
-    console.log(`Profile updated for user: ${user.email} (completeness: ${user.completenessPercentage}%)`);
+    console.log(`Profile updated for user ID: ${user._id} (completeness: ${user.completenessPercentage}%)`);
     req.session.success = "Profile saved successfully!";
     res.redirect("/profile?success=" + encodeURIComponent("Profile saved successfully!"));
   } catch (err) {

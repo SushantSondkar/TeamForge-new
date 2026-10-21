@@ -1,13 +1,14 @@
 const User = require("./User");
 const bcrypt = require("bcryptjs");
+const crypto = require("crypto");
 
-const defaultPasswordHash = bcrypt.hashSync("test123", 10);
+let seedPasswordHash = null;
 
 const initialCandidates = [
   {
     name: "Aaradhya Wabale",
     email: "aaradhya@demo.local",
-    password: defaultPasswordHash,
+    password: seedPasswordHash,
     role: "Lead Coordinator",
     skills: [
       { name: "JavaScript", level: 5 },
@@ -27,7 +28,7 @@ const initialCandidates = [
   {
     name: "Harsh Dhavane",
     email: "harsh@demo.local",
-    password: defaultPasswordHash,
+    password: seedPasswordHash,
     role: "React Developer",
     skills: [
       { name: "React", level: 5 },
@@ -51,7 +52,7 @@ const initialCandidates = [
   {
     name: "Gayatri Jadhav",
     email: "gayatri@demo.local",
-    password: defaultPasswordHash,
+    password: seedPasswordHash,
     role: "Python Specialist",
     skills: [
       { name: "Python", level: 5 },
@@ -74,7 +75,7 @@ const initialCandidates = [
   {
     name: "Sanket Pawar",
     email: "sanket@demo.local",
-    password: defaultPasswordHash,
+    password: seedPasswordHash,
     role: "UI-UX Designer",
     skills: [
       { name: "Figma", level: 5 },
@@ -97,7 +98,7 @@ const initialCandidates = [
   {
     name: "Kalpesh Shinde",
     email: "kalpesh@demo.local",
-    password: defaultPasswordHash,
+    password: seedPasswordHash,
     role: "Backend Developer",
     skills: [
       { name: "Node.js", level: 4 },
@@ -117,7 +118,7 @@ const initialCandidates = [
   {
     name: "Atmaj Gaikwad",
     email: "atmaj@demo.local",
-    password: defaultPasswordHash,
+    password: seedPasswordHash,
     role: "DevOps Engineer",
     skills: [
       { name: "Docker", level: 5 },
@@ -136,7 +137,7 @@ const initialCandidates = [
   {
     name: "Bhakti Lad",
     email: "bhakti@demo.local",
-    password: defaultPasswordHash,
+    password: seedPasswordHash,
     role: "QA Engineer",
     skills: [
       { name: "Testing", level: 5 },
@@ -155,7 +156,7 @@ const initialCandidates = [
   {
     name: "Rohan Patil",
     email: "rohan@demo.local",
-    password: defaultPasswordHash,
+    password: seedPasswordHash,
     role: "Junior Web Developer",
     skills: [
       { name: "HTML", level: 4 },
@@ -170,11 +171,11 @@ const initialCandidates = [
     lastActive: new Date(),
     lockedEvents: []
   },
-  // Condition 2 Test User: Has all skills for Alpha_coders, but locked into Alpha_coders already!
+  // Condition 2 Test User: Has all skills for Campus_automation, but locked into Campus_automation already!
   {
     name: "Pooja Deshmukh",
     email: "pooja@demo.local",
-    password: defaultPasswordHash,
+    password: seedPasswordHash,
     role: "Senior Cloud Architect",
     skills: [
       { name: "System Design", level: 5 },
@@ -188,13 +189,13 @@ const initialCandidates = [
     reviewCount: 15,
     availability: 1.0,
     lastActive: new Date(),
-    lockedEvents: ["Alpha_coders"]
+    lockedEvents: ["Campus_automation"]
   },
   // Edge Case Test User: Inactive for 35 days (Activity should be 0)
   {
     name: "Devon Lane",
     email: "devon@demo.local",
-    password: defaultPasswordHash,
+    password: seedPasswordHash,
     role: "Systems Specialist",
     skills: [
       { name: "System Design", level: 4 },
@@ -213,7 +214,7 @@ const initialCandidates = [
   {
     name: "Neha Sharma",
     email: "neha@demo.local",
-    password: defaultPasswordHash,
+    password: seedPasswordHash,
     role: "Associate Engineer",
     skills: [
       { name: "System Design", level: 3 },
@@ -359,6 +360,12 @@ async function seedUsers() {
     return;
   }
   try {
+    const randomPassword = crypto.randomBytes(16).toString("hex");
+    seedPasswordHash = await bcrypt.hash(randomPassword, 10);
+    initialCandidates.forEach(cand => {
+      cand.password = seedPasswordHash;
+    });
+
     const existingCount = await User.countDocuments();
     if (existingCount === 0) {
       await User.insertMany(initialCandidates);
@@ -416,8 +423,8 @@ async function seedUsers() {
       }
     }
 
-    // Ensure Alpha_coders is attributed to Aaradhya Wabale and linked to defaultEvent
-    let alphaTeam = await TeamRequirement.findOne({ projectName: "Alpha_coders" });
+    // Ensure Campus_automation is attributed to Aaradhya Wabale and linked to defaultEvent
+    let alphaTeam = await TeamRequirement.findOne({ projectName: "Campus_automation" });
     if (alphaTeam) {
       let changed = false;
       if (aaradhya && !alphaTeam.createdBy) {
@@ -446,7 +453,7 @@ async function seedUsers() {
       }
     }
 
-    // Seed sample applications for Alpha_coders (so team owner can view applicants)
+    // Seed sample applications for Campus_automation (so team owner can view applicants)
     if (alphaTeam && harsh && sanket) {
       const existingHarshApp = await Application.findOne({ applicantId: harsh._id, teamRequirementId: alphaTeam._id });
       if (!existingHarshApp) {

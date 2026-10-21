@@ -52,7 +52,7 @@ router.post("/apply", requireLogin, actionLimiter, async (req, res) => {
       direction: "APPLY"
     });
 
-    console.log(`Unified Action created: APPLY from ${currentUser.name} to team ${team.projectName} for role ${roleObj.title}`);
+    console.log(`Unified Action created: APPLY action ID ${action._id} for team requirement ${team._id}`);
 
     if (req.xhr || req.headers.accept?.includes("application/json") || req.is("json")) {
       return res.json({
