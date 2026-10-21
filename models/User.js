@@ -278,6 +278,24 @@ userSchema.virtual("completenessPercentage").get(function() {
   return Math.min(100, Math.round(score));
 });
 
+// Missing profile fields needed for 100% completeness
+userSchema.virtual("missingFields").get(function() {
+  const missing = [];
+  if (!this.department || !this.year) missing.push("Department & Academic Year");
+  if (!this.bio || this.bio.trim().length <= 10) missing.push("Bio (at least 10 characters)");
+  if (!this.skills || this.skills.length < 3) {
+    const count = this.skills ? this.skills.length : 0;
+    missing.push(`At least 3 technical skills (currently ${count}/3)`);
+  }
+  if (!this.isGithubVerified && !this.github && !this.isLinkedinLinked && !this.linkedin && !this.portfolio) {
+    missing.push("External developer link (GitHub, LinkedIn, or Portfolio)");
+  }
+  if ((!this.projects || this.projects.length === 0) && (!this.pastHackathons || this.pastHackathons.length === 0)) {
+    missing.push("At least one project or past hackathon");
+  }
+  return missing;
+});
+
 // Tiered Trust Badges getter: honest trust labels, never fake 100% verified
 userSchema.virtual("trustBadges").get(function() {
   const badges = [];

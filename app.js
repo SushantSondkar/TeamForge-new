@@ -26,6 +26,7 @@ try {
 const mongoose = require("mongoose");
 const connectDB = require("./models/db");
 const User = require("./models/User");
+const Notification = require("./models/Notification");
 
 // Import Routes
 const authRoutes = require("./routes/auth");
@@ -179,6 +180,16 @@ app.use(async (req, res, next) => {
   res.locals.appBaseUrl = (process.env.APP_BASE_URL || "http://localhost:8080").replace(/\/+$/, "");
   res.locals.currentPath = req.path || "";
 
+  // Session Flash Messages (transient success / error alerts)
+  res.locals.success = (req.session && req.session.success) || (req.query && req.query.success) || null;
+  res.locals.error = (req.session && req.session.error) || (req.query && req.query.error) || null;
+  if (req.session) {
+    delete req.session.success;
+    delete req.session.error;
+  }
+
+  res.locals.unreadNotificationCount = 0;
+
   // Hide sidebar and title bar nav options on authentication pages
   const isAuthPage = ["/signup", "/login", "/forgot-password", "/reset-password", "/verify-email", "/check-inbox", "/resend-verification"].some(p => req.path === p || req.path.startsWith(p + "/"));
   if (isAuthPage) {
@@ -206,17 +217,27 @@ app.use(async (req, res, next) => {
         }
         req.user = user;
         res.locals.currentUser = user;
+
+        // Compute unread notifications count for badge display
+        try {
+          res.locals.unreadNotificationCount = await Notification.countDocuments({ userId: user._id, read: false });
+        } catch (e) {
+          res.locals.unreadNotificationCount = 0;
+        }
       } else {
         req.user = null;
         res.locals.currentUser = null;
+        res.locals.unreadNotificationCount = 0;
       }
     } catch (err) {
       req.user = null;
       res.locals.currentUser = null;
+      res.locals.unreadNotificationCount = 0;
     }
   } else {
     req.user = null;
     res.locals.currentUser = null;
+    res.locals.unreadNotificationCount = 0;
   }
   next();
 });
@@ -233,23 +254,15 @@ app.use("/", reviewRoutes);
 app.use("/leaderboard", leaderboardRoutes);
 app.use("/", organizerRoutes);
 
-// 404 Route Handler
+// 404 Route Handler - Friendly Error Page
 app.use((req, res, next) => {
-  res.status(404).render("home", {
-    latestTeam: null,
-    recommendedCandidates: [],
-    recommendedOpportunities: [],
-    myApplications: [],
-    teamApplicationCount: 0,
-    sentInvites: [],
-    receivedInvites: [],
-    promotedEvents: [],
+  res.status(404).render("404", {
     currentUser: req.user || null,
-    error: "404 - Page Not Found"
+    pageTitle: "404 - Page Not Found"
   });
 });
 
-// Global Error Handling Middleware
+// Global Error Handling Middleware - Friendly 500 Page
 app.use((err, req, res, next) => {
   if (err.message && err.message.includes("CSRF token")) {
     console.warn("CSRF Warning:", err.message);
@@ -279,8 +292,12 @@ app.use((err, req, res, next) => {
     return res.status(400).send(`Validation Error: ${err.message}`);
   }
 
-  const { status = 500, message = "Internal Server Error" } = err;
-  res.status(status).send(message);
+  const status = typeof err.status === "number" ? err.status : 500;
+  res.status(status).render("500", {
+    currentUser: req.user || null,
+    pageTitle: "Server Error · TeamForge",
+    errorMessage: process.env.NODE_ENV === "production" ? "Something went wrong on our end. Please try again in a few moments." : err.message
+  });
 });
 
 // Start Server

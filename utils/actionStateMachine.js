@@ -11,8 +11,13 @@ const {
   actionReminder,
   actionClosingSoon,
   actionExpired,
-  confirmationTimeout
+  confirmationTimeout,
+  notificationEmail
 } = require("./emailTemplates");
+
+// In-memory 5-minute notification batching map: userId -> { timer, notifications: [], user }
+const pendingNotificationBatches = new Map();
+const NOTIF_BATCH_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
 
 /**
  * Safe email dispatcher respecting user.emailNotifications setting.
@@ -33,7 +38,79 @@ async function safeSendEmail(user, template) {
 }
 
 /**
- * Creates and logs a notification for a user.
+ * Flushes a specific user's pending notification batch and sends the digest email.
+ */
+async function flushUserBatch(userIdStr) {
+  const batch = pendingNotificationBatches.get(userIdStr);
+  if (!batch) return;
+  pendingNotificationBatches.delete(userIdStr);
+
+  try {
+    const user = batch.user || await User.findById(userIdStr);
+    if (!user || user.emailNotifications === false) return;
+    if (!batch.notifications || batch.notifications.length === 0) return;
+
+    const emailPayload = notificationEmail(user, batch.notifications);
+    await safeSendEmail(user, emailPayload);
+  } catch (err) {
+    console.warn("[ActionStateMachine] Failed to send batched notification email:", err.message);
+  }
+}
+
+/**
+ * Flush all currently pending batches immediately (useful for testing and deterministic flush).
+ */
+async function flushAllNotificationBatches() {
+  const keys = Array.from(pendingNotificationBatches.keys());
+  for (const k of keys) {
+    const b = pendingNotificationBatches.get(k);
+    if (b && b.timer) clearTimeout(b.timer);
+    await flushUserBatch(k);
+  }
+}
+
+function getPendingNotificationBatches() {
+  return pendingNotificationBatches;
+}
+
+/**
+ * Queues a notification for batched email delivery (5-minute window).
+ * If user.emailNotifications is false, skips immediately.
+ */
+async function queueNotificationEmail(userId, notif) {
+  try {
+    const userIdStr = userId.toString();
+    const user = await User.findById(userId);
+    if (!user || user.emailNotifications === false) return;
+
+    const notifItem = {
+      title: notif.title,
+      subtitle: notif.subtitle,
+      link: notif.link
+    };
+
+    if (pendingNotificationBatches.has(userIdStr)) {
+      const existing = pendingNotificationBatches.get(userIdStr);
+      existing.notifications.push(notifItem);
+    } else {
+      const timer = setTimeout(() => {
+        flushUserBatch(userIdStr);
+      }, NOTIF_BATCH_WINDOW_MS);
+      if (timer.unref) timer.unref();
+
+      pendingNotificationBatches.set(userIdStr, {
+        user,
+        notifications: [notifItem],
+        timer
+      });
+    }
+  } catch (err) {
+    console.warn("[ActionStateMachine] Error queueing notification email:", err.message);
+  }
+}
+
+/**
+ * Creates and logs a notification for a user, queueing batched email delivery.
  */
 async function sendNotification(userId, title, subtitle, type = "info", actionId = null, link = "") {
   try {
@@ -46,6 +123,10 @@ async function sendNotification(userId, title, subtitle, type = "info", actionId
       link
     });
     await notif.save();
+
+    // Queue email notification with 5-minute batching (respecting emailNotifications setting)
+    await queueNotificationEmail(userId, notif);
+
     return notif;
   } catch (err) {
     console.warn("Could not save notification:", err.message);
@@ -694,5 +775,8 @@ module.exports = {
   optInContactSharing,
   checkTimeoutsAndExpiries,
   migrateLegacyData,
-  sendNotification
+  sendNotification,
+  flushAllNotificationBatches,
+  getPendingNotificationBatches
 };
+

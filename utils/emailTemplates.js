@@ -421,6 +421,70 @@ function confirmationTimeout({ name, role, projectName, actionUrl }) {
   return { subject, text, html };
 }
 
+/**
+ * Transactional email notification for new platform updates (single or batched).
+ * Never exposes contact details; includes direct link.
+ * 
+ * @param {Object} user 
+ * @param {Array<{title: string, subtitle?: string, link?: string}>} notifications 
+ * @returns {{subject: string, text: string, html: string}}
+ */
+function notificationEmail(user, notifications = []) {
+  const baseUrl = getBaseUrl();
+  const displayName = user?.name || "Student";
+  const isMultiple = notifications.length > 1;
+
+  let subject = `[TeamForge] ${notifications[0]?.title || "New Notification"}`;
+  let heading = notifications[0]?.title || "New Notification";
+  let targetUrl = `${baseUrl}/notifications`;
+
+  if (!isMultiple && notifications[0]?.link && notifications[0].link.startsWith("/")) {
+    targetUrl = `${baseUrl}${notifications[0].link}`;
+  }
+
+  let bodyHtml = "";
+  let bodyText = "";
+
+  if (isMultiple) {
+    subject = `[TeamForge] You have ${notifications.length} new updates`;
+    heading = `You have ${notifications.length} new notifications`;
+    bodyHtml = `<p style="margin: 0 0 16px 0;">Hello ${displayName},</p>
+<p style="margin: 0 0 16px 0;">You received multiple new updates on TeamForge:</p>
+<ul style="margin: 0 0 18px 0; padding-left: 20px; line-height: 1.6;">
+  ${notifications.map(n => `<li><strong>${n.title}</strong>${n.subtitle ? ` — ${n.subtitle}` : ""}</li>`).join("")}
+</ul>`;
+    bodyText = `Hello ${displayName},\n\nYou received ${notifications.length} new updates on TeamForge:\n\n` +
+      notifications.map(n => `* ${n.title}${n.subtitle ? `: ${n.subtitle}` : ""}`).join("\n");
+  } else {
+    const single = notifications[0] || { title: "New notification", subtitle: "" };
+    bodyHtml = `<p style="margin: 0 0 16px 0;">Hello ${displayName},</p>
+<p style="margin: 0 0 16px 0;"><strong>${single.title}</strong></p>
+${single.subtitle ? `<p style="margin: 0 0 16px 0; color: #475569;">${single.subtitle}</p>` : ""}`;
+    bodyText = `Hello ${displayName},\n\n${single.title}\n${single.subtitle || ""}\n`;
+  }
+
+  const disclaimer = "You can manage your email preferences anytime from your profile settings.";
+
+  const html = renderEmailLayout({
+    title: subject,
+    heading,
+    bodyHtml,
+    buttonText: isMultiple ? "View All Notifications" : "View on TeamForge",
+    actionUrl: targetUrl,
+    disclaimer
+  });
+
+  const text = renderPlainTextLayout({
+    heading,
+    bodyText,
+    buttonText: isMultiple ? "View All Notifications" : "View on TeamForge",
+    actionUrl: targetUrl,
+    disclaimer
+  });
+
+  return { subject, text, html };
+}
+
 module.exports = {
   getBaseUrl,
   renderEmailLayout,
@@ -431,7 +495,9 @@ module.exports = {
   actionReminder,
   actionClosingSoon,
   actionExpired,
-  confirmationTimeout
+  confirmationTimeout,
+  notificationEmail
 };
+
 
 

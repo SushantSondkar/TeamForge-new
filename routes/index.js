@@ -193,6 +193,16 @@ router.get("/landing", (req, res) => {
 });
 
 // -------------------------------------------------------------
+// 1d. GET /how-it-works - In-App How TeamForge Works (4 Steps)
+// -------------------------------------------------------------
+router.get("/how-it-works", (req, res) => {
+  return res.render("how-it-works", {
+    currentUser: req.user || null,
+    pageTitle: "How TeamForge Works · Campus Teaming in 4 Steps"
+  });
+});
+
+// -------------------------------------------------------------
 // 2. GET /discover - Explore Opportunities with Server-Side Search & Filters
 // -------------------------------------------------------------
 router.get("/discover", requireLogin, async (req, res) => {
@@ -465,9 +475,11 @@ router.post("/profile/edit", requireLogin, async (req, res) => {
     user.lastActive = new Date();
     await user.save();
     console.log(`Profile updated for user: ${user.email} (completeness: ${user.completenessPercentage}%)`);
-    res.redirect("/profile");
+    req.session.success = "Profile saved successfully!";
+    res.redirect("/profile?success=" + encodeURIComponent("Profile saved successfully!"));
   } catch (err) {
     console.error("Error updating profile:", err.message);
+    req.session.error = `Failed to update profile: ${err.message}`;
     res.render("profile-edit", {
       currentUser: req.user,
       error: `Failed to update profile: ${err.message}`

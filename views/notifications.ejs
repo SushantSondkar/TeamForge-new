@@ -12,12 +12,12 @@
             <p style="font-size: 14px; color: #64748b; margin: 0;">Updates on your team invitations, applications, and event deadlines.</p>
         </div>
 
-        <% if (unreadCount > 0) { %>
-            <form action="/notifications/mark-read" method="POST" style="margin: 0;">
-                <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
-                <button type="submit" class="btn-small-outline" style="font-size: 13px; padding: 6px 14px;">Mark all as read</button>
-            </form>
-        <% } %>
+        <form action="/notifications/mark-read" method="POST" style="margin: 0;">
+            <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+            <button type="submit" class="btn-small-outline" id="markAllReadBtn" <%= unreadCount === 0 ? 'disabled style="opacity: 0.5; cursor: default; font-size: 13px; padding: 6px 14px;"' : 'style="font-size: 13px; padding: 6px 14px; cursor: pointer;"' %>>
+                ✓ Mark all as read
+            </button>
+        </form>
     </div>
 
     <!-- Filter Tabs -->

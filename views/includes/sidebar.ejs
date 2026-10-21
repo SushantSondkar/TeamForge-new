@@ -2,8 +2,9 @@
 
     <div class="sidebar-header-row" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 15px 20px 15px;">
         <div class="sidebar-brand" style="display: flex; align-items: center; gap: 10px; padding: 0;">
-            <div style="background-color: #3b82f6; color: white; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px;">TF</div>
-            <h2 style="color: #1e293b; font-size: 20px; font-weight: 700; margin: 0;">TeamForge</h2>
+            <a href="/" style="text-decoration: none; display: flex; align-items: center;">
+                <img src="/images/logo-horizontal.svg" alt="TeamForge" style="height: 32px; width: auto;">
+            </a>
         </div>
         <button type="button" class="sidebar-close-btn" id="sidebarCloseBtn" aria-label="Close navigation drawer">
             ✕
@@ -29,8 +30,11 @@
                 <span>Discover Opportunities</span>
             </a>
 
-            <a href="/notifications" class="sidebar-link" style="color: #475569; font-weight: 500; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: block; text-decoration: none;">
+            <a href="/notifications" class="sidebar-link" style="color: #475569; font-weight: 500; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; text-decoration: none;">
                 <span>Notifications</span>
+                <% if (typeof unreadNotificationCount !== 'undefined' && unreadNotificationCount > 0) { %>
+                    <span style="background-color: #ef4444; color: white; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 12px;"><%= unreadNotificationCount > 99 ? '99+' : unreadNotificationCount %></span>
+                <% } %>
             </a>
 
             <a href="/profile" class="sidebar-link" style="color: #475569; font-weight: 500; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: block; text-decoration: none;">

@@ -1,0 +1,27 @@
+<% layout("/layouts/boilerplate") -%>
+
+<div class="page-container" style="max-width: 600px; margin: 60px auto; text-align: center; padding: 40px 20px;">
+    <div style="margin-bottom: 24px;">
+        <div style="display: inline-flex; align-items: center; justify-content: center; width: 88px; height: 88px; border-radius: 50%; background: #fef2f2; color: #dc2626; margin-bottom: 16px;">
+            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+        </div>
+        <h1 style="font-size: 32px; font-weight: 800; color: #0f172a; margin: 0 0 8px 0; letter-spacing: -0.5px;">500 — Server Error</h1>
+        <p style="font-size: 16px; color: #64748b; line-height: 1.6; margin: 0 0 24px 0;">
+            <%= typeof errorMessage !== 'undefined' && errorMessage ? errorMessage : "An unexpected server error occurred. Our team has been notified." %>
+        </p>
+    </div>
+
+    <div style="display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;">
+        <a href="/" class="btn-large-primary" style="text-decoration: none; padding: 12px 28px; background: #2563eb; color: #ffffff; border-radius: 8px; font-weight: 600; font-size: 15px; display: inline-flex; align-items: center; gap: 8px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+            <span>Back to Home</span>
+        </a>
+        <a href="mailto:support@teamforge.kkwagh.edu.in?subject=TeamForge%20500%20Error%20Report" class="btn-large-outline" style="text-decoration: none; padding: 12px 24px; border: 1px solid #cbd5e1; color: #334155; border-radius: 8px; font-weight: 600; font-size: 15px; display: inline-flex; align-items: center; gap: 8px;">
+            <span>Report Issue</span>
+        </a>
+    </div>
+</div>

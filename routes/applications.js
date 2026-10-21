@@ -63,9 +63,11 @@ router.post("/apply", requireLogin, actionLimiter, async (req, res) => {
       });
     }
 
-    res.redirect("/discover");
+    req.session.success = "Application submitted successfully!";
+    res.redirect("/discover?success=" + encodeURIComponent("Application submitted successfully!"));
   } catch (err) {
     console.error("Error creating application:", err.message);
+    req.session.error = err.message;
     res.status(400).json({ error: err.message });
   }
 });
@@ -159,9 +161,11 @@ router.post("/:id/accept", requireLogin, async (req, res) => {
       return res.json({ success: true, status: updated.status, message: "Accepted. Waiting for applicant to confirm." });
     }
 
-    res.redirect(`/applications/team/${action.teamRequirementId}`);
+    req.session.success = "Application accepted! Waiting for applicant to confirm.";
+    res.redirect(`/applications/team/${action.teamRequirementId}?success=` + encodeURIComponent("Application accepted! Waiting for applicant to confirm."));
   } catch (err) {
     console.error("Error accepting application:", err.message);
+    req.session.error = err.message;
     res.status(400).send(err.message);
   }
 });
@@ -177,9 +181,11 @@ router.post("/:id/confirm", requireLogin, async (req, res) => {
       return res.json({ success: true, status: "LOCKED", message: "Spot confirmed and locked for this event!" });
     }
 
-    res.redirect("/notifications");
+    req.session.success = "Spot confirmed and locked for this event!";
+    res.redirect("/notifications?success=" + encodeURIComponent("Spot confirmed and locked for this event!"));
   } catch (err) {
     console.error("Error confirming spot:", err.message);
+    req.session.error = err.message;
     res.status(400).send(err.message);
   }
 });
