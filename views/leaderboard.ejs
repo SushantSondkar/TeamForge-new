@@ -1,11 +1,11 @@
 <% layout("/layouts/boilerplate") -%>
 
-<div class="leaderboard-page" style="padding: 24px 36px; max-width: 1200px; margin: 0 auto;">
+<div class="leaderboard-page page-container">
     
     <!-- Header -->
     <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px; margin-bottom: 24px;">
         <div>
-            <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                 <h1 style="font-size: 26px; font-weight: 800; color: #0f172a; margin: 0;">Campus Talent Leaderboard</h1>
                 <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 12px; text-transform: uppercase; letter-spacing: 0.5px;">
                     🏆 Daily Ranked
@@ -16,7 +16,7 @@
             </p>
         </div>
 
-        <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
             <div style="font-size: 12.5px; color: #64748b; text-align: right;">
                 <div>Cache Status: <span style="font-weight: 600; color: <%= isCached ? '#15803d' : '#2563eb' %>;"><%= isCached ? 'Cached (24h Daily)' : 'Freshly Computed' %></span></div>
                 <% if (cachedAt) { %>
@@ -37,8 +37,8 @@
         <form method="GET" action="/leaderboard" style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end;">
             <!-- Branch / Department Filter -->
             <div style="flex: 1; min-width: 180px;">
-                <label style="display: block; font-size: 12.5px; font-weight: 600; color: #475569; margin-bottom: 6px;">Department / Branch</label>
-                <select name="branch" style="width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 13.5px; background: #f8fafc; color: #1e293b;">
+                <label for="branchFilter" style="display: block; font-size: 12.5px; font-weight: 600; color: #475569; margin-bottom: 6px;">Department / Branch</label>
+                <select id="branchFilter" name="branch" style="width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 13.5px; background: #f8fafc; color: #1e293b;">
                     <option value="">All Departments</option>
                     <option value="Computer Engineering" <%= filters.branch === 'Computer Engineering' ? 'selected' : '' %>>Computer Engineering</option>
                     <option value="Information Technology" <%= filters.branch === 'Information Technology' ? 'selected' : '' %>>Information Technology</option>
@@ -54,8 +54,8 @@
 
             <!-- Academic Year Filter -->
             <div style="flex: 1; min-width: 140px;">
-                <label style="display: block; font-size: 12.5px; font-weight: 600; color: #475569; margin-bottom: 6px;">Academic Year</label>
-                <select name="year" style="width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 13.5px; background: #f8fafc; color: #1e293b;">
+                <label for="yearFilter" style="display: block; font-size: 12.5px; font-weight: 600; color: #475569; margin-bottom: 6px;">Academic Year</label>
+                <select id="yearFilter" name="year" style="width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 13.5px; background: #f8fafc; color: #1e293b;">
                     <option value="">All Years</option>
                     <option value="FE" <%= filters.year === 'FE' ? 'selected' : '' %>>FE (First Year)</option>
                     <option value="SE" <%= filters.year === 'SE' ? 'selected' : '' %>>SE (Second Year)</option>
@@ -66,12 +66,12 @@
 
             <!-- Skill Filter -->
             <div style="flex: 1.5; min-width: 220px;">
-                <label style="display: block; font-size: 12.5px; font-weight: 600; color: #475569; margin-bottom: 6px;">Filter by Skill</label>
-                <input type="text" name="skill" value="<%= filters.skill %>" placeholder="e.g. React, Python, Node.js..." style="width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 13.5px; background: #f8fafc; color: #1e293b; box-sizing: border-box;">
+                <label for="skillFilter" style="display: block; font-size: 12.5px; font-weight: 600; color: #475569; margin-bottom: 6px;">Filter by Skill</label>
+                <input id="skillFilter" type="text" name="skill" value="<%= filters.skill %>" placeholder="e.g. React, Python, Node.js..." style="width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 13.5px; background: #f8fafc; color: #1e293b; box-sizing: border-box;">
             </div>
 
             <!-- Action Buttons -->
-            <div style="display: flex; gap: 8px;">
+            <div style="display: flex; gap: 8px; width: 100%; justify-content: flex-end; flex-wrap: wrap;">
                 <button type="submit" class="btn-small-primary" style="padding: 10px 20px; font-size: 13.5px; border-radius: 8px; cursor: pointer; border: none; background: #2563eb; color: white; font-weight: 600;">
                     Apply Filters
                 </button>
@@ -87,7 +87,7 @@
     <!-- Leaderboard Table -->
     <div style="background: white; border: 1px solid #e2e8f0; border-radius: 14px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
         <% if (entries && entries.length > 0) { %>
-            <div style="overflow-x: auto;">
+            <div class="table-responsive">
                 <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
                     <thead>
                         <tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0; color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">

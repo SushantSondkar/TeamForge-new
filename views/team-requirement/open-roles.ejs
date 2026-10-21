@@ -106,7 +106,7 @@
                         </div>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div class="form-grid-2">
                         <div class="form-group-new">
                             <label>Minimum Proficiency</label>
                             <select class="form-control-new role-proficiency-select">
@@ -130,8 +130,10 @@
             </button>
 
             <div class="form-footer-new">
-                <button type="submit" formaction="/team-requirement/new/define-team" class="btn-cancel" id="btn-back-define-team" style="background: none; border: 1px solid #d1d5db; border-radius: 8px; cursor: pointer; padding: 10px 24px; color: #4b5563;">Back</button>
-                <button type="submit" class="btn-continue" id="btn-continue">Continue</button>
+                <div class="footer-actions">
+                    <button type="submit" formaction="/team-requirement/new/define-team" class="btn-cancel" id="btn-back-define-team" style="background: none; border: 1px solid #d1d5db; border-radius: 8px; cursor: pointer; padding: 10px 24px; color: #4b5563;">Back</button>
+                    <button type="submit" class="btn-continue" id="btn-continue">Continue</button>
+                </div>
             </div>
 
         </form>

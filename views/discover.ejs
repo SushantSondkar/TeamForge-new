@@ -1,6 +1,6 @@
 <% layout("/layouts/boilerplate") -%>
 
-<div class="discover-page" style="padding: 24px 36px; max-width: 1200px; margin: 0 auto;">
+<div class="discover-page page-container">
     
     <div class="discover-header" style="margin-bottom: 24px;">
         <h1 class="page-title-new" style="font-size: 26px; font-weight: 800; color: #0f172a; margin: 0 0 6px 0;">Explore Active Requirements</h1>
@@ -102,12 +102,14 @@
                     <div class="search-input-wrapper" style="flex: 2; min-width: 240px; position: relative;">
                         <input type="text" name="q" id="searchQ" value="<%= (typeof q !== 'undefined') ? q : '' %>" class="form-control-new"
                                placeholder="Search by project name, theme, skill, or role..."
+                               aria-label="Search by project name, theme, skill, or role"
                                style="width: 100%; padding: 10px 14px; font-size: 14px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box;">
                     </div>
 
                     <!-- Dynamic Skill Filter Dropdown -->
                     <div style="flex: 1; min-width: 160px;">
                         <select name="skill" id="filterSkill" class="form-control-new filter-select-dropdown"
+                                aria-label="Filter by required skill"
                                 style="width: 100%; padding: 10px 12px; font-size: 13.5px; border: 1px solid #cbd5e1; border-radius: 8px; background: white; box-sizing: border-box;">
                             <option value="">Skill: All Skills</option>
                             <% if (typeof availableSkills !== 'undefined' && availableSkills) { %>
@@ -121,6 +123,7 @@
                     <!-- Dynamic Role Filter Dropdown -->
                     <div style="flex: 1; min-width: 160px;">
                         <select name="role" id="filterRole" class="form-control-new filter-select-dropdown"
+                                aria-label="Filter by role title"
                                 style="width: 100%; padding: 10px 12px; font-size: 13.5px; border: 1px solid #cbd5e1; border-radius: 8px; background: white; box-sizing: border-box;">
                             <option value="">Role: All Roles</option>
                             <% if (typeof availableRoles !== 'undefined' && availableRoles) { %>
@@ -134,6 +137,7 @@
                     <!-- Dynamic Events Filter Dropdown -->
                     <div style="flex: 1; min-width: 160px;">
                         <select name="event" id="filterEvent" class="form-control-new filter-select-dropdown"
+                                aria-label="Filter by event"
                                 style="width: 100%; padding: 10px 12px; font-size: 13.5px; border: 1px solid #cbd5e1; border-radius: 8px; background: white; box-sizing: border-box;">
                             <option value="">Event: All Events</option>
                             <% if (typeof availableEvents !== 'undefined' && availableEvents) { %>

@@ -25,24 +25,24 @@
             <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
             
             <div>
-                <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Full Name *</label>
-                <input type="text" name="name" required placeholder="e.g. Aaradhya Wabale"
+                <label for="signupName" style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Full Name *</label>
+                <input type="text" id="signupName" name="name" required placeholder="e.g. Aaradhya Wabale"
                        value="<%= typeof formData !== 'undefined' && formData.name ? formData.name : '' %>"
                        style="width: 100%; box-sizing: border-box; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none;">
             </div>
 
             <div>
-                <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">College Email *</label>
-                <input type="email" name="email" required placeholder="e.g. rollno_dept@<%= typeof allowedDomain !== 'undefined' ? allowedDomain : 'kkwagh.edu.in' %>"
+                <label for="signupEmail" style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">College Email *</label>
+                <input type="email" id="signupEmail" name="email" required placeholder="e.g. rollno_dept@<%= typeof allowedDomain !== 'undefined' ? allowedDomain : 'kkwagh.edu.in' %>"
                        value="<%= typeof formData !== 'undefined' && formData.email ? formData.email : '' %>"
                        style="width: 100%; box-sizing: border-box; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none;">
                 <span style="display: block; font-size: 11.5px; color: #64748b; margin-top: 4px;">Must end exactly in <strong>@<%= typeof allowedDomain !== 'undefined' ? allowedDomain : 'kkwagh.edu.in' %></strong>. A verification link will be sent to your inbox.</span>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div class="form-grid-2">
                 <div>
-                    <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Department</label>
-                    <select name="department" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13.5px; background: white; outline: none;">
+                    <label for="signupDepartment" style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Department</label>
+                    <select id="signupDepartment" name="department" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13.5px; background: white; outline: none;">
                         <option value="">Select Department</option>
                         <option value="Computer Engineering" <%= (typeof formData !== 'undefined' && formData.department === 'Computer Engineering') ? 'selected' : '' %>>Computer Engineering</option>
                         <option value="Information Technology" <%= (typeof formData !== 'undefined' && formData.department === 'Information Technology') ? 'selected' : '' %>>Information Technology</option>
@@ -54,8 +54,8 @@
                     </select>
                 </div>
                 <div>
-                    <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Academic Year</label>
-                    <select name="year" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13.5px; background: white; outline: none;">
+                    <label for="signupYear" style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Academic Year</label>
+                    <select id="signupYear" name="year" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13.5px; background: white; outline: none;">
                         <option value="">Select Year</option>
                         <option value="FE" <%= (typeof formData !== 'undefined' && formData.year === 'FE') ? 'selected' : '' %>>FE (First Year)</option>
                         <option value="SE" <%= (typeof formData !== 'undefined' && formData.year === 'SE') ? 'selected' : '' %>>SE (Second Year)</option>
@@ -66,22 +66,22 @@
             </div>
 
             <div>
-                <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Core Skills & Proficiency (1 to 5)</label>
-                <input type="text" name="skillsRaw" placeholder="e.g. React:4, Node.js:5, Python:3"
+                <label for="signupSkills" style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Core Skills & Proficiency (1 to 5)</label>
+                <input type="text" id="signupSkills" name="skillsRaw" placeholder="e.g. React:4, Node.js:5, Python:3"
                        value="<%= typeof formData !== 'undefined' && formData.skillsRaw ? formData.skillsRaw : '' %>"
                        style="width: 100%; box-sizing: border-box; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none;">
                 <span style="display: block; font-size: 11.5px; color: #64748b; margin-top: 4px;">Format: <code>Skill:Level</code> (1 = Beginner, 5 = Expert), separated by commas</span>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div class="form-grid-2">
                 <div>
-                    <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Password *</label>
-                    <input type="password" name="password" required placeholder="Min 6 characters"
+                    <label for="signupPassword" style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Password *</label>
+                    <input type="password" id="signupPassword" name="password" required placeholder="Min 6 characters"
                            style="width: 100%; box-sizing: border-box; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none;">
                 </div>
                 <div>
-                    <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Confirm Password *</label>
-                    <input type="password" name="confirmPassword" required placeholder="Re-enter password"
+                    <label for="signupConfirmPassword" style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Confirm Password *</label>
+                    <input type="password" id="signupConfirmPassword" name="confirmPassword" required placeholder="Re-enter password"
                            style="width: 100%; box-sizing: border-box; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none;">
                 </div>
             </div>

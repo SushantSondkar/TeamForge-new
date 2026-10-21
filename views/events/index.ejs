@@ -1,8 +1,8 @@
 <% layout("/layouts/boilerplate") -%>
 
-<div class="events-page" style="padding: 24px 36px; max-width: 1200px; margin: 0 auto;">
+<div class="events-page page-container">
     
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
         <div>
             <h1 style="font-size: 24px; font-weight: 700; color: #0f172a; margin: 0 0 4px 0;">Campus Events & Hackathons</h1>
             <p style="color: #64748b; font-size: 14px; margin: 0;">Explore upcoming competitions, form teams, and lock your commitments per event.</p>
@@ -20,7 +20,7 @@
         </div>
     <% } %>
 
-    <div class="events-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 20px;">
+    <div class="events-grid">
         <% if (events && events.length > 0) { %>
             <% events.forEach(evt => { %>
                 <div class="event-card" style="background: white; border: 1px solid #e2e8f0; border-radius: 14px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); display: flex; flex-direction: column; justify-content: space-between;">

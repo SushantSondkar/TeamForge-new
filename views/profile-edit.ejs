@@ -1,6 +1,6 @@
 <% layout("/layouts/boilerplate") -%>
 
-<div class="profile-edit-page" style="padding: 24px 36px; max-width: 840px; margin: 0 auto;">
+<div class="profile-edit-page page-container" style="max-width: 840px;">
     
     <div style="margin-bottom: 24px;">
         <a href="/profile" style="color: #64748b; text-decoration: none; font-size: 13.5px; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 12px; font-weight: 500;">
@@ -21,7 +21,7 @@
             <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
             
             <!-- Basic Details -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="form-grid-2">
                 <div>
                     <label for="name" style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Full Name *</label>
                     <input type="text" id="name" name="name" required value="<%= currentUser ? currentUser.name : '' %>"
@@ -36,10 +36,10 @@
             </div>
 
             <!-- College Email & Academic Details -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="form-grid-2">
                 <div>
-                    <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Department</label>
-                    <select name="department" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13.5px; background: white;">
+                    <label for="department" style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Department</label>
+                    <select id="department" name="department" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13.5px; background: white;">
                         <option value="">Select Department</option>
                         <option value="Computer Engineering" <%= (currentUser && currentUser.department === 'Computer Engineering') ? 'selected' : '' %>>Computer Engineering</option>
                         <option value="Information Technology" <%= (currentUser && currentUser.department === 'Information Technology') ? 'selected' : '' %>>Information Technology</option>
@@ -51,8 +51,8 @@
                     </select>
                 </div>
                 <div>
-                    <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Academic Year</label>
-                    <select name="year" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13.5px; background: white;">
+                    <label for="year" style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Academic Year</label>
+                    <select id="year" name="year" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13.5px; background: white;">
                         <option value="">Select Year</option>
                         <option value="FE" <%= (currentUser && currentUser.year === 'FE') ? 'selected' : '' %>>FE (First Year)</option>
                         <option value="SE" <%= (currentUser && currentUser.year === 'SE') ? 'selected' : '' %>>SE (Second Year)</option>
@@ -71,7 +71,7 @@
 
             <!-- Availability, Privacy & Email Notifications Settings -->
             <div style="background: #f8fafc; padding: 20px; border-radius: 10px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 16px;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div class="form-grid-2">
                     <div>
                         <label for="availability" style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Availability Status</label>
                         <select id="availability" name="availability"
@@ -99,7 +99,7 @@
             </div>
 
             <!-- External Links: GitHub, LinkedIn, Portfolio -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px;">
+            <div class="form-grid-3">
                 <div>
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                         <label for="github" style="font-size: 13px; font-weight: 600; color: #334155;">GitHub</label>
@@ -188,9 +188,9 @@
             </div>
 
             <!-- Action Buttons -->
-            <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 10px;">
-                <a href="/profile" class="btn-large-outline" style="text-decoration: none; padding: 10px 20px; font-size: 14px; border-radius: 8px;">Cancel</a>
-                <button type="submit" class="btn-large-primary" style="padding: 10px 24px; font-size: 14px; font-weight: 600; border-radius: 8px; border: none; cursor: pointer; background: #2563eb; color: white;">Save Changes</button>
+            <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 10px; flex-wrap: wrap;">
+                <a href="/profile" class="btn-large-outline" style="text-decoration: none; padding: 10px 20px; font-size: 14px; border-radius: 8px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center;">Cancel</a>
+                <button type="submit" class="btn-large-primary" style="padding: 10px 24px; font-size: 14px; font-weight: 600; border-radius: 8px; border: none; cursor: pointer; background: #2563eb; color: white; min-height: 44px;">Save Changes</button>
             </div>
 
         </form>
