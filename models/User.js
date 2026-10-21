@@ -170,6 +170,11 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  // Email notifications preference (reminders, expiries, match updates)
+  emailNotifications: {
+    type: Boolean,
+    default: true
+  },
   // Organizer account with admin approval
   isOrganizer: {
     type: Boolean,

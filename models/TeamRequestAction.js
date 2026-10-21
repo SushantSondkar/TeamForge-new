@@ -79,9 +79,21 @@ const teamRequestActionSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  reminderSentAt: {
+    type: Date,
+    default: null
+  },
   closingSoonWarningSent: {
     type: Boolean,
     default: false
+  },
+  closingSoonSentAt: {
+    type: Date,
+    default: null
+  },
+  expiredAt: {
+    type: Date,
+    default: null
   }
 }, {
   timestamps: true

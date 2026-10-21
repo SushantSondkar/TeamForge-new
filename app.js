@@ -37,8 +37,14 @@ const reviewRoutes = require("./routes/reviews");
 const leaderboardRoutes = require("./routes/leaderboard");
 const organizerRoutes = require("./routes/organizers");
 
-// Connect to Database
-connectDB();
+const { startScheduler } = require("./utils/scheduler");
+
+// Connect to Database and start scheduled daemon
+connectDB().then(() => {
+  startScheduler();
+}).catch(err => {
+  console.error("Database connection failed:", err.message);
+});
 
 // Trust reverse proxy in production (Render, Railway, NGINX, Cloudflare)
 const isProduction = process.env.NODE_ENV === "production";

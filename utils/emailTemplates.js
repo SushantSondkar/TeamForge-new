@@ -253,12 +253,180 @@ function passwordChanged({ name }) {
   return { subject, text, html };
 }
 
+/**
+ * 24h Action Reminder Email Template
+ */
+function actionReminder({ name, role, projectName, direction = "INVITE", actionUrl }) {
+  const baseUrl = getBaseUrl();
+  const url = actionUrl || `${baseUrl}/notifications`;
+  const displayName = name ? name.trim() : "Student";
+  const actionType = direction === "INVITE" ? "team invite" : "application";
+  const subject = `Reminder: Pending ${actionType} for ${role}`;
+  const heading = "Reminder: Action Required on TeamForge";
+
+  const bodyHtml = `
+    <p style="margin: 0 0 12px 0;">Hello <strong>${displayName}</strong>,</p>
+    <p style="margin: 0 0 12px 0;">You have a pending ${actionType} for <strong>${role}</strong> in <strong>${projectName || "Team"}</strong>.</p>
+    <p style="margin: 0 0 12px 0; color: #475569;">Please review and respond to keep team formations moving forward.</p>
+  `;
+
+  const bodyText = `Hello ${displayName},\n\nYou have a pending ${actionType} for ${role} in ${projectName || "Team"}.\n\nPlease review and respond to keep team formations moving forward.`;
+
+  const disclaimer = "You can manage your notification preferences anytime from your profile settings.";
+
+  const html = renderEmailLayout({
+    title: subject,
+    heading,
+    bodyHtml,
+    buttonText: "Review Request",
+    actionUrl: url,
+    disclaimer
+  });
+
+  const text = renderPlainTextLayout({
+    heading,
+    bodyText,
+    buttonText: "Review Request",
+    actionUrl: url,
+    disclaimer
+  });
+
+  return { subject, text, html };
+}
+
+/**
+ * Closing Soon 24h Warning Email Template
+ */
+function actionClosingSoon({ name, role, projectName, direction = "INVITE", actionUrl }) {
+  const baseUrl = getBaseUrl();
+  const url = actionUrl || `${baseUrl}/notifications`;
+  const displayName = name ? name.trim() : "Student";
+  const actionType = direction === "INVITE" ? "team invite" : "application";
+  const subject = `Closing Soon: ${actionType} for ${role} expires in 24 hours`;
+  const heading = "Closing Soon: 24-Hour Expiry Warning";
+
+  const bodyHtml = `
+    <p style="margin: 0 0 12px 0;">Hello <strong>${displayName}</strong>,</p>
+    <p style="margin: 0 0 12px 0;">Your pending ${actionType} for <strong>${role}</strong> in <strong>${projectName || "Team"}</strong> will expire within <strong>24 hours</strong>.</p>
+    <p style="margin: 0 0 12px 0; color: #b45309;">If no action is taken, the request will automatically expire and candidate openings will be released.</p>
+  `;
+
+  const bodyText = `Hello ${displayName},\n\nYour pending ${actionType} for ${role} in ${projectName || "Team"} will expire within 24 hours.\n\nIf no action is taken, the request will automatically expire.`;
+
+  const disclaimer = "You can manage your notification preferences anytime from your profile settings.";
+
+  const html = renderEmailLayout({
+    title: subject,
+    heading,
+    bodyHtml,
+    buttonText: "Respond Now",
+    actionUrl: url,
+    disclaimer
+  });
+
+  const text = renderPlainTextLayout({
+    heading,
+    bodyText,
+    buttonText: "Respond Now",
+    actionUrl: url,
+    disclaimer
+  });
+
+  return { subject, text, html };
+}
+
+/**
+ * Action Expired Email Template
+ */
+function actionExpired({ name, role, projectName, direction = "INVITE", actionUrl }) {
+  const baseUrl = getBaseUrl();
+  const url = actionUrl || `${baseUrl}/discover`;
+  const displayName = name ? name.trim() : "Student";
+  const actionType = direction === "INVITE" ? "team invitation" : "application";
+  const subject = `Request Expired: ${actionType} for ${role}`;
+  const heading = "Request Expired";
+
+  const bodyHtml = `
+    <p style="margin: 0 0 12px 0;">Hello <strong>${displayName}</strong>,</p>
+    <p style="margin: 0 0 12px 0;">The pending ${actionType} for <strong>${role}</strong> in <strong>${projectName || "Team"}</strong> has reached its expiration deadline and is now closed.</p>
+    <p style="margin: 0 0 12px 0; color: #475569;">No reputation penalty has been incurred. You are free to explore other open opportunities on TeamForge.</p>
+  `;
+
+  const bodyText = `Hello ${displayName},\n\nThe pending ${actionType} for ${role} in ${projectName || "Team"} has expired without penalty.\n\nYou are free to explore other opportunities on TeamForge.`;
+
+  const disclaimer = "You can manage your notification preferences anytime from your profile settings.";
+
+  const html = renderEmailLayout({
+    title: subject,
+    heading,
+    bodyHtml,
+    buttonText: "Discover Opportunities",
+    actionUrl: url,
+    disclaimer
+  });
+
+  const text = renderPlainTextLayout({
+    heading,
+    bodyText,
+    buttonText: "Discover Opportunities",
+    actionUrl: url,
+    disclaimer
+  });
+
+  return { subject, text, html };
+}
+
+/**
+ * Confirmation Timeout Email Template
+ */
+function confirmationTimeout({ name, role, projectName, actionUrl }) {
+  const baseUrl = getBaseUrl();
+  const url = actionUrl || `${baseUrl}/notifications`;
+  const displayName = name ? name.trim() : "Student";
+  const subject = `Confirmation Window Expired: ${role} in ${projectName || "Team"}`;
+  const heading = "Confirmation Window Expired";
+
+  const bodyHtml = `
+    <p style="margin: 0 0 12px 0;">Hello <strong>${displayName}</strong>,</p>
+    <p style="margin: 0 0 12px 0;">The 24-hour confirmation window for <strong>${role}</strong> in <strong>${projectName || "Team"}</strong> has expired without final confirmation.</p>
+    <p style="margin: 0 0 12px 0; color: #dc2626;">The candidate spot and availability have been released back to the platform.</p>
+  `;
+
+  const bodyText = `Hello ${displayName},\n\nThe 24-hour confirmation window for ${role} in ${projectName || "Team"} has expired without confirmation.\n\nCandidate availability has been released.`;
+
+  const disclaimer = "You can manage your notification preferences anytime from your profile settings.";
+
+  const html = renderEmailLayout({
+    title: subject,
+    heading,
+    bodyHtml,
+    buttonText: "View Details",
+    actionUrl: url,
+    disclaimer
+  });
+
+  const text = renderPlainTextLayout({
+    heading,
+    bodyText,
+    buttonText: "View Details",
+    actionUrl: url,
+    disclaimer
+  });
+
+  return { subject, text, html };
+}
+
 module.exports = {
   getBaseUrl,
   renderEmailLayout,
   renderPlainTextLayout,
   verifyEmail,
   resetPassword,
-  passwordChanged
+  passwordChanged,
+  actionReminder,
+  actionClosingSoon,
+  actionExpired,
+  confirmationTimeout
 };
+
 

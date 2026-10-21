@@ -13,8 +13,6 @@ const {
   getRecommendedOpportunities,
   searchTeamRequirements,
   getAvailableFilterOptions
-} = require('../utils/recommendations');
-const { checkTimeoutsAndExpiries } = require('../utils/actionStateMachine');
 const requireLogin = require('../middleware/auth');
 
 const ALLOWED_DEPARTMENTS = [
@@ -34,13 +32,6 @@ const ALLOWED_YEARS = ["FE", "SE", "TE", "BE"];
 async function renderDashboard(req, res) {
   try {
     const currentUser = req.user;
-
-    // Check timeouts, reminders, and auto-expiries
-    try {
-      await checkTimeoutsAndExpiries();
-    } catch (e) {
-      console.warn("Error running timeout check on dashboard:", e.message);
-    }
 
     // 1. Get the active team requirement owned by this user
     let latestTeam = null;
@@ -290,13 +281,6 @@ router.get("/notifications", requireLogin, async (req, res) => {
   try {
     const currentUser = req.user;
 
-    // Check timeouts, reminders, and auto-expiries
-    try {
-      await checkTimeoutsAndExpiries();
-    } catch (e) {
-      console.warn("Error running timeout check on notifications:", e.message);
-    }
-
     // Retrieve persistent notifications
     const dbNotifs = await Notification.find({ userId: currentUser._id }).sort({ createdAt: -1 });
 
@@ -364,6 +348,7 @@ router.post("/profile/edit", requireLogin, async (req, res) => {
       portfolio,
       availability,
       isProfileHidden,
+      emailNotifications,
       skills,
       projectsRaw,
       pastHackathonsRaw
@@ -408,6 +393,9 @@ router.post("/profile/edit", requireLogin, async (req, res) => {
 
     // Hide profile toggle
     user.isProfileHidden = (isProfileHidden === "true" || isProfileHidden === "on" || isProfileHidden === true);
+
+    // Email notifications toggle (default true; when unchecked in form, undefined -> false)
+    user.emailNotifications = (emailNotifications === "true" || emailNotifications === "on" || emailNotifications === true);
 
     // Parse skills
     if (skills) {

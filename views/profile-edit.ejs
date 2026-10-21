@@ -69,23 +69,32 @@
                           style="width: 100%; box-sizing: border-box; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; font-family: inherit;"><%= currentUser ? currentUser.bio : '' %></textarea>
             </div>
 
-            <!-- Availability & Hide Profile Settings -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; background: #f8fafc; padding: 16px; border-radius: 10px; border: 1px solid #e2e8f0;">
-                <div>
-                    <label for="availability" style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Availability Status</label>
-                    <select id="availability" name="availability"
-                            style="width: 100%; box-sizing: border-box; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13.5px; background: white;">
-                        <option value="1" <%= (currentUser && Number(currentUser.availability) >= 0.8) ? 'selected' : '' %>>Free (Actively looking for team)</option>
-                        <option value="0.5" <%= (currentUser && Number(currentUser.availability) > 0.2 && Number(currentUser.availability) < 0.8) ? 'selected' : '' %>>Partly Free (Open to selective invites)</option>
-                        <option value="0" <%= (currentUser && Number(currentUser.availability) <= 0.2) ? 'selected' : '' %>>Busy (Not available right now)</option>
-                    </select>
+            <!-- Availability, Privacy & Email Notifications Settings -->
+            <div style="background: #f8fafc; padding: 20px; border-radius: 10px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 16px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div>
+                        <label for="availability" style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Availability Status</label>
+                        <select id="availability" name="availability"
+                                style="width: 100%; box-sizing: border-box; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13.5px; background: white;">
+                            <option value="1" <%= (currentUser && Number(currentUser.availability) >= 0.8) ? 'selected' : '' %>>Free (Actively looking for team)</option>
+                            <option value="0.5" <%= (currentUser && Number(currentUser.availability) > 0.2 && Number(currentUser.availability) < 0.8) ? 'selected' : '' %>>Partly Free (Open to selective invites)</option>
+                            <option value="0" <%= (currentUser && Number(currentUser.availability) <= 0.2) ? 'selected' : '' %>>Busy (Not available right now)</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; flex-direction: column; justify-content: center;">
+                        <label style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; font-weight: 600; color: #334155; cursor: pointer;">
+                            <input type="checkbox" name="isProfileHidden" value="true" <%= (currentUser && currentUser.isProfileHidden) ? 'checked' : '' %> style="width: 18px; height: 18px; cursor: pointer;">
+                            <span>Hide profile from Discover</span>
+                        </label>
+                        <span style="font-size: 11.5px; color: #64748b; margin-top: 4px; margin-left: 28px;">Excludes your profile card from candidate recommendations.</span>
+                    </div>
                 </div>
-                <div style="display: flex; flex-direction: column; justify-content: center;">
+                <div style="border-top: 1px solid #e2e8f0; padding-top: 14px;">
                     <label style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; font-weight: 600; color: #334155; cursor: pointer;">
-                        <input type="checkbox" name="isProfileHidden" value="true" <%= (currentUser && currentUser.isProfileHidden) ? 'checked' : '' %> style="width: 18px; height: 18px; cursor: pointer;">
-                        <span>Hide my profile from Discover & candidate searches</span>
+                        <input type="checkbox" name="emailNotifications" value="true" <%= (currentUser && currentUser.emailNotifications !== false) ? 'checked' : '' %> style="width: 18px; height: 18px; cursor: pointer;">
+                        <span>Receive Email Notifications</span>
                     </label>
-                    <span style="font-size: 11.5px; color: #64748b; margin-top: 4px; margin-left: 28px;">Other students will not see your card in candidate recommendations when enabled.</span>
+                    <span style="font-size: 11.5px; color: #64748b; margin-top: 4px; margin-left: 28px; display: block;">Send transactional emails for 24h reminders, closing-soon alerts, match confirmations, and request expirations.</span>
                 </div>
             </div>
 

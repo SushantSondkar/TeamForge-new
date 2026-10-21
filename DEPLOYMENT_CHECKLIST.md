@@ -137,7 +137,7 @@ node scripts/setupAdmin.js create "Campus Admin" admin@kkwagh.edu.in "YourStrong
 - [ ] **Daily Leaderboard Cache**: Cached with 24-hour TTL (`utils/leaderboardService.js`). Manual refresh available via `/leaderboard?refresh=true`.
 - [ ] **GitHub REST API Cache**: 24-hour cache active to avoid rate-limiting under GitHub's 60 req/hr unauthenticated / 5000 req/hr authenticated quota.
 - [ ] **Static Asset Caching**: Public directory (`public/css`, `public/js`, images) served with caching headers in NGINX reverse proxy.
-- [ ] **Action Expiry Daemon**: Periodic check (`checkTimeoutsAndExpiries()`) running to auto-expire stale requests and release candidate slots.
+- [x] **Action Expiry Daemon**: Periodic background scheduler (`utils/scheduler.js`) running `checkTimeoutsAndExpiries()` every 10 minutes with MongoDB distributed lock and 24h reminder/expiry notifications.
 
 ---
 

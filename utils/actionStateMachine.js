@@ -6,6 +6,31 @@ const Notification = require("../models/Notification");
 const Invite = require("../models/Invite");
 const Application = require("../models/Application");
 const Shortlist = require("../models/Shortlist");
+const { sendMail } = require("./mailer");
+const {
+  actionReminder,
+  actionClosingSoon,
+  actionExpired,
+  confirmationTimeout
+} = require("./emailTemplates");
+
+/**
+ * Safe email dispatcher respecting user.emailNotifications setting.
+ */
+async function safeSendEmail(user, template) {
+  try {
+    if (!user || !user.email) return;
+    if (user.emailNotifications === false) return;
+    await sendMail({
+      to: user.email,
+      subject: template.subject,
+      text: template.text,
+      html: template.html
+    });
+  } catch (err) {
+    console.warn("[ActionStateMachine] Email notification skipped:", err.message);
+  }
+}
 
 /**
  * Creates and logs a notification for a user.
@@ -398,69 +423,200 @@ async function optInContactSharing(actionId, userId) {
 
 /**
  * Background / on-demand check for timeouts, warnings, and auto-expiry.
+ * Fully idempotent: records reminderSentAt and expiredAt so actions are processed once.
+ * Respects user emailNotifications setting.
+ * Emits one summary line with counts only.
  */
 async function checkTimeoutsAndExpiries() {
   const now = new Date();
+  let expiredPendingCount = 0;
+  let timedOutConfirmationsCount = 0;
+  let remindersSentCount = 0;
+  let closingSoonCount = 0;
 
   // 1. Check PENDING actions that reached expiresAt -> EXPIRED (no reputation penalty)
   const expiredPending = await TeamRequestAction.find({
     status: "PENDING",
     expiresAt: { $lt: now }
-  });
+  }).populate("receiverId").populate("senderId").populate("teamRequirementId");
+
   for (const act of expiredPending) {
     act.status = "EXPIRED";
+    act.expiredAt = now;
     await act.save();
+    expiredPendingCount++;
+
+    const receiverId = act.receiverId?._id || act.receiverId;
+    const teamName = act.teamRequirementId ? act.teamRequirementId.projectName : "Team";
     await sendNotification(
-      act.receiverId,
+      receiverId,
       "Request Expired",
       `The ${act.direction.toLowerCase()} for ${act.role} has expired with no penalty.`,
       "info",
       act._id
     );
+
+    if (act.receiverId && act.receiverId.email) {
+      await safeSendEmail(
+        act.receiverId,
+        actionExpired({
+          name: act.receiverId.name,
+          role: act.role,
+          projectName: teamName,
+          direction: act.direction
+        })
+      );
+    }
   }
 
   // 2. Check ACCEPTED actions where requester confirmation timed out -> release candidate
   const timedOutConfirmations = await TeamRequestAction.find({
     status: "ACCEPTED",
     confirmationExpiresAt: { $lt: now }
-  });
+  }).populate("receiverId").populate("senderId").populate("teamRequirementId");
+
   for (const act of timedOutConfirmations) {
     act.status = "EXPIRED";
+    act.expiredAt = now;
     await act.save();
+    timedOutConfirmationsCount++;
+
+    const senderId = act.senderId?._id || act.senderId;
+    const receiverId = act.receiverId?._id || act.receiverId;
+    const teamName = act.teamRequirementId ? act.teamRequirementId.projectName : "Team";
+
     await sendNotification(
-      act.senderId,
+      senderId,
       "Confirmation Timed Out",
       `The 24h confirmation window for ${act.role} expired. Candidate spot released.`,
       "warning",
       act._id
     );
     await sendNotification(
-      act.receiverId,
+      receiverId,
       "Spot Released",
       `Confirmation timed out for ${act.role}. Your availability has been released.`,
       "info",
       act._id
     );
+
+    if (act.senderId && act.senderId.email) {
+      await safeSendEmail(
+        act.senderId,
+        confirmationTimeout({
+          name: act.senderId.name,
+          role: act.role,
+          projectName: teamName
+        })
+      );
+    }
+    if (act.receiverId && act.receiverId.email) {
+      await safeSendEmail(
+        act.receiverId,
+        confirmationTimeout({
+          name: act.receiverId.name,
+          role: act.role,
+          projectName: teamName
+        })
+      );
+    }
   }
 
-  // 3. 24h reminder for pending actions closing soon
+  // 3. 24h reminder for pending actions (sent once per action after 24h elapsed or within 24h of expiry)
+  const past24h = new Date(now.getTime() - 24 * 60 * 60 * 1000);
   const in24h = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+  const pendingReminders = await TeamRequestAction.find({
+    status: "PENDING",
+    reminderSent24h: false,
+    reminderSentAt: null,
+    expiresAt: { $gt: now },
+    $or: [
+      { createdAt: { $lte: past24h } },
+      { expiresAt: { $lte: in24h } }
+    ]
+  }).populate("receiverId").populate("senderId").populate("teamRequirementId");
+
+  for (const act of pendingReminders) {
+    act.reminderSent24h = true;
+    act.reminderSentAt = now;
+    await act.save();
+    remindersSentCount++;
+
+    const receiverId = act.receiverId?._id || act.receiverId;
+    const teamName = act.teamRequirementId ? act.teamRequirementId.projectName : "Team";
+
+    await sendNotification(
+      receiverId,
+      "Action Reminder ⏰",
+      `You have a pending ${act.direction.toLowerCase()} for ${act.role} in ${teamName}.`,
+      "warning",
+      act._id
+    );
+
+    if (act.receiverId && act.receiverId.email) {
+      await safeSendEmail(
+        act.receiverId,
+        actionReminder({
+          name: act.receiverId.name,
+          role: act.role,
+          projectName: teamName,
+          direction: act.direction
+        })
+      );
+    }
+  }
+
+  // 4. Closing soon warning (sent once when pending action is within 24h of expiresAt)
   const closingSoon = await TeamRequestAction.find({
     status: "PENDING",
+    closingSoonWarningSent: false,
+    closingSoonSentAt: null,
     expiresAt: { $lte: in24h, $gt: now },
-    reminderSent24h: false
-  });
+    _id: { $nin: pendingReminders.map(a => a._id) }
+  }).populate("receiverId").populate("senderId").populate("teamRequirementId");
+
   for (const act of closingSoon) {
-    act.reminderSent24h = true;
+    act.closingSoonWarningSent = true;
+    act.closingSoonSentAt = now;
     await act.save();
+    closingSoonCount++;
+
+    const receiverId = act.receiverId?._id || act.receiverId;
+    const teamName = act.teamRequirementId ? act.teamRequirementId.projectName : "Team";
+
     await sendNotification(
-      act.receiverId,
-      "Closing Soon: 24h Reminder ⏰",
+      receiverId,
+      "Closing Soon: 24h Warning ⏰",
       `Your pending ${act.direction.toLowerCase()} for ${act.role} will expire in 24 hours.`,
       "warning",
       act._id
     );
+
+    if (act.receiverId && act.receiverId.email) {
+      await safeSendEmail(
+        act.receiverId,
+        actionClosingSoon({
+          name: act.receiverId.name,
+          role: act.role,
+          projectName: teamName,
+          direction: act.direction
+        })
+      );
+    }
   }
+
+  // 5. Log ONE summary line per run (counts only, no user data)
+  console.log(
+    `[Scheduler] checkTimeoutsAndExpiries: ${expiredPendingCount} expired pending, ${timedOutConfirmationsCount} confirmation timeouts, ${remindersSentCount} reminders sent, ${closingSoonCount} closing soon warnings.`
+  );
+
+  return {
+    expiredPendingCount,
+    timedOutConfirmationsCount,
+    remindersSentCount,
+    closingSoonCount
+  };
 }
 
 /**

@@ -118,6 +118,16 @@
                     🌐 Public Profile
                 </span>
             <% } %>
+
+            <% if (currentUser && currentUser.emailNotifications === false) { %>
+                <span style="background-color: #fef2f2; color: #b91c1c; font-size: 12px; padding: 5px 12px; border-radius: 20px; font-weight: 600;">
+                    🔕 Emails Muted
+                </span>
+            <% } else { %>
+                <span style="background-color: #f0fdf4; color: #166534; font-size: 12px; padding: 5px 12px; border-radius: 20px; font-weight: 600;">
+                    🔔 Emails Active
+                </span>
+            <% } %>
         </div>
 
         <!-- Profile Completeness Progress -->
