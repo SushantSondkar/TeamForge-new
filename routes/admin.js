@@ -20,6 +20,19 @@ function requireAdmin(req, res, next) {
 }
 
 /**
+ * Sanitize and format a CSV cell to prevent CSV Formula Injection.
+ * Prefixes cells starting with '=', '+', '-', or '@' with a single quote (').
+ */
+function formatCsvCell(val) {
+  if (val === null || val === undefined) return '""';
+  let str = String(val);
+  if (/^[=\+\-@]/.test(str)) {
+    str = "'" + str;
+  }
+  return `"${str.replace(/"/g, '""')}"`;
+}
+
+/**
  * Helper to compute live platform metrics
  */
 async function getPlatformStats() {
@@ -175,7 +188,7 @@ router.get("/admin/stats/export", requireLogin, requireAdmin, async (req, res) =
     }
 
     const csvContent = rows
-      .map(r => r.map(field => `"${String(field).replace(/"/g, '""')}"`).join(","))
+      .map(r => r.map(formatCsvCell).join(","))
       .join("\r\n");
 
     const dateStr = new Date().toISOString().slice(0, 10);
@@ -240,7 +253,7 @@ router.get("/admin/feedback/export", requireLogin, requireAdmin, async (req, res
     });
 
     const csvContent = rows
-      .map(r => r.map(field => `"${String(field).replace(/"/g, '""')}"`).join(","))
+      .map(r => r.map(formatCsvCell).join(","))
       .join("\r\n");
 
     const dateStr = new Date().toISOString().slice(0, 10);
@@ -338,4 +351,5 @@ router.post("/admin/banner/clear", requireLogin, requireAdmin, async (req, res) 
   }
 });
 
+router.formatCsvCell = formatCsvCell;
 module.exports = router;

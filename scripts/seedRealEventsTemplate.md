@@ -2,7 +2,7 @@
 
 > **Policy**: In accordance with TeamForge platform integrity standards, **no mock, dummy, or synthetic event records are hardcoded in the codebase or automatically seeded in production**. All real upcoming hackathons must be published through the verified administrator/organizer web interface.
 
-This guide provides faculty coordinators, student club leaders, and campus administrators with the exact workflow and templates to publish real upcoming hackathons and engineering competitions on TeamForge.
+This guide provides faculty coordinators, student club leaders, and campus administrators with the exact entry templates to publish real, verifiable upcoming hackathons and engineering competitions on TeamForge.
 
 ---
 
@@ -14,65 +14,59 @@ To create events on the platform:
 
 ---
 
-## 2. Event Creation Workflow
+## 2. Event Creation Form Fields
 
-1. Navigate to:
-   ```text
-   https://<your-app-domain>/events/new
-   ```
-2. Complete the verified event form:
-   - **Event Name**: Official title of the competition.
-   - **Theme / Track**: Problem statement categories (e.g. AI/ML, Smart Automation, Web3, Healthcare, FinTech).
-   - **Description**: Detailed eligibility criteria, round structure, and submission guidelines.
-   - **Event Start & End Dates**: Competition execution timeline.
-   - **Registration & Team Lock Deadline**: The hard cutoff timestamp after which team rosters are permanently locked.
-   - **Team Size Constraints**: Minimum and maximum allowed team size (typically 2 to 4 members).
-   - **Tags**: Comma-separated search keywords (e.g. `Hackathon, AI, Hardware, SIH, Inter-Collegiate`).
-3. Click **Create & Publish Event**.
-4. In the Admin Dashboard (`/events`), click **Promote Event** to pin the competition to the top of the student dashboard hero section.
+Navigate to:
+```text
+https://<your-app-domain>/events/new
+```
+
+When creating an event, the web form requires:
+- **Event Name**: Official title of the competition.
+- **Organizer**: Department, student chapter, or institution body hosting the event.
+- **Official Website / Registration URL**: Link to official rules or portal (**FILL IN YOURSELF**).
+- **Mode**: `Offline`, `Online`, or `Hybrid`.
+- **Event Date**: The start date of the competition.
+- **Registration & Team Lock Deadline**: The hard cutoff date and time after which team rosters are permanently locked.
+- **Description**: Official problem statements, round structure, and submission guidelines.
+- **Tags / Categories**: Search keywords for discovery.
 
 ---
 
 ## 3. Real Event Entry Templates
 
-Use these ready-to-use templates modeled after standard Indian collegiate hackathons:
+> **Note**: Do not invent dates, names, or links. The official website field is marked as **FILL IN YOURSELF**. Replace bracketed placeholders with verified official details before publishing.
 
-### Template A: Smart India Hackathon (SIH) Internal Campus Qualifier
-- **Event Name**: `Smart India Hackathon 2026 — Internal Campus Selection`
-- **Theme**: `Smart Automation, Clean Tech, Smart Education, Healthcare & AgriTech`
+### Event 1: Smart India Hackathon (SIH) — Campus Qualifier
+*Real nationwide competition organized by Ministry of Education's Innovation Cell (MIC) & AICTE.*
+
+- **Event Name**: `Smart India Hackathon (SIH) — Internal Campus Qualifier`
+- **Official Website**: `FILL IN YOURSELF`
+- **Organizer**: `[FILL IN YOURSELF: e.g. Institutional Innovation Council (IIC) / College Tech Committee]`
+- **Mode**: `Offline` (or `Hybrid`)
+- **Theme**: `[FILL IN YOURSELF: Select current official SIH themes, e.g. Smart Automation, Clean & Green Tech, MedTech]`
 - **Description**:
-  > Official internal qualification round for KKWIEER teams aiming to represent the institute at the National Smart India Hackathon. Teams must select problem statements from the official portal and build working software or hardware prototypes. Top 15 teams receive institutional nomination and faculty mentorship.
-- **Minimum Team Size**: `6` (Must include at least 1 female teammate per SIH national rules)
-- **Maximum Team Size**: `6`
-- **Registration Deadline**: `2026-09-15T18:00`
-- **Event Dates**: `2026-09-20` to `2026-09-21`
+  > Official internal qualification round for college teams aiming to represent the institute at the National Smart India Hackathon. Teams must select published problem statements from the official portal and build working software or hardware prototypes. Top nominated teams will receive institutional mentorship.
+- **Event Date**: `[FILL IN YOURSELF: YYYY-MM-DD]`
+- **Registration Deadline**: `[FILL IN YOURSELF: YYYY-MM-DDTHH:MM]`
+- **Team Size**: Exactly `6` members (Per official national SIH rules: exactly 6 student members per team, must include at least 1 female teammate)
 - **Tags**: `SIH, National, Innovation, Government, Hardware, Software`
 
 ---
 
-### Template B: Annual Campus TechFest Hackathon (Equinox / Innowave)
-- **Event Name**: `Equinox 2026: 24-Hour CodeSprint`
-- **Theme**: `Generative AI, Web3 & Decentralized Systems, Sustainable Smart Cities`
-- **Description**:
-  > The flagship annual 24-hour inter-departmental hackathon organized by the Computer and IT Engineering Student Associations. Features live mentor rounds, cloud credits, industry jury evaluations, and cash prizes for top three multidisciplinary prototypes.
-- **Minimum Team Size**: `2`
-- **Maximum Team Size**: `4`
-- **Registration Deadline**: `2026-03-01T23:59`
-- **Event Dates**: `2026-03-07` to `2026-03-08`
-- **Tags**: `TechFest, 24Hour, Coding, GenerativeAI, Web3, CashPrize`
+### Event 2: Verified Campus / Departmental Technical Hackathon
+*Template for real campus hackathons organized by accredited student associations or departments.*
 
----
-
-### Template C: CSI / ACM Student Chapter Web & Mobile Dev Hackathon
-- **Event Name**: `DevForge 2026: Full-Stack Innovation Challenge`
-- **Theme**: `Developer Tools, EdTech Platforms, Open Source Campus Utilities`
-- **Description**:
-  > A 36-hour sprint focused on shipping high-impact full-stack web and mobile applications that solve daily campus logistics, attendance tracking, alumni networking, or placement preparation. Hosted by CSI Student Branch.
-- **Minimum Team Size**: `3`
-- **Maximum Team Size**: `4`
-- **Registration Deadline**: `2026-04-10T20:00`
-- **Event Dates**: `2026-04-15` to `2026-04-17`
-- **Tags**: `CSI, FullStack, React, Node, Mobile, OpenSource`
+- **Event Name**: `[FILL IN YOURSELF: Real Event Name]`
+- **Official Website**: `FILL IN YOURSELF`
+- **Organizer**: `[FILL IN YOURSELF: Real Department or Student Chapter, e.g. Computer Engineering Student Association]`
+- **Mode**: `[FILL IN YOURSELF: Offline / Online / Hybrid]`
+- **Theme**: `[FILL IN YOURSELF: Real Competition Themes / Problem Tracks]`
+- **Description**: `[FILL IN YOURSELF: Official event description, round criteria, and submission rules]`
+- **Event Date**: `[FILL IN YOURSELF: YYYY-MM-DD]`
+- **Registration Deadline**: `[FILL IN YOURSELF: YYYY-MM-DDTHH:MM]`
+- **Team Size Constraints**: `[FILL IN YOURSELF: e.g. Min 2, Max 4]`
+- **Tags**: `[FILL IN YOURSELF: e.g. Web, AI, Mobile, Campus]`
 
 ---
 
@@ -80,8 +74,10 @@ Use these ready-to-use templates modeled after standard Indian collegiate hackat
 
 Once an event's end date has passed:
 1. TeamForge automatically unlocks the double-blind peer review interface at `/reviews/event/<eventId>`.
-2. All locked teammates receive a notification prompt to review their peers on:
-   - Technical contribution
-   - Communication & teamwork
-   - Skill endorsements
+2. All locked teammates receive an in-app notification prompt to review their peers on:
+   - Technical contribution (1-5)
+   - Reliability & task completion (1-5)
+   - Communication (1-5)
+   - Teamwork (1-5)
+   - Peer skill endorsements
 3. Individual review ratings remain strictly confidential until both teammates submit, protecting student psychological safety and platform trust.

