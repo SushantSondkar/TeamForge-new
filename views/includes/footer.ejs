@@ -8,7 +8,13 @@
         </div>
         <div style="display: flex; align-items: center; gap: 18px; flex-wrap: wrap;">
             <a href="/how-it-works" style="color: #2563eb; text-decoration: none; font-weight: 500;">How TeamForge works</a>
-            <a href="mailto:support@teamforge.kkwagh.edu.in?subject=TeamForge%20Issue%20Report" style="color: #64748b; text-decoration: none; font-weight: 500;">Report a problem</a>
+            <% 
+              const activeSupportEmail = (typeof supportEmail !== "undefined" && supportEmail) 
+                || (typeof process !== "undefined" && process.env && process.env.SUPPORT_EMAIL ? process.env.SUPPORT_EMAIL.trim() : null); 
+            %>
+            <% if (activeSupportEmail) { %>
+            <a href="mailto:<%= activeSupportEmail %>?subject=TeamForge%20Issue%20Report" style="color: #64748b; text-decoration: none; font-weight: 500;">Report a problem</a>
+            <% } %>
             <span style="color: #94a3b8;">© 2026 TeamForge</span>
         </div>
     </div>

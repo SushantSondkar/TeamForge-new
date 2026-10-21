@@ -21,7 +21,8 @@ async function runTests() {
       SMTP_PORT: "587",
       SMTP_USER: "mailer@teamforge.kkwagh.edu.in",
       SMTP_PASS: "secure-smtp-app-password-prod",
-      SEED: "false"
+      SEED: "false",
+      SUPPORT_EMAIL: "support@teamforge.kkwagh.edu.in"
     };
   }
 
@@ -172,6 +173,24 @@ async function runTests() {
   assert.strictEqual(resSeedActive.valid, false);
   assert.ok(resSeedActive.errors.some(e => e.includes("SEED cannot be 'true' in production")));
   console.log("   ✓ SEED='true' rejected in production.");
+
+  // 16b. Missing SUPPORT_EMAIL in production
+  console.log("16b. Testing missing SUPPORT_EMAIL in production...");
+  const missingSupport = createValidProdEnv();
+  delete missingSupport.SUPPORT_EMAIL;
+  const resMissingSupport = validateEnv(missingSupport, true);
+  assert.strictEqual(resMissingSupport.valid, false);
+  assert.ok(resMissingSupport.errors.some(e => e.includes("SUPPORT_EMAIL is required in production")));
+  console.log("   ✓ Missing SUPPORT_EMAIL failed as expected.");
+
+  // 16c. Placeholder SUPPORT_EMAIL in production
+  console.log("16c. Testing placeholder SUPPORT_EMAIL in production...");
+  const placeholderSupport = createValidProdEnv();
+  placeholderSupport.SUPPORT_EMAIL = placeholders.SUPPORT_EMAIL;
+  const resPlaceholderSupport = validateEnv(placeholderSupport, true);
+  assert.strictEqual(resPlaceholderSupport.valid, false);
+  assert.ok(resPlaceholderSupport.errors.some(e => e.includes("SUPPORT_EMAIL cannot use the default placeholder")));
+  console.log("   ✓ Placeholder SUPPORT_EMAIL rejected in production.");
 
   // 17. Non-production environment bypasses strict production requirements
   console.log("17. Testing development environment leeway...");

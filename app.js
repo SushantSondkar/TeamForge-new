@@ -179,6 +179,7 @@ app.use(async (req, res, next) => {
   // Expose application base URL and current path for SEO, Open Graph and brand asset references
   res.locals.appBaseUrl = (process.env.APP_BASE_URL || "http://localhost:8080").replace(/\/+$/, "");
   res.locals.currentPath = req.path || "";
+  res.locals.supportEmail = (process.env.SUPPORT_EMAIL && process.env.SUPPORT_EMAIL.trim()) ? process.env.SUPPORT_EMAIL.trim() : null;
 
   // Session Flash Messages (transient success / error alerts)
   res.locals.success = (req.session && req.session.success) || (req.query && req.query.success) || null;

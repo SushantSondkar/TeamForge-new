@@ -100,6 +100,13 @@ function validateEnv(env = process.env, isProduction = (env.NODE_ENV === "produc
     if (env.SEED === "true") {
       errors.push("SEED cannot be 'true' in production (demo seeding is forbidden)");
     }
+
+    // 8. SUPPORT_EMAIL
+    if (!env.SUPPORT_EMAIL || !env.SUPPORT_EMAIL.trim()) {
+      errors.push("SUPPORT_EMAIL is required in production");
+    } else if (placeholders.SUPPORT_EMAIL && env.SUPPORT_EMAIL.trim() === placeholders.SUPPORT_EMAIL) {
+      errors.push("SUPPORT_EMAIL cannot use the default placeholder from .env.example in production");
+    }
   }
 
   const isValid = errors.length === 0;
