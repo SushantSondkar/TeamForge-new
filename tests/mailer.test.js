@@ -198,13 +198,13 @@ async function runTests() {
     assert.ok(resetTmpl.html.includes("Reset Password"));
 
     // 5C. Custom APP_BASE_URL handling
-    process.env.APP_BASE_URL = "https://teamforge.kkwagh.edu.in/";
+    process.env.APP_BASE_URL = "https://teamforge.example.com/";
     const customTmpl = verifyEmail({
       name: "Student",
       token: "tok-custom"
     });
     assert.ok(
-      customTmpl.text.includes("https://teamforge.kkwagh.edu.in/verify-email?token=tok-custom"),
+      customTmpl.text.includes("https://teamforge.example.com/verify-email?token=tok-custom"),
       "Must correctly strip trailing slash from custom APP_BASE_URL"
     );
 

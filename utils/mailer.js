@@ -133,7 +133,7 @@ async function sendMail({ to, subject, text, html }) {
   if (isSmtpConfigured() || mockTransporter) {
     const transporter = getTransporter();
     const mailOptions = {
-      from: process.env.MAIL_FROM || '"TeamForge" <noreply@teamforge.kkwagh.edu.in>',
+      from: process.env.MAIL_FROM || (process.env.SUPPORT_EMAIL ? `"TeamForge" <${process.env.SUPPORT_EMAIL}>` : '"TeamForge" <noreply@example.com>'),
       to,
       subject,
       text,

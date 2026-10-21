@@ -16,13 +16,13 @@ async function runTests() {
       SESSION_SECRET: "0123456789abcdef0123456789abcdef_valid_session_secret_32_chars",
       COOKIE_SECRET: "0123456789abcdef0123456789abcdef_valid_cookie_secret_32_chars",
       CSRF_SECRET: "0123456789abcdef0123456789abcdef_valid_csrf_secret_32_chars",
-      APP_BASE_URL: "https://teamforge.kkwagh.edu.in",
+      APP_BASE_URL: "https://teamforge.example.com",
       SMTP_HOST: "smtp-relay.brevo.com",
       SMTP_PORT: "587",
-      SMTP_USER: "mailer@teamforge.kkwagh.edu.in",
+      SMTP_USER: "mailer@example.com",
       SMTP_PASS: "secure-smtp-app-password-prod",
       SEED: "false",
-      SUPPORT_EMAIL: "support@teamforge.kkwagh.edu.in"
+      SUPPORT_EMAIL: "support@example.com"
     };
   }
 
