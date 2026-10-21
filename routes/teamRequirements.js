@@ -226,7 +226,11 @@ router.get("/:id/recommendations", requireLogin, async (req, res) => {
       return res.json({ team, role: null, recommendations: [] });
     }
 
-    const recommendations = await getRecommendedCandidates(team, role, req.user._id);
+    const filters = {
+      skill: req.query.skill || "",
+      minLevel: req.query.minLevel || 1
+    };
+    const recommendations = await getRecommendedCandidates(team, role, req.user._id, filters);
 
     res.json({
       success: true,
@@ -238,6 +242,53 @@ router.get("/:id/recommendations", requireLogin, async (req, res) => {
   } catch (err) {
     console.error("Error fetching recommendations:", err.message);
     res.status(500).json({ error: `Server error: ${err.message}` });
+  }
+});
+
+// 7. GET /:id - Team Requirement Page with "Find People" Candidate Search
+router.get("/:id", requireLogin, async (req, res) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(404).send("Invalid team requirement ID format.");
+    }
+
+    const team = await TeamRequirement.findById(req.params.id)
+      .populate("eventId")
+      .populate("createdBy", "name department role");
+
+    if (!team) {
+      return res.status(404).send("Team requirement not found.");
+    }
+
+    const roleIndex = parseInt(req.query.roleIndex, 10) || 0;
+    const role = (team.roles && team.roles[roleIndex]) ? team.roles[roleIndex] : (team.roles ? team.roles[0] : null);
+
+    const searchedSkill = req.query.skill ? String(req.query.skill).trim() : "";
+    const searchedMinLevel = req.query.minLevel ? String(req.query.minLevel).trim() : "1";
+
+    let candidates = [];
+    const isOwner = Boolean(team.createdBy && team.createdBy._id && team.createdBy._id.equals(req.user._id));
+
+    if (isOwner && role) {
+      candidates = await getRecommendedCandidates(team, role, req.user._id, {
+        skill: searchedSkill,
+        minLevel: searchedMinLevel
+      });
+    }
+
+    res.render("team-requirement/show", {
+      team,
+      role,
+      roleIndex,
+      candidates,
+      searchedSkill,
+      searchedMinLevel,
+      isOwner,
+      currentUser: req.user
+    });
+  } catch (err) {
+    console.error("Error loading team requirement detail:", err.message);
+    res.redirect("/discover");
   }
 });
 

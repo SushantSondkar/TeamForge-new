@@ -75,6 +75,16 @@ const teamRequirementSchema = new mongoose.Schema({
   timestamps: true
 });
 
+// MongoDB indexes for Discover search & filter performance
+teamRequirementSchema.index({ projectName: 1 });
+teamRequirementSchema.index({ theme: 1 });
+teamRequirementSchema.index({ "roles.requiredSkills": 1 });
+teamRequirementSchema.index({ "roles.title": 1 });
+teamRequirementSchema.index({ "roles.openings": 1 });
+teamRequirementSchema.index({ deadline: 1 });
+teamRequirementSchema.index({ createdBy: 1 });
+teamRequirementSchema.index({ eventId: 1 });
+
 const TeamRequirement = mongoose.model("TeamRequirement", teamRequirementSchema);
 
 module.exports = TeamRequirement;

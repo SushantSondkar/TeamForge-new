@@ -1,0 +1,183 @@
+<% layout("/layouts/boilerplate") -%>
+
+<div class="team-requirement-show" style="padding: 24px 36px; max-width: 1100px; margin: 0 auto;">
+    
+    <div style="margin-bottom: 20px;">
+        <a href="/dashboard" style="color: #64748b; text-decoration: none; font-size: 13.5px; display: inline-flex; align-items: center; gap: 6px; font-weight: 500;">
+            ← Back to Dashboard
+        </a>
+    </div>
+
+    <!-- Team Hero Card -->
+    <div style="background: white; border: 1px solid #e2e8f0; border-radius: 14px; padding: 28px 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); margin-bottom: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; flex-wrap: wrap;">
+            <div>
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                    <span style="background: #e0e7ff; color: #4338ca; font-size: 11.5px; font-weight: 700; padding: 3px 10px; border-radius: 6px; text-transform: uppercase;">
+                        <%= team.theme || 'PROJECT' %>
+                    </span>
+                    <% if (team.eventId) { %>
+                        <span style="background: #f1f5f9; color: #475569; font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 6px;">
+                            <%= team.eventId.name %>
+                        </span>
+                    <% } %>
+                </div>
+
+                <h1 style="font-size: 26px; font-weight: 800; color: #0f172a; margin: 0 0 8px 0;"><%= team.projectName %></h1>
+                <p style="color: #64748b; font-size: 14px; margin: 0 0 16px 0; max-width: 700px; line-height: 1.5;">
+                    <%= team.projectRequirement %>
+                </p>
+
+                <div style="display: flex; gap: 24px; flex-wrap: wrap; font-size: 13px; color: #475569;">
+                    <div><strong>Team Size:</strong> <%= team.teamSize %> members</div>
+                    <div><strong>Deadline:</strong> <%= new Date(team.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %></div>
+                    <% if (team.deliverables) { %>
+                        <div><strong>Deliverables:</strong> <%= team.deliverables %></div>
+                    <% } %>
+                </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <a href="/applications/team/<%= team._id %>" class="btn-small-primary" style="text-decoration: none; padding: 10px 18px; font-size: 13px; text-align: center;">
+                    View Received Applications
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Open Roles List -->
+    <div style="background: white; border: 1px solid #e2e8f0; border-radius: 14px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); margin-bottom: 24px;">
+        <h3 style="font-size: 17px; font-weight: 700; color: #0f172a; margin: 0 0 16px 0;">Team Roles</h3>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+            <% (team.roles || []).forEach((r, idx) => { %>
+                <div style="border: 1px solid <%= (role && role.title === r.title) ? '#3b82f6' : '#e2e8f0' %>; background: <%= (role && role.title === r.title) ? '#eff6ff' : '#f8fafc' %>; border-radius: 10px; padding: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <strong style="font-size: 15px; color: #0f172a;"><%= r.title %></strong>
+                        <span style="font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 4px; background: <%= r.openings > 0 ? '#dcfce7' : '#fee2e2' %>; color: <%= r.openings > 0 ? '#15803d' : '#b91c1c' %>;">
+                            <%= r.openings %> Openings
+                        </span>
+                    </div>
+
+                    <div style="font-size: 12px; color: #64748b; margin-bottom: 8px;">
+                        Proficiency: <strong><%= r.proficiency || 'Intermediate' %></strong>
+                    </div>
+
+                    <div style="margin-bottom: 12px;">
+                        <span style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Required Skills:</span>
+                        <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                            <% (r.requiredSkills || []).forEach(s => { %>
+                                <span style="background: white; border: 1px solid #cbd5e1; color: #334155; font-size: 11px; padding: 1px 6px; border-radius: 4px;"><%= s %></span>
+                            <% }); %>
+                        </div>
+                    </div>
+
+                    <a href="/team-requirement/<%= team._id %>?roleIndex=<%= idx %>" style="display: block; text-align: center; font-size: 12px; font-weight: 600; color: #2563eb; text-decoration: none; padding: 6px; background: white; border: 1px solid #cbd5e1; border-radius: 6px;">
+                        <%= (role && role.title === r.title) ? '● Active Search Role' : 'Select for Candidate Search' %>
+                    </a>
+                </div>
+            <% }); %>
+        </div>
+    </div>
+
+    <!-- Candidate Search ("Find People") -->
+    <% if (isOwner) { %>
+        <div style="background: white; border: 1px solid #e2e8f0; border-radius: 14px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+                <div>
+                    <h3 style="font-size: 18px; font-weight: 700; color: #0f172a; margin: 0 0 4px 0;">Find People for <%= role ? role.title : 'Team' %></h3>
+                    <p style="color: #64748b; font-size: 13px; margin: 0;">Search candidates by skill name and minimum proficiency level. Ranked using MatchScore.</p>
+                </div>
+            </div>
+
+            <!-- Plain GET form for JS-disabled compatibility -->
+            <form action="/team-requirement/<%= team._id %>" method="GET" style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center;">
+                <input type="hidden" name="roleIndex" value="<%= roleIndex %>">
+                
+                <input type="text" name="skill" value="<%= searchedSkill %>" placeholder="Search skill (e.g. React, Python, Docker)"
+                       style="padding: 8px 14px; font-size: 13.5px; border: 1px solid #cbd5e1; border-radius: 8px; flex: 1; min-width: 220px;">
+                
+                <select name="minLevel" style="padding: 8px 12px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 8px; background: white;">
+                    <option value="1" <%= searchedMinLevel === '1' ? 'selected' : '' %>>Min Level: 1+ (Beginner)</option>
+                    <option value="2" <%= searchedMinLevel === '2' ? 'selected' : '' %>>Min Level: 2+</option>
+                    <option value="3" <%= searchedMinLevel === '3' ? 'selected' : '' %>>Min Level: 3+ (Intermediate)</option>
+                    <option value="4" <%= searchedMinLevel === '4' ? 'selected' : '' %>>Min Level: 4+ (Advanced)</option>
+                    <option value="5" <%= searchedMinLevel === '5' ? 'selected' : '' %>>Min Level: 5 (Expert)</option>
+                </select>
+
+                <button type="submit" class="btn-small-primary" style="padding: 8px 18px; font-size: 13px;">Find People</button>
+                
+                <% if (searchedSkill || searchedMinLevel !== '1') { %>
+                    <a href="/team-requirement/<%= team._id %>?roleIndex=<%= roleIndex %>" style="color: #64748b; font-size: 13px; text-decoration: underline; margin-left: 6px;">Clear</a>
+                <% } %>
+            </form>
+
+            <!-- Candidates Results List -->
+            <% if (candidates && candidates.length > 0) { %>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <% candidates.forEach(cand => { %>
+                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                            <div style="display: flex; align-items: center; gap: 14px; flex: 1; min-width: 260px;">
+                                <div style="width: 44px; height: 44px; border-radius: 50%; background: #e2e8f0; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #475569;">
+                                    <%= cand.user.name.charAt(0) %>
+                                </div>
+                                <div>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <strong style="font-size: 15px; color: #0f172a;"><%= cand.user.name %></strong>
+                                        <span style="font-size: 12px; font-weight: 700; color: #15803d; background: #dcfce7; padding: 1px 6px; border-radius: 4px;">
+                                            <%= cand.score %>% Match
+                                        </span>
+                                        <% if (cand.user.isGithubVerified) { %>
+                                            <span style="font-size: 10px; background: #0f172a; color: #38bdf8; padding: 1px 6px; border-radius: 4px; font-weight: 600;">✓ GitHub</span>
+                                        <% } %>
+                                        <% if (cand.user.isLinkedinLinked) { %>
+                                            <span style="font-size: 10px; background: #0077b5; color: white; padding: 1px 6px; border-radius: 4px; font-weight: 600;">🔗 LinkedIn</span>
+                                        <% } %>
+                                    </div>
+                                    
+                                    <div style="font-size: 12.5px; color: #64748b; margin-top: 2px;">
+                                        <%= cand.user.department %> · <%= cand.user.year %> · <%= cand.user.role || 'Student' %>
+                                    </div>
+
+                                    <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px;">
+                                        <% (cand.user.skills || []).slice(0, 5).forEach(s => { %>
+                                            <span style="font-size: 11px; background: white; border: 1px solid #cbd5e1; padding: 1px 6px; border-radius: 4px; color: #334155;">
+                                                <%= s.name %> (Lvl <%= s.level %>)
+                                            </span>
+                                        <% }); %>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <% if (cand.isInvited) { %>
+                                    <button class="btn-small-primary" disabled style="background: #10b981; border-color: #10b981; font-size: 12.5px;">✓ Invited</button>
+                                <% } else { %>
+                                    <form action="/invites/send" method="POST" style="margin: 0;">
+                                        <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                                        <input type="hidden" name="receiverId" value="<%= cand.user._id %>">
+                                        <input type="hidden" name="teamRequirementId" value="<%= team._id %>">
+                                        <input type="hidden" name="role" value="<%= role ? role.title : '' %>">
+                                        <button type="submit" class="btn-small-primary" style="font-size: 12.5px; padding: 6px 14px;">Invite to Team</button>
+                                    </form>
+                                <% } %>
+                            </div>
+                        </div>
+                    <% }); %>
+                </div>
+            <% } else { %>
+                <div style="text-align: center; padding: 36px 20px; background: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0;">
+                    <p style="color: #475569; font-size: 15px; font-weight: 600; margin: 0 0 6px 0;">No matching candidates found.</p>
+                    <p style="color: #64748b; font-size: 13px; margin: 0 0 14px 0;">
+                        <%= searchedSkill ? `Try searching for related skills or lowering the minimum skill level.` : `No visible candidates are available for this role right now.` %>
+                    </p>
+                    <% if (searchedSkill) { %>
+                        <a href="/team-requirement/<%= team._id %>?roleIndex=<%= roleIndex %>" class="btn-small-outline" style="font-size: 12.5px; text-decoration: none;">View All Recommendations</a>
+                    <% } %>
+                </div>
+            <% } %>
+
+        </div>
+    <% } %>
+
+</div>

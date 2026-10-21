@@ -1,194 +1,339 @@
 <% layout("/layouts/boilerplate") -%>
 
-<div class="discover-page">
+<div class="discover-page" style="padding: 24px 36px; max-width: 1200px; margin: 0 auto;">
     
-    <div class="discover-header">
-        <h1 class="page-title-new">Explore Active Requirements</h1>
-        <p class="page-subtitle">Find teams and roles that match your skills. Apply directly with automatic evidence attachments.</p>
+    <div class="discover-header" style="margin-bottom: 24px;">
+        <h1 class="page-title-new" style="font-size: 26px; font-weight: 800; color: #0f172a; margin: 0 0 6px 0;">Explore Active Requirements</h1>
+        <p class="page-subtitle" style="color: #64748b; font-size: 14.5px; margin: 0;">Find teams and open roles matching your skills. Server-side filtering with real MatchScore calculation.</p>
     </div>
 
-    <!-- Tabs -->
-    <div class="discover-tabs">
-        <button class="discover-tab active" data-target="smart-recs">Smart Recommendations</button>
-        <button class="discover-tab" data-target="search-teams">Search Teams</button>
-        <button class="discover-tab" data-target="browse-events">Browse by Event</button>
+    <!-- Tabs Navigation -->
+    <div class="discover-tabs" style="display: flex; gap: 8px; border-bottom: 1px solid #e2e8f0; margin-bottom: 24px;">
+        <button type="button" class="discover-tab <%= (typeof activeTab === 'undefined' || activeTab === 'smart-recs') ? 'active' : '' %>" data-target="smart-recs"
+                style="padding: 10px 18px; font-size: 14px; font-weight: 600; background: none; border: none; cursor: pointer; border-bottom: 2px solid <%= (typeof activeTab === 'undefined' || activeTab === 'smart-recs') ? '#2563eb' : 'transparent' %>; color: <%= (typeof activeTab === 'undefined' || activeTab === 'smart-recs') ? '#2563eb' : '#64748b' %>;">
+            Smart Recommendations
+        </button>
+        <button type="button" class="discover-tab <%= (typeof activeTab !== 'undefined' && activeTab === 'search') ? 'active' : '' %>" data-target="search-teams"
+                style="padding: 10px 18px; font-size: 14px; font-weight: 600; background: none; border: none; cursor: pointer; border-bottom: 2px solid <%= (typeof activeTab !== 'undefined' && activeTab === 'search') ? '#2563eb' : 'transparent' %>; color: <%= (typeof activeTab !== 'undefined' && activeTab === 'search') ? '#2563eb' : '#64748b' %>;">
+            Search Teams (<%= (typeof searchResults !== 'undefined' && searchResults.totalCount !== undefined) ? searchResults.totalCount : 0 %>)
+        </button>
+        <button type="button" class="discover-tab <%= (typeof activeTab !== 'undefined' && activeTab === 'browse-events') ? 'active' : '' %>" data-target="browse-events"
+                style="padding: 10px 18px; font-size: 14px; font-weight: 600; background: none; border: none; cursor: pointer; border-bottom: 2px solid <%= (typeof activeTab !== 'undefined' && activeTab === 'browse-events') ? '#2563eb' : 'transparent' %>; color: <%= (typeof activeTab !== 'undefined' && activeTab === 'browse-events') ? '#2563eb' : '#64748b' %>;">
+            Browse by Event
+        </button>
     </div>
 
     <div class="discover-content-area">
         
-        <!-- Tab: Smart Recommendations -->
-        <div id="smart-recs" class="tab-pane active" style="display: flex; gap: 30px;">
-            <div class="teams-list" style="flex: 1;">
-                <% if (recommendedOpportunities && recommendedOpportunities.length > 0) { %>
+        <!-- Tab 1: Smart Recommendations -->
+        <div id="smart-recs" class="tab-pane" style="<%= (typeof activeTab === 'undefined' || activeTab === 'smart-recs') ? 'display: flex;' : 'display: none;' %> gap: 30px;">
+            <div class="teams-list" style="flex: 1; display: flex; flex-direction: column; gap: 16px;">
+                <% if (typeof recommendedOpportunities !== 'undefined' && recommendedOpportunities && recommendedOpportunities.length > 0) { %>
                     <% recommendedOpportunities.forEach(opp => { %>
-                        <div class="team-card-advanced">
-                            <div class="team-card-header">
+                        <div class="team-card-advanced" style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+                            <div class="team-card-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
                                 <div class="team-card-title">
-                                    <h3><%= opp.team.projectName %></h3>
-                                    <span class="badge badge-hackathon"><%= opp.team.theme ? opp.team.theme.toUpperCase() : 'PROJECT' %></span>
+                                    <h3 style="margin: 0 0 4px 0; font-size: 18px; font-weight: 700; color: #0f172a;"><%= opp.team.projectName %></h3>
+                                    <span class="badge badge-hackathon" style="background: #e0e7ff; color: #4338ca; font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 600;"><%= opp.team.theme ? opp.team.theme.toUpperCase() : 'PROJECT' %></span>
                                 </div>
-                                <div class="team-card-match">
-                                    <span class="brief-badge"><%= opp.role.openings %> Openings</span>
-                                    <span class="match-score"><%= opp.score %>% Match</span>
+                                <div class="team-card-match" style="display: flex; align-items: center; gap: 8px;">
+                                    <span class="brief-badge" style="background: #f1f5f9; color: #475569; font-size: 12px; padding: 2px 8px; border-radius: 4px;"><%= opp.role.openings %> Openings</span>
+                                    <span class="match-score" style="background: #dcfce7; color: #15803d; font-size: 13px; font-weight: 700; padding: 3px 8px; border-radius: 6px;"><%= opp.score %>% Match</span>
                                 </div>
                             </div>
-                            <div class="team-card-role">Role: <%= opp.role.title %></div>
+
+                            <div class="team-card-role" style="font-size: 14.5px; font-weight: 600; color: #1e293b; margin-bottom: 12px;">Role: <%= opp.role.title %></div>
                             
-                            <div class="team-card-meta">
+                            <div class="team-card-meta" style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 14px; font-size: 13px; color: #475569;">
                                 <div class="meta-col">
-                                    <span class="meta-label">Required Skills</span>
-                                    <div class="meta-value" style="font-size: 13px; font-weight: 500;">
-                                        <%= opp.role.requiredSkills.join(', ') %>
+                                    <span class="meta-label" style="font-size: 11px; text-transform: uppercase; color: #94a3b8; display: block;">Required Skills</span>
+                                    <div class="meta-value" style="font-weight: 500; color: #334155;">
+                                        <%= (opp.role.requiredSkills || []).join(', ') %>
                                     </div>
                                 </div>
                                 <div class="meta-col">
-                                    <span class="meta-label">Team Size</span>
-                                    <div class="meta-value" style="font-size: 13px; font-weight: 500;">
+                                    <span class="meta-label" style="font-size: 11px; text-transform: uppercase; color: #94a3b8; display: block;">Team Capacity</span>
+                                    <div class="meta-value" style="font-weight: 500; color: #334155;">
                                         <%= opp.team.teamSize %> Members
                                     </div>
                                 </div>
                                 <div class="meta-col">
-                                    <span class="meta-label">Event Deadline</span>
-                                    <div class="meta-value" style="font-size: 13px; font-weight: 500;">
+                                    <span class="meta-label" style="font-size: 11px; text-transform: uppercase; color: #94a3b8; display: block;">Deadline</span>
+                                    <div class="meta-value" style="font-weight: 500; color: #334155;">
                                         <%= new Date(opp.team.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="team-card-actions">
+                            <div class="team-card-actions" style="display: flex; justify-content: flex-end; align-items: center; gap: 10px;">
                                 <% if (opp.isApplied) { %>
-                                    <button class="btn-small-outline" disabled style="background-color: #10b981; color: white; border-color: #10b981;">Applied</button>
+                                    <button class="btn-small-outline" disabled style="background-color: #10b981; color: white; border-color: #10b981; padding: 6px 14px; font-size: 12.5px;">✓ Applied</button>
                                 <% } else { %>
                                     <form action="/applications/apply" method="POST" style="margin: 0; display: inline;">
                                         <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
                                         <input type="hidden" name="teamRequirementId" value="<%= opp.team._id %>">
                                         <input type="hidden" name="role" value="<%= opp.role.title %>">
-                                        <button type="submit" class="btn-small-primary">Apply Now</button>
+                                        <button type="submit" class="btn-small-primary" style="padding: 6px 16px; font-size: 13px;">Apply Now</button>
                                     </form>
                                 <% } %>
                             </div>
                         </div>
                     <% }); %>
                 <% } else { %>
-                    <div style="text-align: center; padding: 40px; background: white; border-radius: 12px; border: 1px solid #e2e8f0;">
-                        <p style="color: #64748b; font-size: 16px;">No matching opportunities found based on your skills.</p>
+                    <div style="text-align: center; padding: 48px 24px; background: white; border-radius: 12px; border: 1px solid #e2e8f0;">
+                        <p style="color: #64748b; font-size: 15px; margin: 0 0 12px 0;">No matching recommendations found for your current skills.</p>
+                        <p style="color: #94a3b8; font-size: 13px; margin: 0 0 18px 0;">Try updating your profile skills, or use the Search Teams tab to explore all open requirements.</p>
+                        <a href="/profile/edit" class="btn-small-outline" style="text-decoration: none;">Update My Skills</a>
                     </div>
                 <% } %>
             </div>
-            
-            <!-- Application Sidebar -->
-            <div class="application-sidebar" style="display: none; width: 320px;">
-                <div class="invite-sidebar-card">
-                    <div class="invite-header" style="margin-bottom: 15px;">
-                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='12' fill='%23e2e8f0'/%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z' fill='%239ca3af'/%3E%3C/svg%3E" alt="Avatar" class="invite-avatar">
-                        <span class="invite-title">Applying to <strong class="app-team-name">Selected Team</strong> — <span class="app-role-name">Role</span></span>
-                    </div>
-                    
-                    <div class="invite-reason" style="margin-bottom: 15px;">
-                        <span class="sidebar-label">AUTO-ATTACHED EVIDENCE</span>
-                        <div class="reason-box">
-                            <% if (currentUser && currentUser.isGithubVerified) { %>
-                                GitHub: <%= (currentUser.githubData && currentUser.githubData.reposCount !== undefined) ? currentUser.githubData.reposCount : 0 %> repos<% if (currentUser.githubUsername) { %> (@<%= currentUser.githubUsername %>)<% } %>
-                            <% } else { %>
-                                Not verified
-                            <% } %>
-                        </div>
-                    </div>
-
-                    <div class="invite-message">
-                        <span class="sidebar-label">OPTIONAL SHORT NOTE</span>
-                        <textarea placeholder="Add a short note to the team lead (optional)" rows="4" class="form-control-new"></textarea>
-                    </div>
-
-                    <button class="btn-large-primary btn-submit-app" style="margin-bottom: 10px;">Submit Application</button>
-                    <button class="btn-large-outline btn-cancel-app" style="border:none; color: #4b5563;">Cancel</button>
-                </div>
-            </div>
         </div>
 
-        <!-- Tab: Search Teams -->
-        <div id="search-teams" class="tab-pane" style="display: none;">
-            <div class="search-filters-bar">
-                <div class="search-input-wrapper">
-                    <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                    <input type="text" class="search-input" placeholder="Search by team name, skill, or role">
-                </div>
+        <!-- Tab 2: Search Teams (Server-Side Filtered & Paginated) -->
+        <div id="search-teams" class="tab-pane" style="<%= (typeof activeTab !== 'undefined' && activeTab === 'search') ? 'display: block;' : 'display: none;' %>">
+            
+            <!-- Server-Side GET Form (Works with JS disabled) -->
+            <form action="/discover" method="GET" class="search-filters-form" id="discoverSearchForm" style="margin-bottom: 24px;">
+                <input type="hidden" name="tab" value="search">
                 
-                <div class="filter-dropdowns">
-                    <select class="filter-select"><option>Skill: Any skill</option></select>
-                    <select class="filter-select"><option>Availability: Any</option></select>
-                    <select class="filter-select"><option>Reputation: Any rating</option></select>
+                <div class="search-filters-bar" style="display: flex; gap: 12px; flex-wrap: wrap; background: white; padding: 18px 20px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.04); align-items: center;">
+                    
+                    <!-- Search Input (projectName, theme, role title, required/preferred skills) -->
+                    <div class="search-input-wrapper" style="flex: 2; min-width: 240px; position: relative;">
+                        <input type="text" name="q" id="searchQ" value="<%= (typeof q !== 'undefined') ? q : '' %>" class="form-control-new"
+                               placeholder="Search by project name, theme, skill, or role..."
+                               style="width: 100%; padding: 10px 14px; font-size: 14px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box;">
+                    </div>
+
+                    <!-- Dynamic Skill Filter Dropdown -->
+                    <div style="flex: 1; min-width: 160px;">
+                        <select name="skill" id="filterSkill" class="form-control-new filter-select-dropdown"
+                                style="width: 100%; padding: 10px 12px; font-size: 13.5px; border: 1px solid #cbd5e1; border-radius: 8px; background: white; box-sizing: border-box;">
+                            <option value="">Skill: All Skills</option>
+                            <% if (typeof availableSkills !== 'undefined' && availableSkills) { %>
+                                <% availableSkills.forEach(s => { %>
+                                    <option value="<%= s %>" <%= (typeof selectedSkill !== 'undefined' && selectedSkill === s) ? 'selected' : '' %>><%= s %></option>
+                                <% }); %>
+                            <% } %>
+                        </select>
+                    </div>
+
+                    <!-- Dynamic Role Filter Dropdown -->
+                    <div style="flex: 1; min-width: 160px;">
+                        <select name="role" id="filterRole" class="form-control-new filter-select-dropdown"
+                                style="width: 100%; padding: 10px 12px; font-size: 13.5px; border: 1px solid #cbd5e1; border-radius: 8px; background: white; box-sizing: border-box;">
+                            <option value="">Role: All Roles</option>
+                            <% if (typeof availableRoles !== 'undefined' && availableRoles) { %>
+                                <% availableRoles.forEach(r => { %>
+                                    <option value="<%= r %>" <%= (typeof selectedRole !== 'undefined' && selectedRole === r) ? 'selected' : '' %>><%= r %></option>
+                                <% }); %>
+                            <% } %>
+                        </select>
+                    </div>
+
+                    <!-- Dynamic Events Filter Dropdown -->
+                    <div style="flex: 1; min-width: 160px;">
+                        <select name="event" id="filterEvent" class="form-control-new filter-select-dropdown"
+                                style="width: 100%; padding: 10px 12px; font-size: 13.5px; border: 1px solid #cbd5e1; border-radius: 8px; background: white; box-sizing: border-box;">
+                            <option value="">Event: All Events</option>
+                            <% if (typeof availableEvents !== 'undefined' && availableEvents) { %>
+                                <% availableEvents.forEach(evt => { %>
+                                    <option value="<%= evt._id %>" <%= (typeof selectedEvent !== 'undefined' && selectedEvent === evt._id.toString()) ? 'selected' : '' %>><%= evt.name %></option>
+                                <% }); %>
+                            <% } %>
+                        </select>
+                    </div>
+
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <button type="submit" class="btn-small-primary" style="padding: 10px 20px; font-size: 14px; font-weight: 600;">Search</button>
+                        <% if ((typeof q !== 'undefined' && q) || (typeof selectedSkill !== 'undefined' && selectedSkill) || (typeof selectedRole !== 'undefined' && selectedRole) || (typeof selectedEvent !== 'undefined' && selectedEvent)) { %>
+                            <a href="/discover?tab=search" class="btn-small-outline" style="padding: 9px 14px; font-size: 13px; text-decoration: none; display: inline-flex; align-items: center;">Clear</a>
+                        <% } %>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Results Summary -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <div style="font-size: 14px; color: #64748b;">
+                    Found <strong style="color: #0f172a;"><%= (typeof searchResults !== 'undefined' && searchResults.totalCount !== undefined) ? searchResults.totalCount : 0 %></strong> open requirements
+                    <% if (typeof searchResults !== 'undefined' && searchResults.totalCount > 0) { %>
+                        (Page <%= searchResults.currentPage %> of <%= searchResults.totalPages %>)
+                    <% } %>
                 </div>
             </div>
 
-            <div class="teams-list">
-                <% if (teamRequirements && teamRequirements.length > 0) { %>
-                    <% teamRequirements.forEach(team => { %>
-                        <div class="team-card-advanced">
-                            <div class="team-card-header">
-                                <div class="team-card-title">
-                                    <h3><%= team.projectName %></h3>
-                                    <span class="badge badge-hackathon" style="text-transform: uppercase;"><%= team.theme %></span>
-                                </div>
-                                <div class="team-card-match">
-                                    <span class="brief-badge">Active Requirement</span>
-                                    <span class="match-score"><%= team.roles ? team.roles.length : 1 %> Role<%= team.roles && team.roles.length > 1 ? 's' : '' %></span>
-                                </div>
-                            </div>
-                            <div class="team-card-role">Role: <%= (team.roles && team.roles.length > 0) ? team.roles[0].title : 'Open Role' %></div>
+            <!-- Teams Results List -->
+            <div class="teams-list" style="display: flex; flex-direction: column; gap: 16px;">
+                <% if (typeof searchResults !== 'undefined' && searchResults.results && searchResults.results.length > 0) { %>
+                    <% searchResults.results.forEach(item => { %>
+                        <div class="team-card-advanced" style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 22px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
                             
-                            <div class="team-card-meta">
-                                <div class="meta-col">
-                                    <span class="meta-label">Team Capacity</span>
-                                    <div class="meta-value"><%= team.teamSize %> Members</div>
+                            <!-- Card Header -->
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+                                <div>
+                                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                                        <h3 style="margin: 0; font-size: 19px; font-weight: 700; color: #0f172a;"><%= item.team.projectName %></h3>
+                                        <span class="badge" style="background: #e0e7ff; color: #4338ca; font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 600; text-transform: uppercase;">
+                                            <%= item.team.theme %>
+                                        </span>
+                                        <% if (item.team.eventId) { %>
+                                            <span style="background: #f1f5f9; color: #475569; font-size: 11.5px; padding: 2px 8px; border-radius: 4px; font-weight: 500;">
+                                                <%= item.team.eventId.name %>
+                                            </span>
+                                        <% } %>
+                                    </div>
+                                    <div style="font-size: 12.5px; color: #64748b;">
+                                        Led by: <strong style="color: #334155;"><%= item.team.createdBy ? item.team.createdBy.name : 'Student' %></strong> · 
+                                        Deadline: <strong style="color: #334155;"><%= new Date(item.team.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %></strong> · 
+                                        Capacity: <strong style="color: #334155;"><%= item.team.teamSize %> Members</strong>
+                                    </div>
                                 </div>
-                                <div class="meta-col">
-                                    <span class="meta-label">Open Roles</span>
-                                    <div class="meta-value"><%= team.roles ? team.roles.length : 1 %> Available</div>
-                                </div>
-                                <div class="meta-col">
-                                    <span class="meta-label">Deadline</span>
-                                    <div class="meta-value"><%= new Date(team.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %></div>
+
+                                <div>
+                                    <span style="font-size: 12px; background: #eff6ff; color: #1e40af; padding: 4px 10px; border-radius: 6px; font-weight: 600;">
+                                        <%= item.roles.length %> Open Role<%= item.roles.length > 1 ? 's' : '' %>
+                                    </span>
                                 </div>
                             </div>
 
-                            <div class="team-card-actions">
-                                <button class="btn-small-outline">View Details</button>
-                                <button class="btn-small-primary btn-apply-trigger" data-team="<%= team.projectName %>" data-role="<%= (team.roles && team.roles.length > 0) ? team.roles[0].title : 'Team Member' %>">Apply Now</button>
+                            <% if (item.team.projectRequirement) { %>
+                                <p style="color: #475569; font-size: 13.5px; line-height: 1.5; margin: 0 0 14px 0;">
+                                    <%= item.team.projectRequirement %>
+                                </p>
+                            <% } %>
+
+                            <!-- Open Roles Sub-Cards -->
+                            <div style="display: flex; flex-direction: column; gap: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px;">
+                                <span style="font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">Available Roles</span>
+                                
+                                <% item.roles.forEach(r => { %>
+                                    <div style="background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                                        <div style="flex: 1; min-width: 240px;">
+                                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                                                <strong style="font-size: 14.5px; color: #0f172a;"><%= r.title %></strong>
+                                                <span style="font-size: 11px; background: #dcfce7; color: #15803d; padding: 1px 6px; border-radius: 4px; font-weight: 600;">
+                                                    <%= r.openings %> Opening<%= r.openings > 1 ? 's' : '' %>
+                                                </span>
+                                                <span style="font-size: 12px; font-weight: 700; color: #15803d; margin-left: 4px;">
+                                                    <%= r.matchScore %>% Match
+                                                </span>
+                                            </div>
+
+                                            <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; font-size: 11px;">
+                                                <span style="color: #64748b; font-weight: 500;">Required:</span>
+                                                <% (r.requiredSkills || []).forEach(sk => { %>
+                                                    <span style="background: #f1f5f9; color: #334155; padding: 1px 6px; border-radius: 4px;"><%= sk %></span>
+                                                <% }); %>
+                                                <% if (r.preferredSkills && r.preferredSkills.length > 0) { %>
+                                                    <span style="color: #94a3b8; margin-left: 4px;">Pref:</span>
+                                                    <% r.preferredSkills.forEach(ps => { %>
+                                                        <span style="background: #fffbeb; color: #b45309; padding: 1px 6px; border-radius: 4px;"><%= ps %></span>
+                                                    <% }); %>
+                                                <% } %>
+                                            </div>
+
+                                            <!-- "Why this match?" Breakdown Toggle -->
+                                            <% if (r.breakdown) { %>
+                                                <details style="margin-top: 6px; font-size: 11.5px; color: #64748b;">
+                                                    <summary style="cursor: pointer; color: #4f46e5; font-weight: 600; outline: none;">
+                                                        Why this match? ▾
+                                                    </summary>
+                                                    <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; padding: 6px 8px; background: #f8fafc; border-radius: 6px; border: 1px solid #e2e8f0;">
+                                                        <span style="background: #eff6ff; color: #1d4ed8; padding: 1px 6px; border-radius: 4px;" title="Required skills score & preferred bonus">Skill Match: <%= Math.round(r.breakdown.S * 100) %>%</span>
+                                                        <span style="background: #f0fdf4; color: #15803d; padding: 1px 6px; border-radius: 4px;" title="GitHub verification + Peer endorsements">Credibility: <%= Math.round(r.breakdown.C * 100) %>%</span>
+                                                        <span style="background: #faf5ff; color: #7e22ce; padding: 1px 6px; border-radius: 4px;" title="Wins + Reviews + Shortlists">Reputation: <%= Math.round(r.breakdown.R * 100) %>%</span>
+                                                        <span style="background: #fff7ed; color: #c2410c; padding: 1px 6px; border-radius: 4px;" title="Current commitment">Availability: <%= Math.round(r.breakdown.A * 100) %>%</span>
+                                                        <span style="background: #fefce8; color: #a16207; padding: 1px 6px; border-radius: 4px;" title="Recent activity">Active: <%= Math.round(r.breakdown.T * 100) %>%</span>
+                                                    </div>
+                                                </details>
+                                            <% } %>
+                                        </div>
+
+                                        <!-- Apply Action Button -->
+                                        <div>
+                                            <% if (r.isApplied) { %>
+                                                <button class="btn-small-outline" disabled style="background: #10b981; color: white; border-color: #10b981; font-size: 12px; padding: 5px 12px;">✓ Applied</button>
+                                            <% } else { %>
+                                                <form action="/applications/apply" method="POST" style="margin: 0;">
+                                                    <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                                                    <input type="hidden" name="teamRequirementId" value="<%= item.team._id %>">
+                                                    <input type="hidden" name="role" value="<%= r.title %>">
+                                                    <button type="submit" class="btn-small-primary" style="font-size: 12.5px; padding: 6px 14px;">Apply</button>
+                                                </form>
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                <% }); %>
                             </div>
+
                         </div>
                     <% }); %>
                 <% } else { %>
-                    <div class="team-card-advanced" style="text-align: center; padding: 30px;">
-                        <p style="color: #64748b; margin-bottom: 12px;">No team requirements currently posted.</p>
-                        <a href="/team-requirement/new" class="btn-small-primary" style="display: inline-block; text-decoration: none;">+ Create First Requirement</a>
+                    <!-- Empty State (Requirement 5) -->
+                    <div style="text-align: center; padding: 48px 24px; background: white; border-radius: 12px; border: 1px solid #e2e8f0;">
+                        <div style="font-size: 36px; margin-bottom: 12px;">🔍</div>
+                        <h3 style="font-size: 18px; font-weight: 700; color: #0f172a; margin: 0 0 8px 0;">No matching requirements found</h3>
+                        <p style="color: #64748b; font-size: 14px; max-width: 500px; margin: 0 auto 18px auto; line-height: 1.5;">
+                            Try fewer filters, checking for typos, or searching for broader skill terms (e.g., 'React', 'Python', 'Design').
+                        </p>
+                        <a href="/discover?tab=search" class="btn-small-primary" style="text-decoration: none; display: inline-block; padding: 8px 20px;">Clear All Filters</a>
                     </div>
                 <% } %>
             </div>
+
+            <!-- Paging Controls (Requirement 2) -->
+            <% if (typeof searchResults !== 'undefined' && searchResults.totalPages > 1) { %>
+                <div class="pagination-controls" style="display: flex; justify-content: space-between; align-items: center; margin-top: 24px; padding: 14px 20px; background: white; border-radius: 10px; border: 1px solid #e2e8f0;">
+                    <div>
+                        <% if (searchResults.hasPrevPage) { %>
+                            <a href="<%= buildFilterUrl(searchResults.currentPage - 1) %>" class="btn-small-outline" style="text-decoration: none; padding: 7px 16px; font-size: 13px;">← Previous</a>
+                        <% } else { %>
+                            <span class="btn-small-outline" style="opacity: 0.4; cursor: not-allowed; padding: 7px 16px; font-size: 13px;">← Previous</span>
+                        <% } %>
+                    </div>
+
+                    <span style="font-size: 13.5px; color: #475569; font-weight: 500;">
+                        Page <strong><%= searchResults.currentPage %></strong> of <strong><%= searchResults.totalPages %></strong>
+                    </span>
+
+                    <div>
+                        <% if (searchResults.hasNextPage) { %>
+                            <a href="<%= buildFilterUrl(searchResults.currentPage + 1) %>" class="btn-small-primary" style="text-decoration: none; padding: 7px 16px; font-size: 13px;">Next →</a>
+                        <% } else { %>
+                            <span class="btn-small-primary" style="opacity: 0.4; cursor: not-allowed; padding: 7px 16px; font-size: 13px;">Next →</span>
+                        <% } %>
+                    </div>
+                </div>
+            <% } %>
+
         </div>
 
-        <!-- Tab: Browse by Event -->
-        <div id="browse-events" class="tab-pane" style="display: none;">
-            <div class="events-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px;">
+        <!-- Tab 3: Browse by Event -->
+        <div id="browse-events" class="tab-pane" style="<%= (typeof activeTab !== 'undefined' && activeTab === 'browse-events') ? 'display: block;' : 'display: none;' %>">
+            <div class="events-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
                 <% if (typeof events !== 'undefined' && events && events.length > 0) { %>
                     <% events.forEach(evt => { %>
-                        <div class="event-card-new">
-                            <div class="event-card-header">
-                                <h3><%= evt.name %></h3>
-                                <span class="badge tag-blue"><%= (evt.mode || 'HACKATHON').toUpperCase() %></span>
+                        <div class="event-card-new" style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+                            <div class="event-card-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                                <h3 style="margin: 0; font-size: 17px; font-weight: 700; color: #0f172a;"><%= evt.name %></h3>
+                                <span class="badge tag-blue" style="background: #e0f2fe; color: #0369a1; font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 600;"><%= (evt.mode || 'OFFLINE').toUpperCase() %></span>
                             </div>
-                            <p class="event-date">Date: <%= new Date(evt.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %></p>
-                            <div class="event-roles-info">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                                <span><%= evt.organizer || 'KKWIEER Campus' %></span>
+                            <p class="event-date" style="font-size: 13px; color: #64748b; margin: 0 0 10px 0;">
+                                Event Date: <%= new Date(evt.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %>
+                            </p>
+                            <div class="event-roles-info" style="font-size: 13px; color: #475569; margin-bottom: 16px;">
+                                <span>Organized by: <strong><%= evt.organizer || 'KKWIEER Campus' %></strong></span>
                             </div>
-                            <a href="/events/<%= evt._id %>" class="btn-dashed-new" style="margin:0; padding:10px; display: block; text-align: center; text-decoration: none;">View Event ></a>
+                            <a href="/events/<%= evt._id %>" class="btn-dashed-new" style="margin: 0; padding: 8px; display: block; text-align: center; text-decoration: none; border: 1px dashed #cbd5e1; border-radius: 6px; font-size: 13px; font-weight: 600; color: #2563eb;">
+                                View Event Details & Teams →
+                            </a>
                         </div>
                     <% }); %>
                 <% } else { %>
                     <div style="text-align: center; padding: 40px; background: white; border-radius: 12px; border: 1px solid #e2e8f0; grid-column: 1 / -1;">
                         <p style="color: #64748b; font-size: 15px; margin: 0 0 12px 0;">No upcoming events scheduled at this time.</p>
-                        <% if (currentUser && currentUser.isOrganizer) { %>
+                        <% if (currentUser && (currentUser.isAdmin || (currentUser.isOrganizer && currentUser.organizerStatus === 'APPROVED'))) { %>
                             <a href="/events/new" class="btn-small-primary" style="display: inline-block; text-decoration: none;">+ Add Campus Event</a>
                         <% } %>
                     </div>
@@ -207,10 +352,17 @@
         // Tab Switching
         tabs.forEach(tab => {
             tab.addEventListener('click', () => {
-                tabs.forEach(t => t.classList.remove('active'));
+                tabs.forEach(t => {
+                    t.classList.remove('active');
+                    t.style.borderBottomColor = 'transparent';
+                    t.style.color = '#64748b';
+                });
                 panes.forEach(p => p.style.display = 'none');
                 
                 tab.classList.add('active');
+                tab.style.borderBottomColor = '#2563eb';
+                tab.style.color = '#2563eb';
+                
                 const target = document.getElementById(tab.dataset.target);
                 if (target) {
                     if (tab.dataset.target === 'smart-recs') {
@@ -222,49 +374,27 @@
             });
         });
 
-        // Application Sidebar functionality
-        const applyBtns = document.querySelectorAll('.btn-apply-trigger');
-        const appSidebar = document.querySelector('.application-sidebar');
-        const cancelBtn = document.querySelector('.btn-cancel-app');
-        const submitBtn = document.querySelector('.btn-submit-app');
-        
-        applyBtns.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const team = btn.getAttribute('data-team');
-                const role = btn.getAttribute('data-role');
-                
-                document.querySelector('.app-team-name').textContent = team;
-                document.querySelector('.app-role-name').textContent = role;
-                
-                // Show sidebar
-                if (appSidebar) appSidebar.style.display = 'block';
+        // Progressive Enhancement for Search Form: Auto-submit dropdowns & debounced text search
+        const searchForm = document.getElementById('discoverSearchForm');
+        const searchInput = document.getElementById('searchQ');
+        const filterDropdowns = document.querySelectorAll('.filter-select-dropdown');
 
-                // reset buttons visually
-                if (submitBtn) {
-                    submitBtn.textContent = 'Submit Application';
-                    submitBtn.style.backgroundColor = '';
-                    submitBtn.disabled = false;
-                }
+        if (searchForm) {
+            filterDropdowns.forEach(dropdown => {
+                dropdown.addEventListener('change', () => {
+                    searchForm.submit();
+                });
             });
-        });
 
-        if (cancelBtn) {
-            cancelBtn.addEventListener('click', () => {
-                if (appSidebar) appSidebar.style.display = 'none';
-            });
-        }
-
-        if (submitBtn) {
-            submitBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                submitBtn.textContent = 'Application Sent!';
-                submitBtn.style.backgroundColor = '#10b981';
-                submitBtn.disabled = true;
-                setTimeout(() => {
-                    if (appSidebar) appSidebar.style.display = 'none';
-                }, 2000);
-            });
+            if (searchInput) {
+                let debounceTimeout = null;
+                searchInput.addEventListener('input', () => {
+                    clearTimeout(debounceTimeout);
+                    debounceTimeout = setTimeout(() => {
+                        searchForm.submit();
+                    }, 400);
+                });
+            }
         }
     });
 </script>
-

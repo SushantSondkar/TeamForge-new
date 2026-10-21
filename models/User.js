@@ -306,4 +306,9 @@ userSchema.virtual("trustBadges").get(function() {
   return badges;
 });
 
+// MongoDB indexes for Candidate search & recommendations performance
+userSchema.index({ isProfileHidden: 1 });
+userSchema.index({ "skills.name": 1, "skills.level": 1 });
+userSchema.index({ lockedEvents: 1 });
+
 module.exports = mongoose.model("User", userSchema);

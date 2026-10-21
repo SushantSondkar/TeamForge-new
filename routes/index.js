@@ -8,8 +8,12 @@ const Application = require('../models/Application');
 const TeamRequestAction = require('../models/TeamRequestAction');
 const Notification = require('../models/Notification');
 const Event = require('../models/Event');
-const SuccessStory = require('../models/SuccessStory');
-const { getRecommendedCandidates, getRecommendedOpportunities } = require('../utils/recommendations');
+const {
+  getRecommendedCandidates,
+  getRecommendedOpportunities,
+  searchTeamRequirements,
+  getAvailableFilterOptions
+} = require('../utils/recommendations');
 const { checkTimeoutsAndExpiries } = require('../utils/actionStateMachine');
 const requireLogin = require('../middleware/auth');
 
@@ -53,11 +57,16 @@ async function renderDashboard(req, res) {
       latestTeam = await TeamRequirement.findOne({ createdBy: currentUser._id }).sort({ createdAt: -1 });
     }
 
-    // 2. Calculate recommended candidates for the active team's primary open role
+    // 2. Calculate recommended candidates for the active team's primary open role (supports Find People search)
     let recommendedCandidates = [];
+    const candidateSkill = req.query.candidateSkill ? String(req.query.candidateSkill).trim() : "";
+    const minLevel = req.query.minLevel ? String(req.query.minLevel).trim() : "1";
     if (latestTeam && latestTeam.roles && latestTeam.roles.length > 0) {
       const activeRole = latestTeam.roles[0];
-      recommendedCandidates = await getRecommendedCandidates(latestTeam, activeRole, currentUser._id);
+      recommendedCandidates = await getRecommendedCandidates(latestTeam, activeRole, currentUser._id, {
+        skill: candidateSkill,
+        minLevel: minLevel
+      });
     }
 
     // 3. Calculate recommended opportunities for the logged-in user
@@ -139,6 +148,8 @@ async function renderDashboard(req, res) {
       promotedEvents,
       upcomingDeadlines,
       successStories,
+      candidateSkill,
+      minLevel,
       currentUser
     });
   } catch (error) {
@@ -191,18 +202,84 @@ router.get("/landing", (req, res) => {
 });
 
 // -------------------------------------------------------------
-// 2. GET /discover - Explore Opportunities (Protected by requireLogin)
+// 2. GET /discover - Explore Opportunities with Server-Side Search & Filters
 // -------------------------------------------------------------
 router.get("/discover", requireLogin, async (req, res) => {
   try {
-    const teamRequirements = await TeamRequirement.find().sort({ createdAt: -1 });
-    const events = await Event.find().sort({ date: 1 });
     const currentUser = req.user;
+    const { tab, q, skill, role, event, page } = req.query;
+
+    // Determine active tab
+    let activeTab = "smart-recs";
+    if (tab === "search" || q !== undefined || skill !== undefined || role !== undefined || event !== undefined || page !== undefined) {
+      activeTab = "search";
+    } else if (tab === "events" || tab === "browse-events") {
+      activeTab = "browse-events";
+    } else if (tab) {
+      activeTab = tab;
+    }
+
+    // 1. Fetch available filter options dynamically from real open requirements & upcoming events
+    const { availableSkills, availableRoles, availableEvents } = await getAvailableFilterOptions();
+
+    // 2. Server-side search & filtering with pagination (10 per page)
+    const searchResults = await searchTeamRequirements({
+      currentUser,
+      q: q || "",
+      skill: skill || "",
+      role: role || "",
+      event: event || "",
+      page: page || 1,
+      limit: 10
+    });
+
+    // 3. Recommended opportunities for smart recommendations tab
     const recommendedOpportunities = currentUser ? await getRecommendedOpportunities(currentUser) : [];
-    res.render("discover", { teamRequirements, recommendedOpportunities, events, currentUser });
+
+    // Helper to generate pagination URLs preserving all active filters
+    function buildFilterUrl(targetPage) {
+      const params = new URLSearchParams();
+      params.set("tab", "search");
+      if (q) params.set("q", q);
+      if (skill) params.set("skill", skill);
+      if (role) params.set("role", role);
+      if (event) params.set("event", event);
+      params.set("page", targetPage);
+      return "/discover?" + params.toString();
+    }
+
+    res.render("discover", {
+      activeTab,
+      q: q ? String(q) : "",
+      selectedSkill: skill ? String(skill) : "",
+      selectedRole: role ? String(role) : "",
+      selectedEvent: event ? String(event) : "",
+      searchResults,
+      availableSkills,
+      availableRoles,
+      availableEvents,
+      events: availableEvents,
+      recommendedOpportunities,
+      buildFilterUrl,
+      currentUser
+    });
   } catch (error) {
-    console.error("Error fetching team requirements for discover:", error.message);
-    res.render("discover", { teamRequirements: [], recommendedOpportunities: [], events: [], currentUser: req.user || null });
+    console.error("Error fetching discover search results:", error.message);
+    res.render("discover", {
+      activeTab: "search",
+      q: "",
+      selectedSkill: "",
+      selectedRole: "",
+      selectedEvent: "",
+      searchResults: { results: [], totalCount: 0, currentPage: 1, totalPages: 1, hasNextPage: false, hasPrevPage: false },
+      availableSkills: [],
+      availableRoles: [],
+      availableEvents: [],
+      events: [],
+      recommendedOpportunities: [],
+      buildFilterUrl: () => "/discover",
+      currentUser: req.user || null
+    });
   }
 });
 
