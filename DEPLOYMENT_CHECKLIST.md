@@ -6,6 +6,9 @@ A comprehensive, production-readiness verification checklist for deploying the *
 
 ## 1. Environment Variables & Secrets Configuration
 
+> ⚠️ **CRITICAL SECURITY REQUIREMENT**: Rotate every secret before deploying and never share the project zip with `.env` inside.
+> Always verify with `npm run check-secrets` to confirm `.env` is untracked and all placeholder secrets are replaced.
+
 Create a production `.env` file on your server (ensure permissions are set to `chmod 600 .env` and never commit it to git):
 
 ```bash

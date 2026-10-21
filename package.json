@@ -5,9 +5,10 @@
   "main": "index.js",
   "scripts": {
     "start": "node app.js",
-    "test": "node tests/matchingEngine.test.js && node tests/phase5StateMachine.test.js && node tests/phase6GithubVerification.test.js && node tests/phase7PostEventReviews.test.js && node tests/phase8Leaderboard.test.js && node tests/mailer.test.js && node tests/integration.test.js",
+    "test": "node tests/validateEnv.test.js && node tests/matchingEngine.test.js && node tests/phase5StateMachine.test.js && node tests/phase6GithubVerification.test.js && node tests/phase7PostEventReviews.test.js && node tests/phase8Leaderboard.test.js && node tests/mailer.test.js && node tests/integration.test.js",
     "test:integration": "node tests/integration.test.js",
-    "setup-admin": "node scripts/setupAdmin.js"
+    "setup-admin": "node scripts/setupAdmin.js",
+    "check-secrets": "node scripts/checkSecrets.js"
   },
   "keywords": [],
   "author": "",
@@ -22,6 +23,7 @@
     "express": "^5.2.1",
     "express-rate-limit": "^8.7.1",
     "express-session": "^1.19.0",
+    "helmet": "^8.3.0",
     "mongoose": "^9.10.3",
     "nodemailer": "^10.1.7",
     "tiny-csrf": "^1.1.6"

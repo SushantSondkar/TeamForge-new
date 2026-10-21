@@ -22,9 +22,9 @@ Ensure `.env` exists in the project root (copied from `.env.example`):
 ```env
 PORT=8080
 MONGODB_URI=mongodb://127.0.0.1:27017/teamforge
-SESSION_SECRET=teamforge-super-secret-session-key-32-chars!
-COOKIE_SECRET=teamforge-super-secret-cookie-key-32-chars!
-CSRF_SECRET=teamforge-super-secret-csrf-key-32-chars!
+SESSION_SECRET=<generate_a_random_32_char_secret>
+COOKIE_SECRET=<generate_a_random_32_char_secret>
+CSRF_SECRET=<generate_a_random_32_char_secret>
 SEED=false
 ```
 

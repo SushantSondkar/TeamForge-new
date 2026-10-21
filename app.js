@@ -1,20 +1,19 @@
 require("dotenv").config();
 
+// 1. Startup Environment & Security Validation (Called first in app.js)
+const { assertValidEnv } = require("./utils/validateEnv");
+assertValidEnv();
+
 const express = require("express");
 const app = express();
+const helmet = require("helmet");
 const ejsMate = require("ejs-mate");
 const session = require("express-session");
 const { MongoStore } = require("connect-mongo");
 const cookieParser = require("cookie-parser");
 const csurf = require("tiny-csrf");
 
-// Enforce mandatory SESSION_SECRET
-if (!process.env.SESSION_SECRET) {
-  console.error("FATAL ERROR: SESSION_SECRET is not set in the environment variables. The server cannot start.");
-  process.exit(1);
-}
-
-// Enforce mandatory SMTP configuration in production
+// Enforce mandatory SMTP configuration in production (secondary check)
 const { validateMailerConfig } = require("./utils/mailer");
 try {
   validateMailerConfig();
@@ -41,15 +40,49 @@ const organizerRoutes = require("./routes/organizers");
 // Connect to Database
 connectDB();
 
-// App Configurations
-app.set("view engine", "ejs");
-app.engine("ejs", ejsMate);
-
-// Trust reverse proxy in production (e.g., NGINX, Cloudflare)
+// Trust reverse proxy in production (Render, Railway, NGINX, Cloudflare)
 const isProduction = process.env.NODE_ENV === "production";
 if (isProduction) {
   app.set("trust proxy", 1);
 }
+
+// Helmet Security Headers & Content Security Policy (CSP)
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
+        imgSrc: ["'self'", "data:", "https:", "http:"],
+        connectSrc: ["'self'"],
+        objectSrc: ["'none'"],
+        baseUri: ["'self'"],
+        formAction: ["'self'"],
+        frameAncestors: ["'none'"],
+        upgradeInsecureRequests: isProduction ? [] : null
+      }
+    },
+    crossOriginEmbedderPolicy: false
+  })
+);
+
+// Health Check Endpoint (Platform health checks: Render, Railway, Kubernetes)
+app.get("/healthz", (req, res) => {
+  const dbStates = ["disconnected", "connected", "connecting", "disconnecting"];
+  const dbState = dbStates[mongoose.connection.readyState] || "unknown";
+  const isHealthy = mongoose.connection.readyState === 1;
+
+  res.status(isHealthy ? 200 : 503).json({
+    status: isHealthy ? "ok" : "degraded",
+    database: dbState
+  });
+});
+
+// App Configurations
+app.set("view engine", "ejs");
+app.engine("ejs", ejsMate);
 
 // Static files
 app.use(express.static("public"));
@@ -96,6 +129,7 @@ app.use((req, res, next) => {
       options = Object.assign({}, options, {
         maxAge: 24 * 60 * 60 * 1000, // 24 hours (prevents 5-min timeout)
         sameSite: "lax",
+        httpOnly: true,
         secure: isProduction
       });
     }
@@ -222,6 +256,10 @@ app.use((err, req, res, next) => {
 
 // Start Server
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+if (process.env.NODE_ENV !== "test") {
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+  });
+}
+
+module.exports = app;

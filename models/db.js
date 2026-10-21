@@ -8,30 +8,43 @@ const connectDB = async () => {
   }
 
   connectionPromise = (async () => {
-    let mongoURI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/teamforge";
+    // Check if in-memory database is explicitly requested
+    if (process.env.USE_MEMORY_DB === "true") {
+      console.warn("\n************************************************************");
+      console.warn("⚠️  LOUD WARNING: USE_MEMORY_DB=true is active!");
+      console.warn("⚠️  Starting in-memory MongoMemoryServer.");
+      console.warn("⚠️  ALL DATA WILL BE LOST WHEN THE SERVER RESTARTS / EXITS!");
+      console.warn("************************************************************\n");
+      try {
+        const { MongoMemoryServer } = require("mongodb-memory-server");
+        memoryServerInstance = await MongoMemoryServer.create();
+        const memUri = memoryServerInstance.getUri() + "teamforge";
+        process.env.MONGODB_URI = memUri;
+        await mongoose.connect(memUri);
+        console.log(`In-memory MongoDB connected successfully at ${memUri}`);
+      } catch (memErr) {
+        console.error("FATAL: Failed to start in-memory MongoDB:", memErr.message);
+        process.exit(1);
+      }
+    } else {
+      // Normal run path: MONGODB_URI must be provided in all environments. No default fallback URI.
+      const mongoURI = process.env.MONGODB_URI;
 
-    try {
-      await mongoose.connect(mongoURI, {
-        serverSelectionTimeoutMS: 2500
-      });
-      console.log(`MongoDB connected successfully via MONGODB_URI (${mongoURI})`);
-    } catch (error) {
-      if (process.env.NODE_ENV !== "production") {
-        try {
-          console.log(`Local MongoDB not reachable at ${mongoURI}. Starting embedded local database engine for development/demo...`);
-          const { MongoMemoryServer } = require("mongodb-memory-server");
-          memoryServerInstance = await MongoMemoryServer.create();
-          mongoURI = memoryServerInstance.getUri() + "teamforge";
-          process.env.MONGODB_URI = mongoURI;
-          await mongoose.connect(mongoURI);
-          console.log(`Embedded MongoDB connected successfully at ${mongoURI}`);
-        } catch (innerErr) {
-          console.error("Failed to start embedded MongoDB:", innerErr.message);
-          throw innerErr;
-        }
-      } else {
-        console.error(`MongoDB connection error: ${error.message}`);
-        throw error;
+      if (!mongoURI || !mongoURI.trim()) {
+        console.error("FATAL: MONGODB_URI environment variable is missing.");
+        console.error("Set MONGODB_URI in your environment or set USE_MEMORY_DB=true for local in-memory demos.");
+        process.exit(1);
+      }
+
+      const maskedUri = mongoURI.replace(/\/\/([^:]+):([^@]+)@/, "//$1:****@");
+      try {
+        await mongoose.connect(mongoURI, {
+          serverSelectionTimeoutMS: 5000
+        });
+        console.log(`MongoDB connected successfully via MONGODB_URI (${maskedUri})`);
+      } catch (error) {
+        console.error(`FATAL: Failed to connect to MongoDB (${maskedUri}): ${error.message}`);
+        process.exit(1);
       }
     }
 
