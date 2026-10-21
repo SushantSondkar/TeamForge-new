@@ -4,11 +4,16 @@ const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 const rateLimit = require("express-rate-limit");
 const User = require("../models/User");
+const mongoose = require("mongoose");
 const requireLogin = require("../middleware/auth");
 const githubService = require("../utils/githubService");
 const linkedinService = require("../utils/linkedinService");
 const { sendMail } = require("../utils/mailer");
-const { verifyEmail: verifyEmailTemplate } = require("../utils/emailTemplates");
+const {
+  verifyEmail: verifyEmailTemplate,
+  resetPassword: resetPasswordTemplate,
+  passwordChanged: passwordChangedTemplate
+} = require("../utils/emailTemplates");
 
 // Basic Rate Limiter for Login, Signup, and Verification (20 attempts per 15 minutes)
 const authLimiter = rateLimit({
@@ -18,6 +23,74 @@ const authLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false
 });
+
+// Per-email rate limiter for password reset requests (max 3 requests per hour per email)
+const resetEmailAttempts = new Map();
+
+function checkEmailResetLimit(email) {
+  if (!email || typeof email !== "string") return false;
+  const cleanEmail = email.toLowerCase().trim();
+  const now = Date.now();
+  const oneHour = 60 * 60 * 1000;
+
+  const timestamps = (resetEmailAttempts.get(cleanEmail) || []).filter(t => now - t < oneHour);
+
+  if (timestamps.length >= 3) {
+    return false; // Limit hit
+  }
+
+  timestamps.push(now);
+  resetEmailAttempts.set(cleanEmail, timestamps);
+  return true;
+}
+
+// Prune expired rate limit entries every 15 minutes
+setInterval(() => {
+  const now = Date.now();
+  const oneHour = 60 * 60 * 1000;
+  for (const [key, times] of resetEmailAttempts.entries()) {
+    const valid = times.filter(t => now - t < oneHour);
+    if (valid.length === 0) {
+      resetEmailAttempts.delete(key);
+    } else {
+      resetEmailAttempts.set(key, valid);
+    }
+  }
+}, 15 * 60 * 1000).unref();
+
+/**
+ * Password Policy Enforcement:
+ * Minimum 8 characters, at least one letter, and at least one number.
+ */
+function isValidPasswordPolicy(password) {
+  if (!password || typeof password !== "string") return false;
+  if (password.length < 8) return false;
+  const hasLetter = /[a-zA-Z]/.test(password);
+  const hasNumber = /[0-9]/.test(password);
+  return hasLetter && hasNumber;
+}
+
+/**
+ * Invalidate all existing sessions for a user across MongoDB connect-mongo collection.
+ */
+async function invalidateUserSessions(userId) {
+  if (!userId) return;
+  try {
+    const db = mongoose.connection.db;
+    if (db) {
+      const sessionsColl = db.collection("sessions");
+      const idStr = String(userId);
+      await sessionsColl.deleteMany({
+        $or: [
+          { "session.userId": idStr },
+          { session: { $regex: `"userId":"${idStr}"` } }
+        ]
+      });
+    }
+  } catch (err) {
+    console.warn("Could not delete sessions from database collection:", err.message);
+  }
+}
 
 // Allowed college domain configuration & helpers
 function getAllowedDomain() {
@@ -452,6 +525,7 @@ router.post("/login", authLimiter, async (req, res) => {
         });
       }
       req.session.userId = user._id;
+      req.session.createdAt = new Date();
       console.log(`User logged in: ${user.name} (${user.email}) at ${user.lastActive}`);
       res.redirect("/dashboard");
     });
@@ -474,38 +548,68 @@ router.get("/forgot-password", (req, res) => {
 });
 
 // -------------------------------------------------------------
-// 7. POST /forgot-password - Issue password reset token
+// 7. POST /forgot-password - Issue password reset token securely
 // -------------------------------------------------------------
 router.post("/forgot-password", authLimiter, async (req, res) => {
   try {
     const { email } = req.body;
-    if (!email) {
-      return res.render("forgot-password", { error: "Please provide your registered college email.", success: null });
-    }
+    const cleanEmail = email ? email.toLowerCase().trim() : "";
+    const genericSuccess = "If an account exists for this email, we've sent a reset link.";
 
-    const user = await User.findOne({ email: email.toLowerCase().trim() });
-    if (!user) {
-      // Avoid revealing user existence
+    if (!cleanEmail) {
       return res.render("forgot-password", {
-        error: null,
-        success: "If an account exists with this email, password reset instructions have been generated."
+        error: "Please provide your registered college email.",
+        success: null
       });
     }
 
-    const resetToken = crypto.randomBytes(24).toString("hex");
-    user.resetPasswordToken = resetToken;
-    user.resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
-    await user.save();
+    // Per-email rate limit check: max 3 requests per hour per email
+    // Without revealing that the limit was hit!
+    const isUnderLimit = checkEmailResetLimit(cleanEmail);
+    if (!isUnderLimit) {
+      return res.render("forgot-password", {
+        error: null,
+        success: genericSuccess
+      });
+    }
 
-    console.log(`Password reset token generated for ${user.email}: ${resetToken}`);
+    const user = await User.findOne({ email: cleanEmail });
 
-    res.render("forgot-password", {
+    // Only issue token & send reset link if user exists AND isEmailVerified is true
+    if (user && user.isEmailVerified) {
+      const rawToken = crypto.randomBytes(32).toString("hex");
+      const hashedToken = hashToken(rawToken);
+
+      user.resetPasswordToken = hashedToken;
+      user.resetPasswordExpires = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+      await user.save();
+
+      try {
+        const emailContent = resetPasswordTemplate({
+          name: user.name,
+          token: rawToken
+        });
+        await sendMail({
+          to: user.email,
+          ...emailContent
+        });
+      } catch (mailErr) {
+        console.error("Failed to send password reset email:", mailErr.message);
+      }
+    }
+
+    // Always respond with the exact same generic message (prevents user enumeration).
+    // Never show the token or link on the page, never log token to console.
+    return res.render("forgot-password", {
       error: null,
-      success: `Reset link generated! Use token: /reset-password?token=${resetToken}`
+      success: genericSuccess
     });
   } catch (err) {
     console.error("Forgot password error:", err.message);
-    res.render("forgot-password", { error: "Server error processing request.", success: null });
+    return res.render("forgot-password", {
+      error: null,
+      success: "If an account exists for this email, we've sent a reset link."
+    });
   }
 });
 
@@ -514,20 +618,28 @@ router.post("/forgot-password", authLimiter, async (req, res) => {
 // -------------------------------------------------------------
 router.get("/reset-password", async (req, res) => {
   const { token } = req.query;
-  if (!token) {
-    return res.redirect("/forgot-password");
+  if (!token || typeof token !== "string" || !token.trim()) {
+    return res.render("forgot-password", {
+      error: "Password reset link is invalid or has expired.",
+      success: null
+    });
   }
 
+  // Hash incoming raw token before database query
+  const hashedToken = hashToken(token);
   const user = await User.findOne({
-    resetPasswordToken: token,
+    resetPasswordToken: hashedToken,
     resetPasswordExpires: { $gt: new Date() }
   });
 
   if (!user) {
-    return res.render("forgot-password", { error: "Password reset link is invalid or has expired.", success: null });
+    return res.render("forgot-password", {
+      error: "Password reset link is invalid or has expired.",
+      success: null
+    });
   }
 
-  res.render("reset-password", { token, error: null });
+  res.render("reset-password", { token: token.trim(), error: null });
 });
 
 // -------------------------------------------------------------
@@ -537,36 +649,80 @@ router.post("/reset-password", authLimiter, async (req, res) => {
   try {
     const { token, newPassword, confirmNewPassword } = req.body;
 
-    if (!newPassword || newPassword.length < 6) {
-      return res.render("reset-password", { token, error: "New password must be at least 6 characters long." });
+    if (!token || typeof token !== "string" || !token.trim()) {
+      return res.render("forgot-password", {
+        error: "Password reset link is invalid or has expired.",
+        success: null
+      });
+    }
+
+    // Password policy: minimum 8 characters, at least one letter, and at least one number
+    if (!isValidPasswordPolicy(newPassword)) {
+      return res.render("reset-password", {
+        token: token.trim(),
+        error: "Password must be at least 8 characters long and contain at least one letter and one number."
+      });
     }
 
     if (newPassword !== confirmNewPassword) {
-      return res.render("reset-password", { token, error: "Passwords do not match." });
+      return res.render("reset-password", {
+        token: token.trim(),
+        error: "Passwords do not match."
+      });
     }
 
+    // Hash incoming token before lookup
+    const hashedToken = hashToken(token);
     const user = await User.findOne({
-      resetPasswordToken: token,
+      resetPasswordToken: hashedToken,
       resetPasswordExpires: { $gt: new Date() }
     });
 
     if (!user) {
-      return res.render("forgot-password", { error: "Password reset token is invalid or has expired.", success: null });
+      return res.render("forgot-password", {
+        error: "Password reset link is invalid or has expired.",
+        success: null
+      });
     }
 
+    // Set new password bcrypt hash
     user.password = await bcrypt.hash(newPassword, 10);
+
+    // Clear token and expiry (token must work exactly once)
     user.resetPasswordToken = null;
     user.resetPasswordExpires = null;
+    user.passwordChangedAt = new Date();
     user.lastActive = new Date();
     await user.save();
 
-    res.render("login", {
+    // Invalidate user's other sessions across connect-mongo collection
+    await invalidateUserSessions(user._id);
+
+    // Send "your password was changed" confirmation email
+    try {
+      const emailContent = passwordChangedTemplate({
+        name: user.name
+      });
+      await sendMail({
+        to: user.email,
+        ...emailContent
+      });
+    } catch (mailErr) {
+      console.error("Failed to send password changed confirmation email:", mailErr.message);
+    }
+
+    return res.render("login", {
       error: null,
-      success: "Password successfully updated. You may now log in with your new credentials."
+      success: "Password successfully updated. You may now log in with your new credentials.",
+      showResend: false,
+      unverifiedEmail: ""
     });
   } catch (err) {
     console.error("Reset password error:", err.message);
-    res.render("reset-password", { token: req.body.token, error: "Server error resetting password." });
+    res.render("reset-password", {
+      token: req.body.token || "",
+      error: "An unexpected error occurred while resetting your password."
+    });
   }
 });
 
@@ -758,3 +914,8 @@ module.exports.getAllowedDomain = getAllowedDomain;
 module.exports.isAllowedCollegeEmail = isAllowedCollegeEmail;
 module.exports.hashToken = hashToken;
 module.exports.generateVerificationToken = generateVerificationToken;
+module.exports.checkEmailResetLimit = checkEmailResetLimit;
+module.exports.isValidPasswordPolicy = isValidPasswordPolicy;
+module.exports.invalidateUserSessions = invalidateUserSessions;
+module.exports.resetEmailAttempts = resetEmailAttempts;
+

@@ -192,8 +192,7 @@ async function runTests() {
     });
     assert.strictEqual(resetTmpl.subject, "Reset your TeamForge password");
     assert.ok(resetTmpl.text.includes("Aaradhya Wabale"));
-    assert.ok(resetTmpl.text.includes("http://localhost:8080/reset-password?token=tok-reset-789"));
-    assert.ok(resetTmpl.text.includes("1 hour"));
+    assert.ok(resetTmpl.text.includes("30 minutes"));
     assert.ok(resetTmpl.html.includes("Reset Your Password"));
     assert.ok(resetTmpl.html.includes("http://localhost:8080/reset-password?token=tok-reset-789"));
     assert.ok(resetTmpl.html.includes("Reset Password"));

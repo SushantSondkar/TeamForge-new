@@ -182,10 +182,10 @@ function resetPassword({ name, token, url }) {
   const bodyHtml = `
     <p style="margin: 0 0 12px 0;">Hello <strong>${displayName}</strong>,</p>
     <p style="margin: 0 0 12px 0;">We received a request to reset the password for your TeamForge account. Click the button below to choose a new password.</p>
-    <p style="margin: 0 0 12px 0; color: #dc2626; font-size: 13px;">This password reset link will expire in 1 hour for your security.</p>
+    <p style="margin: 0 0 12px 0; color: #dc2626; font-size: 13px;">This password reset link will expire in 30 minutes for your security.</p>
   `;
 
-  const bodyText = `Hello ${displayName},\n\nWe received a request to reset the password for your TeamForge account. Please visit the link below to choose a new password.\n\nNote: This link expires in 1 hour for security.`;
+  const bodyText = `Hello ${displayName},\n\nWe received a request to reset the password for your TeamForge account. Please visit the link below to choose a new password.\n\nNote: This link expires in 30 minutes for security.`;
 
   const disclaimer = "If you did not request a password reset, you can safely ignore this email. Your password will remain unchanged.";
 
@@ -209,10 +209,56 @@ function resetPassword({ name, token, url }) {
   return { subject, text, html };
 }
 
+/**
+ * Password Changed Confirmation Email Template
+ * 
+ * @param {Object} params
+ * @param {string} [params.name] - User's name
+ * @returns {{ subject: string, text: string, html: string }}
+ */
+function passwordChanged({ name }) {
+  const baseUrl = getBaseUrl();
+  const loginUrl = `${baseUrl}/login`;
+  const displayName = name ? name.trim() : "Student";
+  const subject = "Your TeamForge password was changed";
+  const heading = "Password Changed Successfully";
+
+  const bodyHtml = `
+    <p style="margin: 0 0 12px 0;">Hello <strong>${displayName}</strong>,</p>
+    <p style="margin: 0 0 12px 0;">This email confirms that the password for your TeamForge account was recently changed.</p>
+    <p style="margin: 0 0 12px 0; color: #475569;">For your security, all active sessions on other devices have been invalidated.</p>
+  `;
+
+  const bodyText = `Hello ${displayName},\n\nThis email confirms that the password for your TeamForge account was recently changed.\n\nFor your security, all active sessions on other devices have been invalidated.`;
+
+  const disclaimer = "If you did NOT make this change, please contact campus support or request a password reset immediately to secure your account.";
+
+  const html = renderEmailLayout({
+    title: subject,
+    heading,
+    bodyHtml,
+    buttonText: "Log In to TeamForge",
+    actionUrl: loginUrl,
+    disclaimer
+  });
+
+  const text = renderPlainTextLayout({
+    heading,
+    bodyText,
+    buttonText: "Log In to TeamForge",
+    actionUrl: loginUrl,
+    disclaimer
+  });
+
+  return { subject, text, html };
+}
+
 module.exports = {
   getBaseUrl,
   renderEmailLayout,
   renderPlainTextLayout,
   verifyEmail,
-  resetPassword
+  resetPassword,
+  passwordChanged
 };
+

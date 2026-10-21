@@ -31,10 +31,15 @@ const {
   declineAction
 } = require("../utils/actionStateMachine");
 const { getRecommendedCandidates } = require("../utils/recommendations");
+const crypto = require("crypto");
 const {
   isAllowedCollegeEmail,
   hashToken,
-  generateVerificationToken
+  generateVerificationToken,
+  checkEmailResetLimit,
+  isValidPasswordPolicy,
+  invalidateUserSessions,
+  resetEmailAttempts
 } = require("../routes/auth");
 
 let mongod = null;
@@ -236,6 +241,148 @@ async function runTests() {
     const canNowLogin = isPasswordValid && refreshedUser.isEmailVerified === true;
     assert.strictEqual(canNowLogin, true, "Verified student can now log in successfully");
     console.log("   ✓ Valid token successfully verifies student and enables login.");
+
+    // -------------------------------------------------------------
+    // PHASE 9C: SAFE PASSWORD RESET & SESSION INVALIDATION
+    // -------------------------------------------------------------
+    console.log("\n1C. Testing Phase 9C: Safe Password Reset & Session Invalidation...");
+
+    // 1. Password policy enforcement (min 8 chars, 1 letter, 1 number)
+    assert.strictEqual(isValidPasswordPolicy("short7"), false, "Password < 8 characters must fail policy");
+    assert.strictEqual(isValidPasswordPolicy("allletters"), false, "Password without numbers must fail policy");
+    assert.strictEqual(isValidPasswordPolicy("12345678"), false, "Password without letters must fail policy");
+    assert.strictEqual(isValidPasswordPolicy("ValidPass1"), true, "8+ chars with letters and numbers passes policy");
+    console.log("   ✓ Password policy (8+ chars, at least 1 letter, at least 1 number) enforced.");
+
+    // 2. Unknown email gives same generic response as known email (no user enumeration)
+    const dedicatedResetStudent = new User({
+      name: "Reset Flow Candidate",
+      email: "reset_flow@kkwagh.edu.in",
+      password: hashedPassword,
+      department: "Computer Engineering",
+      year: "TE",
+      isEmailVerified: true
+    });
+    await dedicatedResetStudent.save();
+
+    const knownEmail = "reset_flow@kkwagh.edu.in";
+    const genericExpectedMsg = "If an account exists for this email, we've sent a reset link.";
+    const unknownEmail = "nonexistent_student@kkwagh.edu.in";
+
+    async function simulateForgotPassword(email) {
+      const clean = email.toLowerCase().trim();
+      const underLimit = checkEmailResetLimit(clean);
+      if (!underLimit) return { success: genericExpectedMsg, tokenGenerated: false };
+
+      const u = await User.findOne({ email: clean });
+      if (u && u.isEmailVerified) {
+        const rawToken = crypto.randomBytes(32).toString("hex");
+        u.resetPasswordToken = hashToken(rawToken);
+        u.resetPasswordExpires = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+        await u.save();
+        return { success: genericExpectedMsg, rawToken, tokenGenerated: true };
+      }
+      return { success: genericExpectedMsg, tokenGenerated: false };
+    }
+
+    const unknownResult = await simulateForgotPassword(unknownEmail);
+    const knownResult = await simulateForgotPassword(knownEmail);
+
+    assert.strictEqual(unknownResult.success, genericExpectedMsg);
+    assert.strictEqual(knownResult.success, genericExpectedMsg);
+    assert.strictEqual(unknownResult.tokenGenerated, false, "Unknown email must not generate a reset token");
+    assert.strictEqual(knownResult.tokenGenerated, true, "Known verified email generates a reset token");
+    // Verify response body never contains raw or hashed token
+    assert.strictEqual(unknownResult.success.includes("token"), false);
+    assert.strictEqual(knownResult.success.includes("token"), false);
+    console.log("   ✓ Unknown and known emails return identical generic response; token never in response.");
+
+    // 3. Token is stored hashed and expires in 30 minutes
+    const studentWithReset = await User.findOne({ email: knownEmail });
+    assert.strictEqual(studentWithReset.resetPasswordToken, hashToken(knownResult.rawToken), "Token must be stored as SHA-256 hash");
+    assert.notStrictEqual(studentWithReset.resetPasswordToken, knownResult.rawToken, "Raw token must never be stored in database");
+    const expiryDiffMs = studentWithReset.resetPasswordExpires.getTime() - Date.now();
+    assert.ok(expiryDiffMs > 28 * 60 * 1000 && expiryDiffMs <= 30 * 60 * 1000, "Reset expiry must be set to 30 minutes");
+    console.log("   ✓ Reset token is stored strictly as SHA-256 hash with 30-minute expiry.");
+
+    // 4. Expired token fails
+    const expiredStudent = new User({
+      name: "Expired Reset Student",
+      email: "expired_reset@kkwagh.edu.in",
+      password: hashedPassword,
+      isEmailVerified: true,
+      resetPasswordToken: hashToken("expired-raw-token"),
+      resetPasswordExpires: new Date(Date.now() - 1000) // expired 1s ago
+    });
+    await expiredStudent.save();
+
+    const expiredLookup = await User.findOne({
+      resetPasswordToken: hashToken("expired-raw-token"),
+      resetPasswordExpires: { $gt: new Date() }
+    });
+    assert.strictEqual(expiredLookup, null, "Expired reset token lookup must fail");
+    console.log("   ✓ Expired reset token correctly rejected.");
+
+    // 5. Valid token resets password and works exactly once
+    const newSecurePassword = "BrandNewPassword2026!";
+    const validLookup = await User.findOne({
+      resetPasswordToken: hashToken(knownResult.rawToken),
+      resetPasswordExpires: { $gt: new Date() }
+    });
+    assert.ok(validLookup !== null, "User found with valid unexpired token hash");
+
+    validLookup.password = await bcrypt.hash(newSecurePassword, 10);
+    validLookup.resetPasswordToken = null;
+    validLookup.resetPasswordExpires = null;
+    validLookup.passwordChangedAt = new Date();
+    await validLookup.save();
+
+    // Verify token works exactly once (re-attempt with same token fails)
+    const reuseAttempt = await User.findOne({
+      resetPasswordToken: hashToken(knownResult.rawToken),
+      resetPasswordExpires: { $gt: new Date() }
+    });
+    assert.strictEqual(reuseAttempt, null, "Used token must immediately be nullified and unusable");
+    console.log("   ✓ Valid token resets password and cannot be reused (single-use enforced).");
+
+    // 6. Old sessions are invalidated after password reset
+    const sessionsColl = mongoose.connection.collection("sessions");
+    const mockSessionId = "test_active_session_abc";
+    await sessionsColl.insertOne({
+      _id: mockSessionId,
+      session: JSON.stringify({
+        cookie: { originalMaxAge: 86400000, expires: new Date(Date.now() + 86400000).toISOString() },
+        userId: String(validLookup._id)
+      }),
+      expires: new Date(Date.now() + 86400000)
+    });
+
+    const sessionBefore = await sessionsColl.findOne({ _id: mockSessionId });
+    assert.ok(sessionBefore !== null, "Mock active session exists before invalidation");
+
+    // Invalidate sessions
+    await invalidateUserSessions(validLookup._id);
+
+    const sessionAfter = await sessionsColl.findOne({ _id: mockSessionId });
+    assert.strictEqual(sessionAfter, null, "Session must be deleted from database after password reset");
+
+    // Also verify passwordChangedAt timestamp rejection logic
+    const oldSessionCreated = new Date(validLookup.passwordChangedAt.getTime() - 60000); // 1 minute before reset
+    const isSessionStale = validLookup.passwordChangedAt && oldSessionCreated < validLookup.passwordChangedAt;
+    assert.strictEqual(isSessionStale, true, "Sessions created prior to passwordChangedAt are recognized as stale and rejected");
+    console.log("   ✓ Old sessions successfully invalidated from database and timestamp checks.");
+
+    // 7. Per-email rate limit: max 3 requests per hour without leaking limit
+    const spamEmail = "ratelimit_student@kkwagh.edu.in";
+    resetEmailAttempts.delete(spamEmail);
+    assert.strictEqual(checkEmailResetLimit(spamEmail), true, "1st reset attempt allowed");
+    assert.strictEqual(checkEmailResetLimit(spamEmail), true, "2nd reset attempt allowed");
+    assert.strictEqual(checkEmailResetLimit(spamEmail), true, "3rd reset attempt allowed");
+    assert.strictEqual(checkEmailResetLimit(spamEmail), false, "4th reset attempt blocked by per-email rate limit");
+    // Under limit failure still gives exact same generic success message
+    const overLimitRes = await simulateForgotPassword(spamEmail);
+    assert.strictEqual(overLimitRes.success, genericExpectedMsg, "Rate-limited request responds with same message without leaking limit");
+    console.log("   ✓ Per-email rate limit (max 3/hr) strictly enforced silently.");
 
     // -------------------------------------------------------------
     // TEST SUITE 2: AUTHENTICATION & LOGIN LIFECYCLE

@@ -218,6 +218,10 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: null
   },
+  passwordChangedAt: {
+    type: Date,
+    default: null
+  },
   // Timestamp when candidate was last active
   lastActive: {
     type: Date,

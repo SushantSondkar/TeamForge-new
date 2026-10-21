@@ -136,6 +136,14 @@ app.use(async (req, res, next) => {
     try {
       const user = await User.findById(req.session.userId);
       if (user) {
+        // Invalidate older session if password was changed after session creation
+        if (user.passwordChangedAt && req.session.createdAt && new Date(req.session.createdAt) < new Date(user.passwordChangedAt)) {
+          req.session.destroy(() => {});
+          req.user = null;
+          res.locals.currentUser = null;
+          return next();
+        }
+
         // Update lastActive on authenticated actions (throttled to 60s)
         const now = new Date();
         if (!user.lastActive || (now - new Date(user.lastActive)) > 60000) {
