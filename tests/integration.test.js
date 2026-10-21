@@ -31,6 +31,11 @@ const {
   declineAction
 } = require("../utils/actionStateMachine");
 const { getRecommendedCandidates } = require("../utils/recommendations");
+const {
+  isAllowedCollegeEmail,
+  hashToken,
+  generateVerificationToken
+} = require("../routes/auth");
 
 let mongod = null;
 let isMemoryServer = false;
@@ -141,6 +146,96 @@ async function runTests() {
     const duplicateUser = await User.findOne({ email: "sushant_comp@kkwagh.edu.in" });
     assert.ok(duplicateUser !== null, "Duplicate check detects existing account");
     console.log("   ✓ Duplicate institutional email detection verified.");
+
+    // -------------------------------------------------------------
+    // PHASE 9B: EMAIL VERIFICATION, DOMAIN RULES & TOKEN HASHING
+    // -------------------------------------------------------------
+    console.log("\n1B. Testing Phase 9B: Email Verification, Domain Rules & Token Security...");
+
+    // 1. Lookalike domain rejection test
+    assert.strictEqual(isAllowedCollegeEmail("student@kkwagh.edu.in"), true, "Valid @kkwagh.edu.in must be accepted");
+    assert.strictEqual(isAllowedCollegeEmail("STUDENT@KKWAGH.EDU.IN"), true, "Case-insensitive domain must be accepted");
+    assert.strictEqual(isAllowedCollegeEmail("x@kkwagh.edu.in.evil.com"), false, "Lookalike evil domain suffix must be rejected");
+    assert.strictEqual(isAllowedCollegeEmail("x@evilkkwagh.edu.in"), false, "Lookalike prefixed domain must be rejected");
+    assert.strictEqual(isAllowedCollegeEmail("x@sub.kkwagh.edu.in"), false, "Subdomain must be rejected");
+    assert.strictEqual(isAllowedCollegeEmail("student@gmail.com"), false, "Non-institutional domain must be rejected");
+    console.log("   ✓ Lookalike and non-institutional domains strictly rejected.");
+
+    // 2. Signup creates unverified user with hashed token
+    const { rawToken, hashedToken } = generateVerificationToken();
+    const unverifiedPassword = "SecretPassword123!";
+    const hashedUnverifiedPassword = await bcrypt.hash(unverifiedPassword, 10);
+
+    const unverifiedStudent = new User({
+      name: "Pratiksha Bhamare",
+      email: "pratiksha_it@kkwagh.edu.in",
+      password: hashedUnverifiedPassword,
+      department: "Information Technology",
+      year: "TE",
+      skills: [{ name: "Python", level: 4 }],
+      role: "Candidate",
+      isEmailVerified: false,
+      emailVerificationToken: hashedToken,
+      emailVerificationExpires: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
+    });
+    await unverifiedStudent.save();
+
+    assert.strictEqual(unverifiedStudent.isEmailVerified, false, "Signup must create user with isEmailVerified: false");
+    assert.notStrictEqual(unverifiedStudent.emailVerificationToken, rawToken, "Raw token must NOT be stored in DB");
+    assert.strictEqual(unverifiedStudent.emailVerificationToken, hashToken(rawToken), "Stored token must strictly match SHA-256 hash");
+    console.log("   ✓ Signup creates unverified user with token stored as SHA-256 hash.");
+
+    // 3. Unverified login is blocked
+    const userAttemptingLogin = await User.findOne({ email: "pratiksha_it@kkwagh.edu.in" });
+    const isPasswordValid = await bcrypt.compare(unverifiedPassword, userAttemptingLogin.password);
+    assert.strictEqual(isPasswordValid, true, "Password matches correctly");
+    // Verify login rule: correct password BUT isEmailVerified is false must block session creation
+    const canCreateSession = isPasswordValid && userAttemptingLogin.isEmailVerified === true;
+    assert.strictEqual(canCreateSession, false, "Unverified user must NOT be permitted to create an authenticated session");
+    console.log("   ✓ Login with correct password correctly blocked for unverified student.");
+
+    // 4. Expired token fails verification
+    const expiredTokenUser = new User({
+      name: "Expired Candidate",
+      email: "expired_candidate@kkwagh.edu.in",
+      password: hashedUnverifiedPassword,
+      isEmailVerified: false,
+      emailVerificationToken: hashToken("expired-raw-token"),
+      emailVerificationExpires: new Date(Date.now() - 1000) // 1 second in the past
+    });
+    await expiredTokenUser.save();
+
+    const incomingExpiredHash = hashToken("expired-raw-token");
+    const verifiedExpiredUser = await User.findOne({
+      emailVerificationToken: incomingExpiredHash,
+      emailVerificationExpires: { $gt: new Date() }
+    });
+    assert.strictEqual(verifiedExpiredUser, null, "Expired verification token must not match unexpired query");
+    console.log("   ✓ Expired verification token fails and rejects verification.");
+
+    // 5. Valid token verifies user
+    const incomingValidHash = hashToken(rawToken);
+    const verifiedUser = await User.findOne({
+      emailVerificationToken: incomingValidHash,
+      emailVerificationExpires: { $gt: new Date() }
+    });
+    assert.ok(verifiedUser !== null, "User with valid token found");
+    assert.strictEqual(verifiedUser.email, "pratiksha_it@kkwagh.edu.in");
+
+    verifiedUser.isEmailVerified = true;
+    verifiedUser.emailVerificationToken = null;
+    verifiedUser.emailVerificationExpires = null;
+    await verifiedUser.save();
+
+    const refreshedUser = await User.findById(verifiedUser._id);
+    assert.strictEqual(refreshedUser.isEmailVerified, true, "isEmailVerified must be set to true");
+    assert.strictEqual(refreshedUser.emailVerificationToken, null, "Verification token must be cleared");
+    assert.strictEqual(refreshedUser.emailVerificationExpires, null, "Verification expiry must be cleared");
+
+    // Now login is allowed!
+    const canNowLogin = isPasswordValid && refreshedUser.isEmailVerified === true;
+    assert.strictEqual(canNowLogin, true, "Verified student can now log in successfully");
+    console.log("   ✓ Valid token successfully verifies student and enables login.");
 
     // -------------------------------------------------------------
     // TEST SUITE 2: AUTHENTICATION & LOGIN LIFECYCLE

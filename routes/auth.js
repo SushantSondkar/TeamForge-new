@@ -7,8 +7,10 @@ const User = require("../models/User");
 const requireLogin = require("../middleware/auth");
 const githubService = require("../utils/githubService");
 const linkedinService = require("../utils/linkedinService");
+const { sendMail } = require("../utils/mailer");
+const { verifyEmail: verifyEmailTemplate } = require("../utils/emailTemplates");
 
-// Basic Rate Limiter for Login and Signup (20 attempts per 15 minutes)
+// Basic Rate Limiter for Login, Signup, and Verification (20 attempts per 15 minutes)
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 20,
@@ -17,8 +19,48 @@ const authLimiter = rateLimit({
   legacyHeaders: false
 });
 
-// Allowed college domain and academic lists
-const ALLOWED_EMAIL_DOMAIN = "@kkwagh.edu.in";
+// Allowed college domain configuration & helpers
+function getAllowedDomain() {
+  const envDomain = process.env.ALLOWED_DOMAIN ? process.env.ALLOWED_DOMAIN.trim() : "";
+  const clean = envDomain.startsWith("@") ? envDomain.slice(1) : envDomain;
+  return (clean || "kkwagh.edu.in").toLowerCase();
+}
+
+/**
+ * Validate institutional email strictly against ALLOWED_DOMAIN.
+ * Compares case-insensitively and exactly against the part after the last "@".
+ * Rejects lookalikes such as x@kkwagh.edu.in.evil.com or x@evilkkwagh.edu.in.
+ */
+function isAllowedCollegeEmail(email) {
+  if (!email || typeof email !== "string") return false;
+  const clean = email.trim().toLowerCase();
+  const lastAtIndex = clean.lastIndexOf("@");
+  if (lastAtIndex <= 0) return false;
+
+  const localPart = clean.slice(0, lastAtIndex);
+  const domainPart = clean.slice(lastAtIndex + 1);
+
+  if (!localPart || !domainPart) return false;
+  return domainPart === getAllowedDomain();
+}
+
+/**
+ * Compute SHA-256 hash of a raw token.
+ */
+function hashToken(token) {
+  if (!token || typeof token !== "string") return "";
+  return crypto.createHash("sha256").update(token.trim()).digest("hex");
+}
+
+/**
+ * Generate 32-byte crypto random verification token and its SHA-256 hash.
+ */
+function generateVerificationToken() {
+  const rawToken = crypto.randomBytes(32).toString("hex");
+  const hashedToken = hashToken(rawToken);
+  return { rawToken, hashedToken };
+}
+
 const ALLOWED_DEPARTMENTS = [
   "Computer Engineering",
   "Information Technology",
@@ -37,7 +79,12 @@ router.get("/signup", (req, res) => {
   if (req.session && req.session.userId) {
     return res.redirect("/dashboard");
   }
-  res.render("signup", { error: null, success: null, formData: {} });
+  res.render("signup", {
+    error: null,
+    success: null,
+    formData: {},
+    allowedDomain: getAllowedDomain()
+  });
 });
 
 // -------------------------------------------------------------
@@ -58,13 +105,15 @@ router.post("/signup", authLimiter, async (req, res) => {
     }
 
     const cleanEmail = email.toLowerCase().trim();
+    const allowedDomain = getAllowedDomain();
 
-    // Enforce @kkwagh.edu.in strictly on server-side
-    if (!cleanEmail.endsWith(ALLOWED_EMAIL_DOMAIN)) {
+    // Enforce allowed college domain strictly on server-side
+    if (!isAllowedCollegeEmail(cleanEmail)) {
       return res.render("signup", {
-        error: `Only official college emails ending in ${ALLOWED_EMAIL_DOMAIN} are permitted to register.`,
+        error: `Only official college emails ending exactly in @${allowedDomain} are permitted to register.`,
         success: null,
-        formData
+        formData,
+        allowedDomain
       });
     }
 
@@ -72,7 +121,8 @@ router.post("/signup", authLimiter, async (req, res) => {
       return res.render("signup", {
         error: "Password and Confirm Password must match.",
         success: null,
-        formData
+        formData,
+        allowedDomain
       });
     }
 
@@ -80,7 +130,8 @@ router.post("/signup", authLimiter, async (req, res) => {
       return res.render("signup", {
         error: "Password must be at least 6 characters long.",
         success: null,
-        formData
+        formData,
+        allowedDomain
       });
     }
 
@@ -90,7 +141,8 @@ router.post("/signup", authLimiter, async (req, res) => {
       return res.render("signup", {
         error: "Please select a valid college department from the list.",
         success: null,
-        formData
+        formData,
+        allowedDomain
       });
     }
 
@@ -99,7 +151,8 @@ router.post("/signup", authLimiter, async (req, res) => {
       return res.render("signup", {
         error: "Please select a valid academic year (FE, SE, TE, or BE).",
         success: null,
-        formData
+        formData,
+        allowedDomain
       });
     }
 
@@ -109,7 +162,8 @@ router.post("/signup", authLimiter, async (req, res) => {
       return res.render("signup", {
         error: "This college email is already registered. Please log in.",
         success: null,
-        formData
+        formData,
+        allowedDomain
       });
     }
 
@@ -144,11 +198,11 @@ router.post("/signup", authLimiter, async (req, res) => {
     // Hash password securely via bcrypt
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Email verification token setup
-    const verificationToken = crypto.randomBytes(24).toString("hex");
+    // Email verification token setup: generate 32-byte crypto token, store ONLY SHA-256 hash in DB
+    const { rawToken, hashedToken } = generateVerificationToken();
     const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
-    // Mass-assignment guarded user instantiation
+    // Mass-assignment guarded user instantiation (isEmailVerified: false)
     const newUser = new User({
       name: name.trim(),
       email: cleanEmail,
@@ -164,31 +218,53 @@ router.post("/signup", authLimiter, async (req, res) => {
       isAdmin: false,
       isOrganizer: false,
       organizerStatus: "NONE",
-      isEmailVerified: true, // Non-blocking for local campus demonstration
-      emailVerificationToken: verificationToken,
+      isEmailVerified: false,
+      emailVerificationToken: hashedToken,
       emailVerificationExpires: verificationExpires,
       lastActive: new Date()
     });
 
     await newUser.save();
-    console.log(`New user registered: ${newUser.name} (${newUser.email})`);
+    console.log(`New user registered (pending verification): ${newUser.name} (${newUser.email})`);
 
-    // Regenerate session to eliminate session-fixation risk on account creation
-    req.session.regenerate((sessErr) => {
-      if (sessErr) {
-        console.error("Session regeneration error after signup:", sessErr);
-      }
-      req.session.userId = newUser._id;
-      res.redirect("/profile?welcome=true");
-    });
+    // Send verification email with raw token link (raw token exists only in emailed link)
+    try {
+      const emailContent = verifyEmailTemplate({
+        name: newUser.name,
+        token: rawToken
+      });
+      await sendMail({
+        to: newUser.email,
+        ...emailContent
+      });
+    } catch (mailErr) {
+      console.error("Failed to send signup verification email:", mailErr.message);
+    }
+
+    // Redirect to check-inbox page (do NOT create session or log in automatically)
+    return res.redirect(`/check-inbox?email=${encodeURIComponent(cleanEmail)}`);
   } catch (err) {
     console.error("Signup error:", err);
     res.render("signup", {
       error: "An unexpected error occurred during signup.",
       success: null,
-      formData: req.body || {}
+      formData: req.body || {},
+      allowedDomain: getAllowedDomain()
     });
   }
+});
+
+// -------------------------------------------------------------
+// 2B. GET /check-inbox - Display "Check your inbox" screen
+// -------------------------------------------------------------
+router.get("/check-inbox", (req, res) => {
+  const email = req.query.email ? req.query.email.trim() : "";
+  res.render("check-inbox", {
+    email,
+    message: null,
+    error: null,
+    allowedDomain: getAllowedDomain()
+  });
 });
 
 // -------------------------------------------------------------
@@ -197,17 +273,29 @@ router.post("/signup", authLimiter, async (req, res) => {
 router.get("/verify-email", async (req, res) => {
   try {
     const { token } = req.query;
-    if (!token) {
-      return res.render("login", { error: "Invalid or missing email verification token." });
+    if (!token || typeof token !== "string" || !token.trim()) {
+      return res.render("verify-email", {
+        success: false,
+        error: "Verification token is missing or invalid.",
+        email: "",
+        allowedDomain: getAllowedDomain()
+      });
     }
 
+    // Hash the incoming raw token to match stored SHA-256 hash
+    const hashedToken = hashToken(token);
     const user = await User.findOne({
-      emailVerificationToken: token,
+      emailVerificationToken: hashedToken,
       emailVerificationExpires: { $gt: new Date() }
     });
 
     if (!user) {
-      return res.render("login", { error: "Email verification link is invalid or has expired." });
+      return res.render("verify-email", {
+        success: false,
+        error: "Email verification link is invalid or has expired.",
+        email: "",
+        allowedDomain: getAllowedDomain()
+      });
     }
 
     user.isEmailVerified = true;
@@ -215,13 +303,72 @@ router.get("/verify-email", async (req, res) => {
     user.emailVerificationExpires = null;
     await user.save();
 
-    res.render("login", {
+    console.log(`Email successfully verified for ${user.email}`);
+
+    return res.render("verify-email", {
+      success: true,
       error: null,
-      success: "Your college email has been verified successfully! You may now log in."
+      email: user.email,
+      allowedDomain: getAllowedDomain()
     });
   } catch (err) {
     console.error("Email verification error:", err.message);
-    res.render("login", { error: "An error occurred during verification." });
+    return res.render("verify-email", {
+      success: false,
+      error: "An unexpected error occurred during verification.",
+      email: "",
+      allowedDomain: getAllowedDomain()
+    });
+  }
+});
+
+// -------------------------------------------------------------
+// 3B. POST /resend-verification - Issue fresh verification token
+// -------------------------------------------------------------
+router.post("/resend-verification", authLimiter, async (req, res) => {
+  try {
+    const { email } = req.body;
+    const cleanEmail = email ? email.toLowerCase().trim() : "";
+    const genericMessage = "If an account with that college email exists and is not yet verified, a new verification link has been sent to your inbox.";
+
+    if (cleanEmail && isAllowedCollegeEmail(cleanEmail)) {
+      const user = await User.findOne({ email: cleanEmail });
+      if (user && !user.isEmailVerified) {
+        const { rawToken, hashedToken } = generateVerificationToken();
+        user.emailVerificationToken = hashedToken;
+        user.emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+        await user.save();
+
+        try {
+          const emailContent = verifyEmailTemplate({
+            name: user.name,
+            token: rawToken
+          });
+          await sendMail({
+            to: user.email,
+            ...emailContent
+          });
+        } catch (mailErr) {
+          console.error("Failed to send verification email on resend:", mailErr.message);
+        }
+      }
+    }
+
+    // Always respond with the same generic message (prevents user enumeration)
+    return res.render("check-inbox", {
+      email: cleanEmail,
+      message: genericMessage,
+      error: null,
+      allowedDomain: getAllowedDomain()
+    });
+  } catch (err) {
+    console.error("Resend verification error:", err.message);
+    return res.render("check-inbox", {
+      email: req.body.email || "",
+      message: "If an account with that college email exists and is not yet verified, a new verification link has been sent to your inbox.",
+      error: null,
+      allowedDomain: getAllowedDomain()
+    });
   }
 });
 
@@ -232,7 +379,12 @@ router.get("/login", (req, res) => {
   if (req.session && req.session.userId) {
     return res.redirect("/dashboard");
   }
-  res.render("login", { error: null, success: null });
+  res.render("login", {
+    error: null,
+    success: null,
+    showResend: false,
+    unverifiedEmail: ""
+  });
 });
 
 // -------------------------------------------------------------
@@ -243,7 +395,12 @@ router.post("/login", authLimiter, async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.render("login", { error: "Please enter both email and password.", success: null });
+      return res.render("login", {
+        error: "Please enter both email and password.",
+        success: null,
+        showResend: false,
+        unverifiedEmail: ""
+      });
     }
 
     const cleanEmail = email.toLowerCase().trim();
@@ -251,12 +408,32 @@ router.post("/login", authLimiter, async (req, res) => {
 
     const user = await User.findOne({ email: cleanEmail });
     if (!user) {
-      return res.render("login", { error: genericAuthError, success: null });
+      return res.render("login", {
+        error: genericAuthError,
+        success: null,
+        showResend: false,
+        unverifiedEmail: ""
+      });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.render("login", { error: genericAuthError, success: null });
+      return res.render("login", {
+        error: genericAuthError,
+        success: null,
+        showResend: false,
+        unverifiedEmail: ""
+      });
+    }
+
+    // Block unverified accounts from creating a session
+    if (!user.isEmailVerified) {
+      return res.render("login", {
+        error: "Please verify your email first. Check your inbox for the verification link.",
+        success: null,
+        showResend: true,
+        unverifiedEmail: user.email
+      });
     }
 
     // Update lastActive timestamp on login
@@ -267,7 +444,12 @@ router.post("/login", authLimiter, async (req, res) => {
     req.session.regenerate((sessErr) => {
       if (sessErr) {
         console.error("Session regeneration error:", sessErr);
-        return res.render("login", { error: "Session creation error. Please try again.", success: null });
+        return res.render("login", {
+          error: "Session creation error. Please try again.",
+          success: null,
+          showResend: false,
+          unverifiedEmail: ""
+        });
       }
       req.session.userId = user._id;
       console.log(`User logged in: ${user.name} (${user.email}) at ${user.lastActive}`);
@@ -275,7 +457,12 @@ router.post("/login", authLimiter, async (req, res) => {
     });
   } catch (err) {
     console.error("Login error:", err.message);
-    res.render("login", { error: "An unexpected error occurred during login.", success: null });
+    res.render("login", {
+      error: "An unexpected error occurred during login.",
+      success: null,
+      showResend: false,
+      unverifiedEmail: ""
+    });
   }
 });
 
@@ -567,3 +754,7 @@ router.post("/auth/linkedin/unlink", requireLogin, async (req, res) => {
 });
 
 module.exports = router;
+module.exports.getAllowedDomain = getAllowedDomain;
+module.exports.isAllowedCollegeEmail = isAllowedCollegeEmail;
+module.exports.hashToken = hashToken;
+module.exports.generateVerificationToken = generateVerificationToken;

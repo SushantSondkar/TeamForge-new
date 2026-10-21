@@ -126,7 +126,7 @@ app.use(async (req, res, next) => {
   }
 
   // Hide sidebar and title bar nav options on authentication pages
-  const isAuthPage = ["/signup", "/login", "/forgot-password", "/reset-password"].some(p => req.path === p || req.path.startsWith(p + "/"));
+  const isAuthPage = ["/signup", "/login", "/forgot-password", "/reset-password", "/verify-email", "/check-inbox", "/resend-verification"].some(p => req.path === p || req.path.startsWith(p + "/"));
   if (isAuthPage) {
     res.locals.hideSidebar = true;
     res.locals.hideNavOptions = true;

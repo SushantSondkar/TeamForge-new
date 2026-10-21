@@ -28,6 +28,21 @@
             </div>
         <% } %>
 
+        <% if (typeof showResend !== 'undefined' && showResend) { %>
+            <div style="background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 14px 16px; margin-bottom: 20px;">
+                <p style="margin: 0 0 10px 0; font-size: 13px; color: #1e40af; line-height: 1.5;">
+                    Didn't receive the email or did your link expire?
+                </p>
+                <form action="/resend-verification" method="POST" style="margin: 0;">
+                    <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                    <input type="hidden" name="email" value="<%= typeof unverifiedEmail !== 'undefined' ? unverifiedEmail : '' %>">
+                    <button type="submit" style="background-color: #2563eb; color: #ffffff; border: none; padding: 8px 14px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                        Resend Verification Email
+                    </button>
+                </form>
+            </div>
+        <% } %>
+
         <form action="/login" method="POST" style="display: flex; flex-direction: column; gap: 16px;">
             <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
             

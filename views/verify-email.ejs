@@ -1,0 +1,66 @@
+<% 
+    locals.hideSidebar = true;
+    locals.hideNavOptions = true;
+-%>
+<% layout("/layouts/boilerplate") -%>
+
+<div class="auth-page" style="max-width: 480px; margin: 48px auto; padding: 0 16px;">
+    
+    <div class="dashboard-card-new" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 36px 30px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04); text-align: center;">
+        
+        <% if (typeof success !== 'undefined' && success) { %>
+            <!-- Success State -->
+            <div style="background: #f0fdf4; color: #16a34a; width: 56px; height: 56px; border-radius: 16px; display: inline-flex; align-items: center; justify-content: center; font-size: 26px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.12);">
+                ✅
+            </div>
+            
+            <h2 style="font-size: 22px; font-weight: 700; color: #0f172a; margin: 0 0 8px 0;">Email Verified!</h2>
+            
+            <p style="color: #64748b; font-size: 14px; line-height: 1.5; margin: 0 0 24px 0;">
+                Your institutional email <%= typeof email !== 'undefined' && email ? '(' + email + ')' : '' %> has been verified successfully. Your account is active and ready for hackathon team matching.
+            </p>
+
+            <a href="/login" class="btn-large-primary"
+               style="display: inline-flex; width: 100%; box-sizing: border-box; justify-content: center; padding: 12px; font-size: 14.5px; font-weight: 600; border-radius: 8px; background-color: #2563eb; color: #ffffff; text-decoration: none;">
+                Proceed to Log In
+            </a>
+
+        <% } else { %>
+            <!-- Error / Expired State -->
+            <div style="background: #fef2f2; color: #dc2626; width: 56px; height: 56px; border-radius: 16px; display: inline-flex; align-items: center; justify-content: center; font-size: 26px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.12);">
+                ⚠️
+            </div>
+            
+            <h2 style="font-size: 22px; font-weight: 700; color: #0f172a; margin: 0 0 8px 0;">Verification Link Expired or Invalid</h2>
+            
+            <p style="color: #64748b; font-size: 14px; line-height: 1.5; margin: 0 0 20px 0;">
+                <%= typeof error !== 'undefined' && error ? error : "The email verification link you clicked is invalid or has expired." %>
+            </p>
+
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px 18px; margin-bottom: 20px; text-align: left;">
+                <p style="margin: 0 0 10px 0; font-size: 13.5px; font-weight: 600; color: #334155;">
+                    Request a new verification link:
+                </p>
+                <form action="/resend-verification" method="POST" style="display: flex; flex-direction: column; gap: 10px;">
+                    <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                    <input type="email" name="email" required placeholder="Enter your college email (@kkwagh.edu.in)"
+                           value="<%= typeof email !== 'undefined' ? email : '' %>"
+                           style="box-sizing: border-box; width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13.5px; outline: none;">
+                    <button type="submit"
+                            style="width: 100%; padding: 10px 16px; font-size: 13.5px; font-weight: 600; border-radius: 8px; background-color: #2563eb; color: #ffffff; border: none; cursor: pointer;">
+                        Resend Verification Email
+                    </button>
+                </form>
+            </div>
+
+            <div style="margin-top: 16px; font-size: 13.5px; color: #64748b;">
+                <a href="/login" style="color: #2563eb; text-decoration: none; font-weight: 600;">Back to Log In</a>
+                <span style="margin: 0 8px;">·</span>
+                <a href="/signup" style="color: #64748b; text-decoration: none;">Create New Account</a>
+            </div>
+
+        <% } %>
+
+    </div>
+
+</div>
