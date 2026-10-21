@@ -35,18 +35,33 @@ router.get("/", async (req, res) => {
   }
 });
 
+// Helper ensuring caller is authorized to create/publish events
+function canManageEvents(user) {
+  return Boolean(user && (user.isAdmin || (user.isOrganizer && user.organizerStatus === "APPROVED")));
+}
+
 // -------------------------------------------------------------
-// 2. GET /events/new - Render event creation form (Protected)
+// 2. GET /events/new - Render event creation form (Protected: Admin or Approved Organizer)
 // -------------------------------------------------------------
 router.get("/new", requireLogin, (req, res) => {
+  if (!canManageEvents(req.user)) {
+    return res.status(403).render("events/new", {
+      error: "Forbidden: Only approved organizers or administrators can publish campus events.",
+      currentUser: req.user
+    });
+  }
   res.render("events/new", { error: null, currentUser: req.user });
 });
 
 // -------------------------------------------------------------
-// 3. POST /events/new - Create a new event (Protected)
+// 3. POST /events/new - Create a new event (Protected: Admin or Approved Organizer)
 // -------------------------------------------------------------
 router.post("/new", requireLogin, async (req, res) => {
   try {
+    if (!canManageEvents(req.user)) {
+      return res.status(403).send("Forbidden: Only approved organizers or administrators can create events.");
+    }
+
     const { name, organizer, date, deadline, mode, link, description } = req.body;
 
     if (!name || !organizer || !date || !deadline) {
@@ -57,13 +72,13 @@ router.post("/new", requireLogin, async (req, res) => {
     }
 
     const event = new Event({
-      name: name.trim(),
-      organizer: organizer.trim(),
+      name: String(name).trim(),
+      organizer: String(organizer).trim(),
       date: new Date(date),
       deadline: new Date(deadline),
       mode: mode || "Offline",
-      link: link ? link.trim() : "",
-      description: description ? description.trim() : "",
+      link: link ? String(link).trim() : "",
+      description: description ? String(description).trim() : "",
       createdBy: req.user._id
     });
 
@@ -85,6 +100,11 @@ router.post("/new", requireLogin, async (req, res) => {
 // -------------------------------------------------------------
 router.get("/:id", async (req, res) => {
   try {
+    const mongoose = require("mongoose");
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).send("Invalid event ID format.");
+    }
+
     const event = await Event.findById(req.params.id);
     if (!event) {
       return res.status(404).render("home", {
@@ -100,9 +120,9 @@ router.get("/:id", async (req, res) => {
       });
     }
 
-    // Retrieve teams registered for this event
+    // Retrieve teams registered for this event (omit creator email to isolate contact info)
     const teams = await TeamRequirement.find({ eventId: event._id })
-      .populate("createdBy", "name email department role")
+      .populate("createdBy", "name department role")
       .sort({ createdAt: -1 });
 
     const currentUser = req.user || null;

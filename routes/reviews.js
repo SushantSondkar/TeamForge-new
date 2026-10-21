@@ -8,6 +8,7 @@ const TeamReview = require("../models/TeamReview");
 const Notification = require("../models/Notification");
 const SuccessStory = require("../models/SuccessStory");
 const requireLogin = require("../middleware/auth");
+const { reviewLimiter } = require("../middleware/rateLimiters");
 
 /**
  * Helper to recalculate aggregate teammateRating and reviewCount for a user
@@ -40,8 +41,8 @@ router.get("/", requireLogin, async (req, res) => {
     })
       .populate("eventId")
       .populate("teamRequirementId")
-      .populate("senderId", "name email department role skills")
-      .populate("receiverId", "name email department role skills");
+      .populate("senderId", "name department role skills")
+      .populate("receiverId", "name department role skills");
 
     // 2. Identify teammates and check whether event date has passed
     const reviewOpportunities = [];
@@ -211,7 +212,7 @@ router.get("/events/:eventId/review/:peerId", requireLogin, async (req, res) => 
 // -------------------------------------------------------------
 // 3. POST /events/:eventId/review/:peerId - Submit double-blind review & peer skill verification
 // -------------------------------------------------------------
-router.post("/events/:eventId/review/:peerId", requireLogin, async (req, res) => {
+router.post("/events/:eventId/review/:peerId", requireLogin, reviewLimiter, async (req, res) => {
   try {
     const { eventId, peerId } = req.params;
     const currentUser = req.user;
@@ -446,7 +447,7 @@ async function handleStorySubmission(req, res) {
   }
 }
 
-router.post("/story", requireLogin, handleStorySubmission);
-router.post("/reviews/story", requireLogin, handleStorySubmission);
+router.post("/story", requireLogin, reviewLimiter, handleStorySubmission);
+router.post("/reviews/story", requireLogin, reviewLimiter, handleStorySubmission);
 
 module.exports = router;

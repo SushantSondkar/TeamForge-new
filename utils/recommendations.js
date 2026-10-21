@@ -27,8 +27,14 @@ async function getRecommendedCandidates(team, role, currentUserId) {
     return [];
   }
 
-  // Find all users except the current coordinator
-  const allUsers = await User.find(currentUserId ? { _id: { $ne: currentUserId } } : {});
+  // Find all users except the current coordinator; exclude hidden profiles at DB level
+  const userQuery = {
+    isProfileHidden: { $ne: true }
+  };
+  if (currentUserId) {
+    userQuery._id = { $ne: currentUserId };
+  }
+  const allUsers = await User.find(userQuery);
 
   // Determine event lock key: use eventId if present, fallback to projectName
   const eventLockKey = team.eventId ? team.eventId.toString() : (team.projectName || "");
@@ -78,8 +84,25 @@ async function getRecommendedCandidates(team, role, currentUserId) {
       }
     }
 
+    // Sanitize candidate representation to strictly isolate contact info (email, phone, links) until mutual consent
+    const sanitizedUser = {
+      _id: candidate._id,
+      name: candidate.name,
+      department: candidate.department,
+      year: candidate.year,
+      role: candidate.role,
+      skills: candidate.skills || [],
+      credibility: candidate.credibility,
+      teammateRating: candidate.teammateRating,
+      isGithubVerified: !!candidate.isGithubVerified,
+      isLinkedinLinked: !!candidate.isLinkedinLinked,
+      trustBadges: candidate.trustBadges || [],
+      lastActive: candidate.lastActive,
+      completenessPercentage: candidate.completenessPercentage
+    };
+
     recommended.push({
-      user: candidate,
+      user: sanitizedUser,
       score: matchResult.score,
       matchResult: matchResult,
       breakdown: matchResult.breakdown,

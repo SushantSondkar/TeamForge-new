@@ -231,8 +231,28 @@ const userSchema = new mongoose.Schema({
   ]
 }, {
   timestamps: true,
-  toJSON: { virtuals: true },
-  toObject: { virtuals: true }
+  toJSON: {
+    virtuals: true,
+    transform: function(doc, ret) {
+      delete ret.password;
+      delete ret.emailVerificationToken;
+      delete ret.emailVerificationExpires;
+      delete ret.resetPasswordToken;
+      delete ret.resetPasswordExpires;
+      return ret;
+    }
+  },
+  toObject: {
+    virtuals: true,
+    transform: function(doc, ret) {
+      delete ret.password;
+      delete ret.emailVerificationToken;
+      delete ret.emailVerificationExpires;
+      delete ret.resetPasswordToken;
+      delete ret.resetPasswordExpires;
+      return ret;
+    }
+  }
 });
 
 // Profile completeness percentage calculator (used as tie-breaker)

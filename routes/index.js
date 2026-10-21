@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const User = require('../models/User');
 const Invite = require('../models/Invite');
 const TeamRequirement = require('../models/TeamRequirement');
@@ -39,7 +40,7 @@ async function renderDashboard(req, res) {
 
     // 1. Get the active team requirement owned by this user
     let latestTeam = null;
-    if (req.query.teamId) {
+    if (req.query.teamId && mongoose.isValidObjectId(req.query.teamId)) {
       latestTeam = await TeamRequirement.findById(req.query.teamId);
       // Ensure the team belongs to this user
       if (latestTeam && latestTeam.createdBy && !latestTeam.createdBy.equals(currentUser._id)) {

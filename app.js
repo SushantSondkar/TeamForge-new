@@ -240,7 +240,20 @@ app.use((err, req, res, next) => {
     if (req.xhr || req.headers.accept?.includes("application/json")) {
       return res.status(403).json({ error: "Session token expired. Please refresh and try again." });
     }
-    const redirectUrl = req.headers.referer || "/";
+
+    let redirectUrl = "/";
+    if (req.headers.referer) {
+      try {
+        const parsed = new URL(req.headers.referer);
+        if (parsed.host === req.get("host")) {
+          redirectUrl = parsed.pathname + parsed.search;
+        }
+      } catch (e) {
+        if (req.headers.referer.startsWith("/") && !req.headers.referer.startsWith("//")) {
+          redirectUrl = req.headers.referer;
+        }
+      }
+    }
     return res.redirect(redirectUrl);
   }
 

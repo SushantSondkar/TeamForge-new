@@ -143,6 +143,11 @@ router.post("/admin/organizers/:id/reject", requireLogin, requireAdmin, async (r
 // -------------------------------------------------------------
 router.post("/events/:id/promote", requireLogin, async (req, res) => {
   try {
+    const mongoose = require("mongoose");
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).send("Invalid event ID format.");
+    }
+
     const event = await Event.findById(req.params.id);
     if (!event) {
       return res.status(404).send("Event not found.");
@@ -153,10 +158,19 @@ router.post("/events/:id/promote", requireLogin, async (req, res) => {
       return res.status(403).send("Forbidden: Only approved organizers or administrators can promote events.");
     }
 
+    // Strict ownership verification: Non-admin organizers can only promote their own events
+    if (!req.user.isAdmin && (!event.createdBy || !event.createdBy.equals(req.user._id))) {
+      return res.status(403).send("Forbidden: You can only configure promotion for events you created.");
+    }
+
     const { isPromoted, promotedTagline, prizePool } = req.body;
     event.isPromoted = (isPromoted === "true" || isPromoted === "on" || isPromoted === true);
-    if (promotedTagline !== undefined) event.promotedTagline = promotedTagline.trim();
-    if (prizePool !== undefined) event.prizePool = prizePool.trim();
+    if (promotedTagline !== undefined && typeof promotedTagline === "string") {
+      event.promotedTagline = promotedTagline.trim();
+    }
+    if (prizePool !== undefined && typeof prizePool === "string") {
+      event.prizePool = prizePool.trim();
+    }
 
     await event.save();
 

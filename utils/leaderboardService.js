@@ -72,14 +72,12 @@ async function computeLeaderboard() {
       user: {
         _id: user._id,
         name: user.name,
-        email: user.email,
         department: user.department,
         year: user.year,
         role: user.role,
         skills: user.skills || [],
         isGithubVerified: !!user.isGithubVerified,
         isLinkedinLinked: !!user.isLinkedinLinked,
-        portfolio: user.portfolio || "",
         lastActive: user.lastActive,
         completenessPercentage: completeness
       },

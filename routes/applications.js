@@ -5,6 +5,7 @@ const TeamRequirement = require("../models/TeamRequirement");
 const TeamRequestAction = require("../models/TeamRequestAction");
 const Application = require("../models/Application");
 const requireLogin = require("../middleware/auth");
+const { actionLimiter } = require("../middleware/rateLimiters");
 const {
   createAction,
   acceptAction,
@@ -16,7 +17,7 @@ const {
 // -----------------------------------------------------------------
 // 1. POST /applications/apply - Candidate applies to a team role (Direction: APPLY)
 // -----------------------------------------------------------------
-router.post("/apply", requireLogin, async (req, res) => {
+router.post("/apply", requireLogin, actionLimiter, async (req, res) => {
   try {
     const currentUser = req.user;
     const { teamRequirementId, role } = req.body;
@@ -91,8 +92,19 @@ router.get("/team/:teamId", requireLogin, async (req, res) => {
 
     // Map to normalized structure for view compatibility
     const applications = actions.map(act => {
-      const applicant = act.direction === "APPLY" ? act.senderId : act.receiverId;
+      const rawApplicant = act.direction === "APPLY" ? act.senderId : act.receiverId;
       const bothOptedIn = act.senderContactOptIn && act.receiverContactOptIn;
+      let applicant = rawApplicant;
+      if (rawApplicant && !bothOptedIn) {
+        applicant = {
+          _id: rawApplicant._id,
+          name: rawApplicant.name,
+          department: rawApplicant.department,
+          role: rawApplicant.role,
+          skills: rawApplicant.skills,
+          credibility: rawApplicant.credibility
+        };
+      }
       return {
         _id: act._id,
         applicantId: applicant,

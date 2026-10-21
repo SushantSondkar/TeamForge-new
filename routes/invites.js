@@ -3,6 +3,7 @@ const router = express.Router();
 const TeamRequestAction = require("../models/TeamRequestAction");
 const TeamRequirement = require("../models/TeamRequirement");
 const requireLogin = require("../middleware/auth");
+const { actionLimiter } = require("../middleware/rateLimiters");
 const {
   createAction,
   acceptAction,
@@ -14,7 +15,7 @@ const {
 // -----------------------------------------------------------------
 // 1. POST /invites/send - Send a team invitation (Direction: INVITE)
 // -----------------------------------------------------------------
-router.post("/send", requireLogin, async (req, res) => {
+router.post("/send", requireLogin, actionLimiter, async (req, res) => {
   try {
     const currentUser = req.user;
     const { receiverId, teamRequirementId, role } = req.body;

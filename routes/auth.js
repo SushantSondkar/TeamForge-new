@@ -168,12 +168,22 @@ router.post("/signup", authLimiter, async (req, res) => {
     const { name, email, password, confirmPassword, department, year, skillsRaw } = req.body;
     const formData = { name, email, department, year, skillsRaw };
 
-    // Validations
-    if (!name || !email || !password || !confirmPassword) {
+    // Validations & strict type checks
+    if (
+      !name ||
+      !email ||
+      !password ||
+      !confirmPassword ||
+      typeof name !== "string" ||
+      typeof email !== "string" ||
+      typeof password !== "string" ||
+      typeof confirmPassword !== "string"
+    ) {
       return res.render("signup", {
         error: "Name, email, and password fields are required.",
         success: null,
-        formData
+        formData,
+        allowedDomain: getAllowedDomain()
       });
     }
 
@@ -401,7 +411,15 @@ router.get("/verify-email", async (req, res) => {
 router.post("/resend-verification", authLimiter, async (req, res) => {
   try {
     const { email } = req.body;
-    const cleanEmail = email ? email.toLowerCase().trim() : "";
+    if (!email || typeof email !== "string") {
+      return res.render("check-inbox", {
+        email: "",
+        message: genericMessage,
+        error: null,
+        allowedDomain: getAllowedDomain()
+      });
+    }
+    const cleanEmail = email.toLowerCase().trim();
     const genericMessage = "If an account with that college email exists and is not yet verified, a new verification link has been sent to your inbox.";
 
     if (cleanEmail && isAllowedCollegeEmail(cleanEmail)) {
@@ -467,7 +485,7 @@ router.post("/login", authLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    if (!email || !password) {
+    if (!email || !password || typeof email !== "string" || typeof password !== "string") {
       return res.render("login", {
         error: "Please enter both email and password.",
         success: null,
@@ -553,15 +571,16 @@ router.get("/forgot-password", (req, res) => {
 router.post("/forgot-password", authLimiter, async (req, res) => {
   try {
     const { email } = req.body;
-    const cleanEmail = email ? email.toLowerCase().trim() : "";
     const genericSuccess = "If an account exists for this email, we've sent a reset link.";
 
-    if (!cleanEmail) {
+    if (!email || typeof email !== "string") {
       return res.render("forgot-password", {
         error: "Please provide your registered college email.",
         success: null
       });
     }
+
+    const cleanEmail = email.toLowerCase().trim();
 
     // Per-email rate limit check: max 3 requests per hour per email
     // Without revealing that the limit was hit!

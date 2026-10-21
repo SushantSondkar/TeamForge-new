@@ -45,6 +45,9 @@ async function createAction({ senderId, receiverId, teamRequirementId, role, dir
   if (candidate && eventLockKey && candidate.lockedEvents && candidate.lockedEvents.includes(eventLockKey)) {
     throw new Error("Candidate is already committed to a team for this event.");
   }
+  if (direction === "INVITE" && candidate && candidate.isProfileHidden) {
+    throw new Error("Candidate's profile is hidden and cannot receive invitations.");
+  }
 
   // Check duplicate pending action
   const existing = await TeamRequestAction.findOne({

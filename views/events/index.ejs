@@ -7,7 +7,7 @@
             <h1 style="font-size: 24px; font-weight: 700; color: #0f172a; margin: 0 0 4px 0;">Campus Events & Hackathons</h1>
             <p style="color: #64748b; font-size: 14px; margin: 0;">Explore upcoming competitions, form teams, and lock your commitments per event.</p>
         </div>
-        <% if (currentUser) { %>
+        <% if (currentUser && (currentUser.isAdmin || (currentUser.isOrganizer && currentUser.organizerStatus === 'APPROVED'))) { %>
             <a href="/events/new" class="btn-small-primary" style="text-decoration: none; padding: 10px 18px; font-size: 13.5px; border-radius: 8px;">
                 + Add Campus Event
             </a>

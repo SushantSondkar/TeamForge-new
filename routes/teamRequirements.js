@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const TeamRequirement = require('../models/TeamRequirement');
 const Event = require('../models/Event');
 const User = require('../models/User');
@@ -204,6 +205,10 @@ router.post("/submit", requireLogin, async (req, res, next) => {
 // 6. Get Recommended Candidates for a Team Requirement (Owner Only)
 router.get("/:id/recommendations", requireLogin, async (req, res) => {
   try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(404).json({ error: "Invalid team requirement ID." });
+    }
+
     const team = await TeamRequirement.findById(req.params.id);
     if (!team) {
       return res.status(404).json({ error: "Team requirement not found" });
