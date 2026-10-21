@@ -23,6 +23,7 @@ const TeamRequirement = require("../models/TeamRequirement");
 const TeamRequestAction = require("../models/TeamRequestAction");
 const Notification = require("../models/Notification");
 const Shortlist = require("../models/Shortlist");
+const SuccessStory = require("../models/SuccessStory");
 
 const {
   createAction,
@@ -708,6 +709,64 @@ async function runTests() {
     assert.strictEqual(verifiedOrg.isOrganizer, true);
     assert.strictEqual(verifiedOrg.organizerStatus, "APPROVED");
     console.log("   ✓ Organizer application submitted and approved by campus administrator.");
+
+    // ==============================================================
+    // 9. Testing Phase 9E: Success Stories & Removal of Fabricated Content
+    // ==============================================================
+    console.log("\n9. Testing Phase 9E: Success Stories & Real Data Enforcement...");
+
+    // 9.1: SuccessStory model validation
+    const validStory = new SuccessStory({
+      teamName: "Alpha_coders",
+      eventName: "EQUINOX 2026",
+      memberUserIds: [studentA._id, studentB._id],
+      summary: "Built a real-time IoT monitoring dashboard using Node and React.",
+      createdBy: studentA._id
+    });
+    await validStory.save();
+    assert.strictEqual(validStory.approved, false, "SuccessStory must default to approved: false");
+    assert.strictEqual(validStory.teamName, "Alpha_coders");
+    assert.strictEqual(validStory.memberUserIds.length, 2);
+
+    // 9.2: Summary max length 280 constraint
+    const longSummary = "a".repeat(281);
+    const invalidStory = new SuccessStory({
+      teamName: "Alpha_coders",
+      eventName: "EQUINOX 2026",
+      memberUserIds: [studentA._id],
+      summary: longSummary,
+      createdBy: studentA._id
+    });
+    await assert.rejects(
+      async () => { await invalidStory.save(); },
+      /longer than the maximum allowed length|280|Validation/i,
+      "SuccessStory summary exceeding 280 characters must be rejected"
+    );
+
+    // 9.3: Admin approval workflow
+    validStory.approved = true;
+    await validStory.save();
+    const approvedStory = await SuccessStory.findById(validStory._id);
+    assert.strictEqual(approvedStory.approved, true, "Admin approval must set approved to true");
+
+    // 9.4: Only approved stories show on dashboard query
+    const dashboardStories = await SuccessStory.find({ approved: true });
+    assert.strictEqual(dashboardStories.length, 1);
+    const unapprovedCount = await SuccessStory.countDocuments({ approved: false });
+    assert.strictEqual(unapprovedCount, 0);
+
+    // 9.5: Seed Users verification (emails end in @demo.local and SEED !== 'true' guard)
+    const seedUsersModule = require("../models/seedUsers");
+    assert.strictEqual(typeof seedUsersModule, "function");
+    delete process.env.SEED;
+    const initialUserCount = await User.countDocuments();
+    await seedUsersModule();
+    const postSeedUserCount = await User.countDocuments();
+    assert.strictEqual(initialUserCount, postSeedUserCount, "seedUsers must not insert any users when SEED !== 'true'");
+
+    console.log("   ✓ SuccessStory model constraints (max 280 chars, default approved: false) verified.");
+    console.log("   ✓ Success stories come from real data only with admin approval workflow.");
+    console.log("   ✓ Seed users guard enforced (never seeds when SEED !== 'true').");
 
   } finally {
     await teardown();

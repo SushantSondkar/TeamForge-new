@@ -7,6 +7,7 @@ const Application = require('../models/Application');
 const TeamRequestAction = require('../models/TeamRequestAction');
 const Notification = require('../models/Notification');
 const Event = require('../models/Event');
+const SuccessStory = require('../models/SuccessStory');
 const { getRecommendedCandidates, getRecommendedOpportunities } = require('../utils/recommendations');
 const { checkTimeoutsAndExpiries } = require('../utils/actionStateMachine');
 const requireLogin = require('../middleware/auth');
@@ -117,6 +118,13 @@ async function renderDashboard(req, res) {
       activeMemberCount = 1 + lockedCount;
     }
 
+    // 12. Approved Hackathon Success Stories
+    const successStories = await SuccessStory.find({ approved: true })
+      .populate("createdBy", "name department year")
+      .populate("memberUserIds", "name department year")
+      .sort({ createdAt: -1 })
+      .limit(6);
+
     res.render("home", {
       latestTeam,
       activeMemberCount,
@@ -129,6 +137,7 @@ async function renderDashboard(req, res) {
       awaitingConfirmation,
       promotedEvents,
       upcomingDeadlines,
+      successStories,
       currentUser
     });
   } catch (error) {
@@ -145,6 +154,7 @@ async function renderDashboard(req, res) {
       awaitingConfirmation: [],
       promotedEvents: [],
       upcomingDeadlines: [],
+      successStories: [],
       currentUser: req.user || null
     });
   }
@@ -185,12 +195,13 @@ router.get("/landing", (req, res) => {
 router.get("/discover", requireLogin, async (req, res) => {
   try {
     const teamRequirements = await TeamRequirement.find().sort({ createdAt: -1 });
+    const events = await Event.find().sort({ date: 1 });
     const currentUser = req.user;
     const recommendedOpportunities = currentUser ? await getRecommendedOpportunities(currentUser) : [];
-    res.render("discover", { teamRequirements, recommendedOpportunities, currentUser });
+    res.render("discover", { teamRequirements, recommendedOpportunities, events, currentUser });
   } catch (error) {
     console.error("Error fetching team requirements for discover:", error.message);
-    res.render("discover", { teamRequirements: [], recommendedOpportunities: [], currentUser: req.user || null });
+    res.render("discover", { teamRequirements: [], recommendedOpportunities: [], events: [], currentUser: req.user || null });
   }
 });
 

@@ -6,6 +6,7 @@ const TeamRequirement = require("../models/TeamRequirement");
 const TeamRequestAction = require("../models/TeamRequestAction");
 const TeamReview = require("../models/TeamReview");
 const Notification = require("../models/Notification");
+const SuccessStory = require("../models/SuccessStory");
 const requireLogin = require("../middleware/auth");
 
 /**
@@ -92,9 +93,41 @@ router.get("/", requireLogin, async (req, res) => {
       .populate("eventId", "name organizer date")
       .sort({ createdAt: -1 });
 
+    // 4. Find teams eligible for Success Story submission
+    // Team lead can submit after a team is LOCKED and its event date has passed
+    const myTeams = await TeamRequirement.find({ createdBy: currentUser._id }).populate("eventId");
+    const storyEligibleTeams = [];
+
+    for (const team of myTeams) {
+      if (!team.eventId) continue;
+      const eventDate = new Date(team.eventId.date);
+      if (eventDate > now) continue;
+
+      const teamLockedActions = await TeamRequestAction.find({
+        teamRequirementId: team._id,
+        status: "LOCKED"
+      });
+
+      if (teamLockedActions.length === 0) continue;
+
+      const existingStory = await SuccessStory.findOne({
+        createdBy: currentUser._id,
+        teamName: team.projectName,
+        eventName: team.eventId.name
+      });
+
+      storyEligibleTeams.push({
+        team,
+        event: team.eventId,
+        lockedCount: teamLockedActions.length,
+        existingStory
+      });
+    }
+
     res.render("reviews/index", {
       reviewOpportunities,
       receivedReviews,
+      storyEligibleTeams,
       currentUser,
       query: req.query
     });
@@ -334,5 +367,86 @@ router.post("/events/:eventId/review/:peerId", requireLogin, async (req, res) =>
     res.status(400).send("Error submitting review: " + err.message);
   }
 });
+
+// -------------------------------------------------------------
+// 4. POST /story - Team Lead submits a Campus Hackathon Success Story
+// -------------------------------------------------------------
+async function handleStorySubmission(req, res) {
+  try {
+    const currentUser = req.user;
+    const { teamRequirementId, summary } = req.body;
+
+    if (!summary || !summary.trim()) {
+      return res.redirect("/reviews?error=" + encodeURIComponent("Story summary is required."));
+    }
+
+    if (summary.trim().length > 280) {
+      return res.redirect("/reviews?error=" + encodeURIComponent("Story summary must be 280 characters or fewer."));
+    }
+
+    const team = await TeamRequirement.findById(teamRequirementId).populate("eventId");
+    if (!team) {
+      return res.status(404).send("Team requirement not found.");
+    }
+
+    // Only team lead can submit
+    if (!team.createdBy || !team.createdBy.equals(currentUser._id)) {
+      return res.status(403).send("Forbidden: Only the team lead can submit a success story.");
+    }
+
+    if (!team.eventId) {
+      return res.status(400).send("Team is not linked to an event.");
+    }
+
+    // Event date must have passed
+    const now = new Date();
+    if (new Date(team.eventId.date) > now) {
+      return res.status(400).send("Success stories can only be submitted after the event date has passed.");
+    }
+
+    // Team must have at least one locked match
+    const lockedActions = await TeamRequestAction.find({
+      teamRequirementId: team._id,
+      status: "LOCKED"
+    });
+    if (lockedActions.length === 0) {
+      return res.status(400).send("Team must have confirmed locked teammates to submit a success story.");
+    }
+
+    const memberIds = new Set();
+    memberIds.add(currentUser._id.toString());
+    lockedActions.forEach(act => {
+      if (act.senderId) memberIds.add(act.senderId.toString());
+      if (act.receiverId) memberIds.add(act.receiverId.toString());
+    });
+
+    // Check duplicate
+    const existing = await SuccessStory.findOne({
+      createdBy: currentUser._id,
+      teamName: team.projectName,
+      eventName: team.eventId.name
+    });
+    if (existing) {
+      return res.redirect("/reviews?info=" + encodeURIComponent("A story for this team has already been submitted."));
+    }
+
+    await SuccessStory.create({
+      teamName: team.projectName,
+      eventName: team.eventId.name,
+      memberUserIds: Array.from(memberIds),
+      summary: summary.trim(),
+      approved: false,
+      createdBy: currentUser._id
+    });
+
+    res.redirect("/reviews?storySubmitted=true");
+  } catch (err) {
+    console.error("Error submitting success story:", err.message);
+    res.status(500).send("Error submitting success story: " + err.message);
+  }
+}
+
+router.post("/story", requireLogin, handleStorySubmission);
+router.post("/reviews/story", requireLogin, handleStorySubmission);
 
 module.exports = router;

@@ -3,6 +3,7 @@ const router = express.Router();
 const User = require("../models/User");
 const Event = require("../models/Event");
 const Notification = require("../models/Notification");
+const SuccessStory = require("../models/SuccessStory");
 const requireLogin = require("../middleware/auth");
 
 /**
@@ -162,6 +163,87 @@ router.post("/events/:id/promote", requireLogin, async (req, res) => {
     res.redirect(`/events/${event._id}`);
   } catch (err) {
     console.error("Error updating event promotion:", err.message);
+    res.status(400).send(err.message);
+  }
+});
+
+// -------------------------------------------------------------
+// 7. GET /admin/stories - Admin review panel for Success Stories
+// -------------------------------------------------------------
+router.get("/admin/stories", requireLogin, requireAdmin, async (req, res) => {
+  try {
+    const pendingStories = await SuccessStory.find({ approved: false })
+      .populate("createdBy", "name email department year")
+      .populate("memberUserIds", "name department year")
+      .sort({ createdAt: -1 });
+
+    const approvedStories = await SuccessStory.find({ approved: true })
+      .populate("createdBy", "name email department year")
+      .populate("memberUserIds", "name department year")
+      .sort({ createdAt: -1 });
+
+    res.render("admin/stories", {
+      pendingStories,
+      approvedStories,
+      currentUser: req.user
+    });
+  } catch (err) {
+    console.error("Error loading admin stories panel:", err.message);
+    res.status(500).send("Error loading admin stories panel.");
+  }
+});
+
+// -------------------------------------------------------------
+// 8. POST /admin/stories/:id/approve - Approve a success story
+// -------------------------------------------------------------
+router.post("/admin/stories/:id/approve", requireLogin, requireAdmin, async (req, res) => {
+  try {
+    const story = await SuccessStory.findById(req.params.id);
+    if (!story) {
+      return res.status(404).send("Success story not found.");
+    }
+
+    story.approved = true;
+    await story.save();
+
+    await Notification.create({
+      userId: story.createdBy,
+      title: "Success Story Approved! 🏆",
+      subtitle: `Your story for ${story.teamName} at ${story.eventName} has been approved and published to the campus dashboard.`,
+      type: "success",
+      link: "/dashboard"
+    });
+
+    res.redirect("/admin/stories");
+  } catch (err) {
+    console.error("Error approving success story:", err.message);
+    res.status(400).send(err.message);
+  }
+});
+
+// -------------------------------------------------------------
+// 9. POST /admin/stories/:id/reject - Reject / Remove a success story
+// -------------------------------------------------------------
+router.post("/admin/stories/:id/reject", requireLogin, requireAdmin, async (req, res) => {
+  try {
+    const story = await SuccessStory.findById(req.params.id);
+    if (!story) {
+      return res.status(404).send("Success story not found.");
+    }
+
+    await SuccessStory.findByIdAndDelete(req.params.id);
+
+    await Notification.create({
+      userId: story.createdBy,
+      title: "Success Story Update",
+      subtitle: `Your submitted story for ${story.teamName} was not approved for publication.`,
+      type: "info",
+      link: "/reviews"
+    });
+
+    res.redirect("/admin/stories");
+  } catch (err) {
+    console.error("Error rejecting success story:", err.message);
     res.status(400).send(err.message);
   }
 });

@@ -195,12 +195,12 @@
             
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                 <span style="font-size: 13px; color: #64748b;">Credibility Score (Term C)</span>
-                <span style="font-size: 14px; font-weight: 700; color: #0f172a;"><%= currentUser && currentUser.credibility ? Math.round(currentUser.credibility * 100) : (currentUser && currentUser.isGithubVerified ? 70 : 30) %>%</span>
+                <span style="font-size: 14px; font-weight: 700; color: #0f172a;"><%= currentUser && currentUser.credibility !== undefined ? Math.round(currentUser.credibility * 100) : 50 %>%</span>
             </div>
 
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                 <span style="font-size: 13px; color: #64748b;">Teammate Rating</span>
-                <span style="font-size: 14px; font-weight: 700; color: #0f172a;">★ <%= (currentUser && currentUser.teammateRating) ? Number(currentUser.teammateRating * 5).toFixed(1) : '4.5' %> / 5.0</span>
+                <span style="font-size: 14px; font-weight: 700; color: #0f172a;"><%= (currentUser && currentUser.reviewCount > 0 && currentUser.teammateRating) ? '★ ' + Number(currentUser.teammateRating * 5).toFixed(1) + ' / 5.0' : 'No ratings yet' %></span>
             </div>
 
             <div style="display: flex; justify-content: space-between; align-items: center;">

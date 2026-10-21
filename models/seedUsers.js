@@ -6,7 +6,7 @@ const defaultPasswordHash = bcrypt.hashSync("test123", 10);
 const initialCandidates = [
   {
     name: "Aaradhya Wabale",
-    email: "aaradhya@test.com",
+    email: "aaradhya@demo.local",
     password: defaultPasswordHash,
     role: "Lead Coordinator",
     skills: [
@@ -26,7 +26,7 @@ const initialCandidates = [
   },
   {
     name: "Harsh Dhavane",
-    email: "harsh@test.com",
+    email: "harsh@demo.local",
     password: defaultPasswordHash,
     role: "React Developer",
     skills: [
@@ -50,7 +50,7 @@ const initialCandidates = [
   },
   {
     name: "Gayatri Jadhav",
-    email: "gayatri@test.com",
+    email: "gayatri@demo.local",
     password: defaultPasswordHash,
     role: "Python Specialist",
     skills: [
@@ -73,7 +73,7 @@ const initialCandidates = [
   },
   {
     name: "Sanket Pawar",
-    email: "sanket@test.com",
+    email: "sanket@demo.local",
     password: defaultPasswordHash,
     role: "UI-UX Designer",
     skills: [
@@ -96,7 +96,7 @@ const initialCandidates = [
   },
   {
     name: "Kalpesh Shinde",
-    email: "kalpesh@test.com",
+    email: "kalpesh@demo.local",
     password: defaultPasswordHash,
     role: "Backend Developer",
     skills: [
@@ -116,7 +116,7 @@ const initialCandidates = [
   },
   {
     name: "Atmaj Gaikwad",
-    email: "atmaj@test.com",
+    email: "atmaj@demo.local",
     password: defaultPasswordHash,
     role: "DevOps Engineer",
     skills: [
@@ -135,7 +135,7 @@ const initialCandidates = [
   },
   {
     name: "Bhakti Lad",
-    email: "bhakti@test.com",
+    email: "bhakti@demo.local",
     password: defaultPasswordHash,
     role: "QA Engineer",
     skills: [
@@ -154,7 +154,7 @@ const initialCandidates = [
   // Condition 1 Test User: Missing required skills (only knows HTML/CSS/JS, missing System Design & Node.js & MongoDB)
   {
     name: "Rohan Patil",
-    email: "rohan@test.com",
+    email: "rohan@demo.local",
     password: defaultPasswordHash,
     role: "Junior Web Developer",
     skills: [
@@ -173,7 +173,7 @@ const initialCandidates = [
   // Condition 2 Test User: Has all skills for Alpha_coders, but locked into Alpha_coders already!
   {
     name: "Pooja Deshmukh",
-    email: "pooja@test.com",
+    email: "pooja@demo.local",
     password: defaultPasswordHash,
     role: "Senior Cloud Architect",
     skills: [
@@ -193,7 +193,7 @@ const initialCandidates = [
   // Edge Case Test User: Inactive for 35 days (Activity should be 0)
   {
     name: "Devon Lane",
-    email: "devon@test.com",
+    email: "devon@demo.local",
     password: defaultPasswordHash,
     role: "Systems Specialist",
     skills: [
@@ -212,7 +212,7 @@ const initialCandidates = [
   // Edge Case Test User: New user with < 3 reviews (Reputation should be neutral 0.5)
   {
     name: "Neha Sharma",
-    email: "neha@test.com",
+    email: "neha@demo.local",
     password: defaultPasswordHash,
     role: "Associate Engineer",
     skills: [
@@ -354,6 +354,10 @@ const initialOpportunityTeams = [
 ];
 
 async function seedUsers() {
+  if (process.env.SEED !== "true") {
+    console.log("SEED is not 'true'. Skipping seedUsers.");
+    return;
+  }
   try {
     const existingCount = await User.countDocuments();
     if (existingCount === 0) {
