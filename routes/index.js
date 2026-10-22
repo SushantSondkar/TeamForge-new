@@ -344,6 +344,36 @@ router.get("/profile/edit", requireLogin, (req, res) => {
 });
 
 // -------------------------------------------------------------
+// 5b. POST /profile/photo - Directly Save Profile Photo to MongoDB
+// -------------------------------------------------------------
+router.post("/profile/photo", requireLogin, async (req, res) => {
+  try {
+    const { photo, profilePic, avatar } = req.body;
+    const picData = (photo || profilePic || avatar || "").trim();
+    if (!picData) {
+      return res.status(400).json({ success: false, error: "No photo data provided" });
+    }
+
+    const user = req.user;
+    user.profilePic = picData;
+    user.avatar = picData;
+    user.photo = picData;
+    user.lastActive = new Date();
+    await user.save();
+
+    console.log(`[Photo] Profile photo updated directly in MongoDB for user: ${user._id}`);
+    return res.json({
+      success: true,
+      message: "Photo saved to database successfully",
+      profilePic: user.profilePic
+    });
+  } catch (err) {
+    console.error("Error saving photo:", err.message);
+    return res.status(500).json({ success: false, error: "Failed to save photo: " + err.message });
+  }
+});
+
+// -------------------------------------------------------------
 // 6. POST /profile/edit - Save Profile Changes (Protected)
 // -------------------------------------------------------------
 router.post("/profile/edit", requireLogin, async (req, res) => {
@@ -368,7 +398,12 @@ router.post("/profile/edit", requireLogin, async (req, res) => {
     } = req.body;
 
     if (name && name.trim()) user.name = name.trim();
-    if (profilePic !== undefined) user.profilePic = profilePic.trim();
+    if (profilePic !== undefined) {
+      const pic = profilePic.trim();
+      user.profilePic = pic;
+      user.avatar = pic;
+      user.photo = pic;
+    }
     if (role && role.trim()) user.role = role.trim();
     if (department !== undefined) {
       const cleanDept = department.trim();

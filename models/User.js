@@ -26,6 +26,14 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: ""
   },
+  avatar: {
+    type: String,
+    default: ""
+  },
+  photo: {
+    type: String,
+    default: ""
+  },
   department: {
     type: String,
     default: ""
@@ -337,5 +345,14 @@ userSchema.virtual("trustBadges").get(function() {
 userSchema.index({ isProfileHidden: 1 });
 userSchema.index({ "skills.name": 1, "skills.level": 1 });
 userSchema.index({ lockedEvents: 1 });
+// Synchronize profilePic, avatar, and photo fields so all third-party integrations & database queries find the image
+userSchema.pre("save", function() {
+  const pic = (this.profilePic || this.avatar || this.photo || "").trim();
+  if (pic) {
+    this.profilePic = pic;
+    this.avatar = pic;
+    this.photo = pic;
+  }
+});
 
 module.exports = mongoose.model("User", userSchema);
