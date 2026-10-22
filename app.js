@@ -198,7 +198,7 @@ app.use(async (req, res, next) => {
     delete req.session.success;
     delete req.session.error;
   }
-
+  res.locals.query = req.query || {};
   res.locals.unreadNotificationCount = 0;
 
   // Hide sidebar and title bar nav options on authentication pages

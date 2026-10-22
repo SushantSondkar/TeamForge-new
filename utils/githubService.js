@@ -93,13 +93,26 @@ function checkRateLimit(headers) {
 }
 
 /**
+ * Sanitizes and extracts clean GitHub username from URL, @handle, or plain username
+ */
+function cleanGithubUsername(input) {
+  if (!input || typeof input !== "string") return "";
+  let clean = input.trim();
+  clean = clean.replace(/^https?:\/\/(www\.)?github\.com\//i, "");
+  clean = clean.replace(/^@+/, "");
+  clean = clean.split("/")[0].split("?")[0].split("#")[0].trim();
+  return clean;
+}
+
+/**
  * Fetches authenticated or public user's profile from GitHub REST API
  */
 async function fetchUserProfile(accessToken, username) {
   const fetchFn = getFetch();
+  const cleanUser = cleanGithubUsername(username) || username;
   const url = accessToken
     ? `${GITHUB_API_BASE}/user`
-    : `${GITHUB_API_BASE}/users/${encodeURIComponent(username)}`;
+    : `${GITHUB_API_BASE}/users/${encodeURIComponent(cleanUser)}`;
 
   const headers = {
     "Accept": "application/vnd.github.v3+json",
@@ -127,9 +140,10 @@ async function fetchUserProfile(accessToken, username) {
  */
 async function fetchUserRepos(accessToken, username) {
   const fetchFn = getFetch();
+  const cleanUser = cleanGithubUsername(username) || username;
   const url = accessToken
     ? `${GITHUB_API_BASE}/user/repos?per_page=100&sort=updated&affiliation=owner`
-    : `${GITHUB_API_BASE}/users/${encodeURIComponent(username)}/repos?per_page=100&sort=updated`;
+    : `${GITHUB_API_BASE}/users/${encodeURIComponent(cleanUser)}/repos?per_page=100&sort=updated`;
 
   const headers = {
     "Accept": "application/vnd.github.v3+json",
@@ -177,6 +191,7 @@ function extractLanguages(repos) {
  */
 async function fetchUserCommitCount(accessToken, username) {
   const fetchFn = getFetch();
+  const cleanUser = cleanGithubUsername(username) || username;
   const headers = {
     "User-Agent": "TeamForge-KKWagh"
   };
@@ -189,7 +204,7 @@ async function fetchUserCommitCount(accessToken, username) {
       ...headers,
       "Accept": "application/vnd.github.cloak-preview+json"
     };
-    const res = await fetchFn(`${GITHUB_API_BASE}/search/commits?q=author:${encodeURIComponent(username)}`, {
+    const res = await fetchFn(`${GITHUB_API_BASE}/search/commits?q=author:${encodeURIComponent(cleanUser)}`, {
       headers: searchHeaders
     });
 
@@ -209,7 +224,7 @@ async function fetchUserCommitCount(accessToken, username) {
       ...headers,
       "Accept": "application/vnd.github.v3+json"
     };
-    const eventsRes = await fetchFn(`${GITHUB_API_BASE}/users/${encodeURIComponent(username)}/events/public?per_page=100`, {
+    const eventsRes = await fetchFn(`${GITHUB_API_BASE}/users/${encodeURIComponent(cleanUser)}/events/public?per_page=100`, {
       headers: eventsHeaders
     });
     if (eventsRes.ok) {
@@ -262,7 +277,8 @@ async function syncUserGithubData(user, accessToken = null, force = false) {
     }
   }
 
-  const targetUsername = user.githubUsername || user.github;
+  const rawUsername = user.githubUsername || user.github;
+  const targetUsername = cleanGithubUsername(rawUsername);
   if (!accessToken && !targetUsername) {
     throw new Error("No GitHub access token or username found for user.");
   }
@@ -338,5 +354,6 @@ module.exports = {
   fetchUserCommitCount,
   syncUserGithubData,
   checkRateLimit,
-  setFetch
+  setFetch,
+  cleanGithubUsername
 };

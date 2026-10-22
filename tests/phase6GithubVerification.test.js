@@ -8,7 +8,8 @@ const {
   syncUserGithubData,
   extractLanguages,
   checkRateLimit,
-  setFetch: setGithubFetch
+  setFetch: setGithubFetch,
+  cleanGithubUsername
 } = require("../utils/githubService");
 const {
   getAuthorizationUrl: getLinkedinAuthUrl,
@@ -279,6 +280,22 @@ async function runTests() {
   assert.strictEqual(fakeUserDoc.githubData.totalCommits, 88);
   assert.deepStrictEqual(fakeUserDoc.githubData.languages, ["Python", "JavaScript"]);
   assert.strictEqual(fakeUserDoc.githubAccessToken, undefined, "githubAccessToken must NEVER be stored in the database");
+
+  // Test username cleaning from various formats
+  assert.strictEqual(cleanGithubUsername("https://github.com/aaradhyawabale"), "aaradhyawabale");
+  assert.strictEqual(cleanGithubUsername("http://www.github.com/aaradhyawabale/"), "aaradhyawabale");
+  assert.strictEqual(cleanGithubUsername("@aaradhyawabale"), "aaradhyawabale");
+  assert.strictEqual(cleanGithubUsername("aaradhyawabale"), "aaradhyawabale");
+
+  // Test token-less sync using full URL in user.github
+  const fakeUrlUserDoc = {
+    isGithubVerified: false,
+    github: "https://github.com/kkwagh-coder",
+    save: async function() { this._saved = true; }
+  };
+  await syncUserGithubData(fakeUrlUserDoc, null, true);
+  assert.strictEqual(fakeUrlUserDoc.isGithubVerified, true);
+  assert.strictEqual(fakeUrlUserDoc.githubUsername, "kkwagh-coder");
   console.log("   ✓ Stubbed GitHub HTTP calls and token-less sync successfully verified.");
 
   // Clean up GitHub credentials & fetch

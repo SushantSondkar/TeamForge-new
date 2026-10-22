@@ -763,12 +763,20 @@ router.post("/logout", (req, res) => {
 // =============================================================
 
 // 11. GET /auth/github - Initiate GitHub OAuth flow
-router.get("/auth/github", requireLogin, (req, res) => {
+router.get("/auth/github", requireLogin, async (req, res) => {
   if (!process.env.GITHUB_CLIENT_ID || !process.env.GITHUB_CLIENT_SECRET) {
-    return res.status(200).render("oauth-unavailable", {
-      serviceName: "GitHub",
-      message: "This verification is not available right now."
-    });
+    // If OAuth app keys are not configured, auto-verify via GitHub REST API if username/URL is available
+    const rawTarget = req.user.githubUsername || req.user.github;
+    if (rawTarget && rawTarget.trim()) {
+      try {
+        await githubService.syncUserGithubData(req.user, null, true);
+        return res.redirect("/profile?verified=github");
+      } catch (err) {
+        console.error("Direct GitHub verification error:", err.message);
+        return res.redirect("/profile?error=" + encodeURIComponent("Could not verify GitHub profile: " + err.message));
+      }
+    }
+    return res.redirect("/profile?prompt=github");
   }
 
   const state = crypto.randomBytes(16).toString("hex");
@@ -780,6 +788,36 @@ router.get("/auth/github", requireLogin, (req, res) => {
 
   const authUrl = githubService.getAuthorizationUrl(state, redirectUri);
   res.redirect(authUrl);
+});
+
+// 11b. POST /auth/github/verify - Direct Public REST API Verification & Sync
+router.post("/auth/github/verify", requireLogin, async (req, res) => {
+  try {
+    let inputUser = req.body.githubUsername || req.body.github || req.user.githubUsername || req.user.github;
+    if (!inputUser || !inputUser.trim()) {
+      return res.redirect("/profile?error=" + encodeURIComponent("Please provide a GitHub username or profile URL."));
+    }
+
+    const cleanUsername = githubService.cleanGithubUsername(inputUser);
+    if (!cleanUsername) {
+      return res.redirect("/profile?error=" + encodeURIComponent("Invalid GitHub username or URL."));
+    }
+
+    req.user.githubUsername = cleanUsername;
+    if (!req.user.github || req.user.github.trim() === "" || githubService.cleanGithubUsername(req.user.github) === cleanUsername) {
+      req.user.github = `https://github.com/${cleanUsername}`;
+    }
+
+    const result = await githubService.syncUserGithubData(req.user, null, true);
+    if (result.rateLimited) {
+      return res.redirect("/profile?warning=" + encodeURIComponent("GitHub API rate limit reached. Displaying cached data."));
+    }
+
+    res.redirect("/profile?verified=github");
+  } catch (err) {
+    console.error("GitHub verification error:", err.message);
+    res.redirect("/profile?error=" + encodeURIComponent("GitHub verification failed: " + err.message));
+  }
 });
 
 // 12. GET /auth/github/callback - GitHub OAuth callback
@@ -829,7 +867,7 @@ router.get("/auth/github/callback", requireLogin, async (req, res) => {
 // 13. POST /auth/github/sync - Re-sync GitHub data (cache refresh)
 router.post("/auth/github/sync", requireLogin, async (req, res) => {
   try {
-    if (!req.user.isGithubVerified || !req.user.githubUsername) {
+    if (!req.user.isGithubVerified && !req.user.githubUsername && !req.user.github) {
       return res.redirect("/profile?error=" + encodeURIComponent("GitHub account not linked."));
     }
 

@@ -36,7 +36,11 @@
         %>
         <% if (q.verified === 'github') { %>
             <div style="grid-column: 1 / -1; background: #ecfdf5; border: 1px solid #10b981; color: #065f46; padding: 12px 16px; border-radius: 8px; font-size: 13.5px; display: flex; align-items: center; gap: 8px;">
-                ✓ GitHub ownership confirmed via OAuth! Your public repositories, languages, and commit counts have been synced.
+                ✓ GitHub ownership confirmed! Your public repositories, languages, and commit counts have been synced.
+            </div>
+        <% } else if (q.prompt === 'github') { %>
+            <div style="grid-column: 1 / -1; background: #eff6ff; border: 1px solid #3b82f6; color: #1e40af; padding: 12px 16px; border-radius: 8px; font-size: 13.5px;">
+                Please enter your GitHub username below to verify your repositories and commit metrics.
             </div>
         <% } else if (q.verified === 'linkedin') { %>
             <div style="grid-column: 1 / -1; background: #eff6ff; border: 1px solid #3b82f6; color: #1e40af; padding: 12px 16px; border-radius: 8px; font-size: 13.5px; display: flex; align-items: center; gap: 8px;">
@@ -189,12 +193,13 @@
                     </div>
                     <% if (currentUser && currentUser.isGithubVerified) { %>
                         <span style="font-size: 11px; background: #ecfdf5; color: #059669; font-weight: 600; padding: 2px 7px; border-radius: 10px;">Verified ✓</span>
-                    <% } else if (currentUser && currentUser.github) { %>
+                    <% } else if (currentUser && (currentUser.github || currentUser.githubUsername)) { %>
                         <div style="display: flex; align-items: center; gap: 6px;">
                             <span style="font-size: 11px; color: #94a3b8; font-weight: 500;">(Unverified)</span>
-                            <% if (typeof isGithubOAuthConfigured !== 'undefined' && isGithubOAuthConfigured) { %>
-                                <a href="/auth/github" style="font-size: 11px; color: #2563eb; font-weight: 600; text-decoration: none;">Verify ↗</a>
-                            <% } %>
+                            <form action="/auth/github/verify" method="POST" style="margin: 0; display: inline;">
+                                <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                                <button type="submit" style="background: none; border: none; padding: 0; font-size: 11px; color: #2563eb; font-weight: 600; cursor: pointer; text-decoration: underline;">Verify ↗</button>
+                            </form>
                         </div>
                     <% } %>
                 </div>
@@ -326,11 +331,13 @@
                         </form>
                     </div>
                 <% } else { %>
-                    <% if (typeof isGithubOAuthConfigured !== 'undefined' && isGithubOAuthConfigured) { %>
-                        <a href="/auth/github" class="btn-small-primary" style="background: #0f172a; border-color: #0f172a; text-decoration: none; font-size: 12.5px; padding: 7px 16px; display: inline-flex; align-items: center; gap: 6px;">
-                            Connect with GitHub ↗
-                        </a>
-                    <% } %>
+                    <form action="/auth/github/verify" method="POST" style="margin: 0;">
+                        <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                        <button type="submit" class="btn-small-primary" style="background: #0f172a; border-color: #0f172a; font-size: 12.5px; padding: 7px 16px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+                            Verify with GitHub ↗
+                        </button>
+                    </form>
                 <% } %>
             </div>
 
@@ -398,9 +405,34 @@
                     </div>
                 <% } %>
             <% } else { %>
-                <div style="background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 10px; padding: 20px; text-align: center; color: #64748b;">
-                    <p style="font-size: 14px; margin: 0 0 8px 0; color: #334155;">Confirm ownership with GitHub OAuth to verify your coding credentials.</p>
-                    <span style="font-size: 12.5px;">TeamForge will securely pull your public repositories, languages, and commit counts via the REST API to award the <strong>GitHub Verified</strong> badge and boost your match ranking.</span>
+                <div style="background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 12px; padding: 24px; text-align: center; color: #64748b;">
+                    <div style="width: 44px; height: 44px; border-radius: 50%; background: #0f172a; color: white; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px auto;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+                    </div>
+                    <h4 style="font-size: 16px; margin: 0 0 6px 0; color: #0f172a; font-weight: 700;">Verify Your GitHub & Unlock Match Boost</h4>
+                    <p style="font-size: 13.5px; margin: 0 auto 16px auto; max-width: 560px; line-height: 1.5; color: #475569;">
+                        TeamForge inspects your public repositories, dominant languages, and commit metrics via GitHub's REST API. Verifying awards the <strong>GitHub Verified ✓</strong> badge and boosts your match score!
+                    </p>
+
+                    <form action="/auth/github/verify" method="POST" style="max-width: 480px; margin: 0 auto; display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;">
+                        <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                        <input type="text" name="githubUsername" 
+                               value="<%= currentUser ? (currentUser.githubUsername || currentUser.github || '') : '' %>" 
+                               placeholder="GitHub username (e.g. aaradhyawabale)" 
+                               required
+                               style="flex: 1; min-width: 220px; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13.5px; background: white; color: #0f172a;">
+                        <button type="submit" class="btn-small-primary" style="background: #0f172a; border-color: #0f172a; padding: 10px 18px; font-size: 13.5px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; border-radius: 8px;">
+                            <span>Verify & Fetch Repos ↗</span>
+                        </button>
+                    </form>
+
+                    <% if (typeof isGithubOAuthConfigured !== 'undefined' && isGithubOAuthConfigured) { %>
+                        <div style="margin-top: 12px; font-size: 12px;">
+                            <a href="/auth/github" style="color: #2563eb; text-decoration: none; font-weight: 500;">
+                                Or authenticate directly via GitHub OAuth ↗
+                            </a>
+                        </div>
+                    <% } %>
                 </div>
             <% } %>
         </div>

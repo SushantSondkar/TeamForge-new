@@ -162,6 +162,8 @@
                         <label for="github" style="font-size: 13px; font-weight: 600; color: #334155;">GitHub</label>
                         <% if (currentUser && currentUser.isGithubVerified) { %>
                             <span style="color: #059669; font-size: 11px; font-weight: 600;">✓ Verified</span>
+                        <% } else if (currentUser && (currentUser.github || currentUser.githubUsername)) { %>
+                            <a href="/auth/github" style="color: #2563eb; font-size: 11px; text-decoration: none; font-weight: 600;">Verify Now ↗</a>
                         <% } else if (typeof isGithubOAuthConfigured !== 'undefined' && isGithubOAuthConfigured) { %>
                             <a href="/auth/github" style="color: #2563eb; font-size: 11px; text-decoration: none; font-weight: 600;">Verify OAuth ↗</a>
                         <% } %>
