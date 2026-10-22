@@ -3272,5 +3272,7 @@ h1 {
     }
 }
 
-
-
+.footer-link:hover {
+    color: #2563eb !important;
+    text-decoration: underline !important;
+}

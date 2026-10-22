@@ -1,22 +1,25 @@
-<footer class="app-footer" style="background: #ffffff; border-top: 1px solid #e2e8f0; padding: 24px 20px; margin-top: auto; text-align: center; color: #64748b; font-size: 13px;">
-    <div style="max-width: 960px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
-        <div style="display: flex; align-items: center; gap: 10px;">
-            <img src="/images/logo-icon.svg" alt="TeamForge" style="height: 24px; width: 24px;">
-            <span style="font-weight: 600; color: #0f172a;">TeamForge</span>
-            <span style="color: #94a3b8;">·</span>
-            <span>K.K. Wagh Institute of Engineering Education & Research</span>
+<footer class="app-footer" style="background: #ffffff; border-top: 1px solid #e2e8f0; padding: 20px 24px; margin-top: auto; color: #64748b; font-size: 12.5px;">
+    <div style="max-width: 1040px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <img src="/images/logo-icon.svg" alt="TeamForge" style="height: 20px; width: 20px;">
+            <span style="font-weight: 600; color: #0f172a; font-size: 13px;">TeamForge</span>
+            <span style="color: #cbd5e1;">·</span>
+            <span style="color: #64748b; font-size: 12px;">K.K. Wagh Institute of Engineering Education & Research</span>
         </div>
-        <div style="display: flex; align-items: center; gap: 18px; flex-wrap: wrap;">
-            <a href="/how-it-works" style="color: #2563eb; text-decoration: none; font-weight: 500;">How TeamForge works</a>
-            <a href="/feedback" style="color: #2563eb; text-decoration: none; font-weight: 500;">Give Feedback</a>
+        <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap; font-size: 12px;">
+            <a href="/how-it-works" class="footer-link" style="color: #64748b; text-decoration: none; font-weight: 500; transition: color 0.15s ease;">How TeamForge works</a>
+            <span style="color: #e2e8f0;">·</span>
+            <a href="/feedback" class="footer-link" style="color: #64748b; text-decoration: none; font-weight: 500; transition: color 0.15s ease;" title="Share your feedback or suggestions">Give Feedback</a>
             <% 
               const activeSupportEmail = (typeof supportEmail !== "undefined" && supportEmail) 
                 || (typeof process !== "undefined" && process.env && process.env.SUPPORT_EMAIL ? process.env.SUPPORT_EMAIL.trim() : null); 
             %>
             <% if (activeSupportEmail) { %>
-            <a href="mailto:<%= activeSupportEmail %>?subject=TeamForge%20Issue%20Report" style="color: #64748b; text-decoration: none; font-weight: 500;">Report a problem</a>
+            <span style="color: #e2e8f0;">·</span>
+            <a href="mailto:<%= activeSupportEmail %>?subject=TeamForge%20Issue%20Report" class="footer-link" style="color: #64748b; text-decoration: none; font-weight: 500; transition: color 0.15s ease;">Report a problem</a>
             <% } %>
-            <span style="color: #94a3b8;">© 2026 TeamForge</span>
+            <span style="color: #e2e8f0;">·</span>
+            <span style="color: #94a3b8; font-size: 11.5px;">© 2026 TeamForge</span>
         </div>
     </div>
 </footer>
