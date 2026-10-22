@@ -25,7 +25,7 @@ router.post("/send", requireLogin, actionLimiter, async (req, res) => {
       if (req.xhr || req.headers.accept?.includes("application/json") || req.is("json")) {
         return res.status(400).json({ error: errMsg });
       }
-      return res.redirect("/?error=" + encodeURIComponent(errMsg));
+      return res.redirect("/dashboard?error=" + encodeURIComponent(errMsg));
     }
 
     // 1. Verify team requirement exists
@@ -35,7 +35,7 @@ router.post("/send", requireLogin, actionLimiter, async (req, res) => {
       if (req.xhr || req.headers.accept?.includes("application/json") || req.is("json")) {
         return res.status(404).json({ error: errMsg });
       }
-      return res.redirect("/?error=" + encodeURIComponent(errMsg));
+      return res.redirect("/dashboard?error=" + encodeURIComponent(errMsg));
     }
 
     // 2. Strict Ownership Verification: Caller must be the team creator
@@ -44,7 +44,7 @@ router.post("/send", requireLogin, actionLimiter, async (req, res) => {
       if (req.xhr || req.headers.accept?.includes("application/json") || req.is("json")) {
         return res.status(403).json({ error: errMsg });
       }
-      return res.redirect("/?error=" + encodeURIComponent(errMsg));
+      return res.redirect("/dashboard?error=" + encodeURIComponent(errMsg));
     }
 
     // 3. Self-Invitation Guard
@@ -53,7 +53,7 @@ router.post("/send", requireLogin, actionLimiter, async (req, res) => {
       if (req.xhr || req.headers.accept?.includes("application/json") || req.is("json")) {
         return res.status(400).json({ error: errMsg });
       }
-      return res.redirect("/?error=" + encodeURIComponent(errMsg));
+      return res.redirect("/dashboard?error=" + encodeURIComponent(errMsg));
     }
 
     // 4. Candidate Eligibility Verification
@@ -64,7 +64,7 @@ router.post("/send", requireLogin, actionLimiter, async (req, res) => {
       if (req.xhr || req.headers.accept?.includes("application/json") || req.is("json")) {
         return res.status(404).json({ error: errMsg });
       }
-      return res.redirect("/?error=" + encodeURIComponent(errMsg));
+      return res.redirect("/dashboard?error=" + encodeURIComponent(errMsg));
     }
 
     if (candidate.isProfileHidden) {
@@ -72,7 +72,7 @@ router.post("/send", requireLogin, actionLimiter, async (req, res) => {
       if (req.xhr || req.headers.accept?.includes("application/json") || req.is("json")) {
         return res.status(400).json({ error: errMsg });
       }
-      return res.redirect("/?error=" + encodeURIComponent(errMsg));
+      return res.redirect("/dashboard?error=" + encodeURIComponent(errMsg));
     }
 
     const eventLockKey = team.eventId ? team.eventId.toString() : team.projectName;
@@ -81,7 +81,7 @@ router.post("/send", requireLogin, actionLimiter, async (req, res) => {
       if (req.xhr || req.headers.accept?.includes("application/json") || req.is("json")) {
         return res.status(400).json({ error: errMsg });
       }
-      return res.redirect("/?error=" + encodeURIComponent(errMsg));
+      return res.redirect("/dashboard?error=" + encodeURIComponent(errMsg));
     }
 
     // 5. Role Validation & Capacity Check
@@ -92,7 +92,7 @@ router.post("/send", requireLogin, actionLimiter, async (req, res) => {
       if (req.xhr || req.headers.accept?.includes("application/json") || req.is("json")) {
         return res.status(400).json({ error: errMsg });
       }
-      return res.redirect("/?error=" + encodeURIComponent(errMsg));
+      return res.redirect("/dashboard?error=" + encodeURIComponent(errMsg));
     }
 
     // 6. Create Action via Unified State Machine
@@ -116,14 +116,14 @@ router.post("/send", requireLogin, actionLimiter, async (req, res) => {
     }
 
     req.session.success = "Team invitation sent successfully!";
-    res.redirect("/?success=" + encodeURIComponent("Team invitation sent successfully!"));
+    res.redirect("/dashboard?success=" + encodeURIComponent("Team invitation sent successfully!"));
   } catch (err) {
     console.error("Error sending invite:", err.message);
     if (req.xhr || req.headers.accept?.includes("application/json") || req.is("json")) {
       return res.status(400).json({ error: err.message });
     }
     req.session.error = err.message;
-    res.redirect("/?error=" + encodeURIComponent(err.message));
+    res.redirect("/dashboard?error=" + encodeURIComponent(err.message));
   }
 });
 
@@ -140,14 +140,14 @@ router.post("/:id/accept", requireLogin, async (req, res) => {
       return res.json({ success: true, status: "ACCEPTED", message: "Accepted. Awaiting requester confirmation." });
     }
     req.session.success = "Invitation accepted! Awaiting requester confirmation.";
-    res.redirect("/?success=" + encodeURIComponent("Invitation accepted! Awaiting requester confirmation."));
+    res.redirect("/dashboard?success=" + encodeURIComponent("Invitation accepted! Awaiting requester confirmation."));
   } catch (err) {
     console.error("Error accepting invite:", err.message);
     if (req.xhr || req.headers.accept?.includes("application/json") || req.is("json")) {
       return res.status(400).json({ error: err.message });
     }
     req.session.error = err.message;
-    res.redirect("/?error=" + encodeURIComponent(err.message));
+    res.redirect("/dashboard?error=" + encodeURIComponent(err.message));
   }
 });
 
@@ -163,14 +163,14 @@ router.post("/:id/confirm", requireLogin, async (req, res) => {
       return res.json({ success: true, status: "LOCKED", message: "Match officially locked for this event." });
     }
     req.session.success = "Match officially confirmed and locked for this event!";
-    res.redirect("/?success=" + encodeURIComponent("Match officially confirmed and locked for this event!"));
+    res.redirect("/dashboard?success=" + encodeURIComponent("Match officially confirmed and locked for this event!"));
   } catch (err) {
     console.error("Error confirming invite:", err.message);
     if (req.xhr || req.headers.accept?.includes("application/json") || req.is("json")) {
       return res.status(400).json({ error: err.message });
     }
     req.session.error = err.message;
-    res.redirect("/?error=" + encodeURIComponent(err.message));
+    res.redirect("/dashboard?error=" + encodeURIComponent(err.message));
   }
 });
 
@@ -186,14 +186,14 @@ router.post("/:id/decline", requireLogin, async (req, res) => {
       return res.json({ success: true, status: "DECLINED" });
     }
     req.session.success = "Invitation declined.";
-    res.redirect("/");
+    res.redirect("/dashboard");
   } catch (err) {
     console.error("Error declining invite:", err.message);
     if (req.xhr || req.headers.accept?.includes("application/json") || req.is("json")) {
       return res.status(400).json({ error: err.message });
     }
     req.session.error = err.message;
-    res.redirect("/?error=" + encodeURIComponent(err.message));
+    res.redirect("/dashboard?error=" + encodeURIComponent(err.message));
   }
 });
 
@@ -212,7 +212,7 @@ router.post("/:id/contact-consent", requireLogin, async (req, res) => {
         message: bothOptedIn ? "Contacts shared!" : "Opt-in recorded. Waiting for teammate."
       });
     }
-    res.redirect("/");
+    res.redirect("/dashboard");
   } catch (err) {
     console.error("Error updating contact consent:", err.message);
     res.status(400).send(err.message);
