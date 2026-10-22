@@ -34,6 +34,7 @@ const Notification = require("../models/Notification");
 const Feedback = require("../models/Feedback");
 const Announcement = require("../models/Announcement");
 const SuccessStory = require("../models/SuccessStory");
+const TeamRequestAction = require("../models/TeamRequestAction");
 
 class SessionClient {
   constructor(baseUrl) {
@@ -230,6 +231,28 @@ async function runAuthSmokeTests() {
       ]
     });
 
+    // Seed applicant user with custom photo and application action
+    const applicantUser = await User.create({
+      name: "Rohit Verma",
+      email: "rohit_applicant@kkwagh.edu.in",
+      password: hashedPassword,
+      department: "Information Technology",
+      year: "TE",
+      role: "Backend Specialist",
+      isEmailVerified: true,
+      profilePic: "https://images.unsplash.com/photo-rohit-applicant-avatar-xyz",
+      skills: [{ name: "Node.js", level: 5 }]
+    });
+
+    const applicantAction = await TeamRequestAction.create({
+      senderId: applicantUser._id,
+      receiverId: student._id,
+      teamRequirementId: teamReq._id,
+      role: "Backend Specialist",
+      direction: "APPLY",
+      status: "PENDING"
+    });
+
     // Seed notifications (both read and unread)
     await Notification.create([
       {
@@ -327,6 +350,19 @@ async function runAuthSmokeTests() {
       assertCleanBody(res.body, page.path);
       console.log(`   ✓ ${page.name} (${page.path}) -> 200 OK`);
     }
+
+    // 4b. Test /applications/team/:id renders applicant's photo and name
+    console.log("\n4b. Testing /applications/team/:id renders applicant photo...");
+    const appRes = await studentClient.get(`/applications/team/${teamReq._id}`);
+    assert.strictEqual(appRes.statusCode, 200, "GET /applications/team/:teamId must return 200");
+    assert.ok(appRes.body.includes("Rohit Verma"), "Applications page must render applicant name");
+    assert.ok(appRes.body.includes("https://images.unsplash.com/photo-rohit-applicant-avatar-xyz"), "Applications page must render applicant's photo URL");
+    console.log("   ✓ Applicant photo URL successfully rendered in applications/team view.");
+
+    // Also test root /applications route
+    const rootAppRes = await studentClient.get("/applications");
+    assert.ok([200, 302].includes(rootAppRes.statusCode), "GET /applications must redirect or return 200");
+    console.log("   ✓ GET /applications resolves cleanly.");
 
     // -----------------------------------------------------------
     // Step 4: Discover tab pane markup: exactly ONE pane active
@@ -478,7 +514,8 @@ async function runAuthSmokeTests() {
     assert.ok([400, 413].includes(oversizedRes.statusCode), `Oversized photo must return 400 or 413 (got ${oversizedRes.statusCode})`);
     console.log("   ✓ Oversized photo payload rejected early with size limit error.");
 
-    // 6g. JSON limit audit: realistic maximum-size payload to wizard (must not return 413)
+    // 6g. Payload limit audit: realistic maximum-size payload to wizard (must not return 413)
+    // Real HTML forms in views/team-requirement post as application/x-www-form-urlencoded
     const csrfForWizard = await getFreshCsrf();
     const maxWizardPayload = {
       _csrf: csrfForWizard,
@@ -488,15 +525,40 @@ async function runAuthSmokeTests() {
       projectRequirement: "X".repeat(4000), // 4 KB description
       deliverables: "Y".repeat(4000), // 4 KB deliverables
       teamSize: "4",
-      deadline: new Date(Date.now() + 5 * 24 * 3600 * 1000).toISOString().slice(0, 10)
+      deadline: new Date(Date.now() + 5 * 24 * 3600 * 1000).toISOString().slice(0, 10),
+      rolesJson: JSON.stringify(Array.from({ length: 10 }, (_, i) => ({
+        title: `Engineer Role ${i + 1}`,
+        requiredSkills: ["Node.js", "Python", "Kubernetes"],
+        preferredSkills: ["Docker", "GraphQL"],
+        proficiency: "Advanced",
+        openings: 1
+      }))),
+      existingMembersJson: JSON.stringify([
+        { name: "Teammate Alpha", role: "Frontend Lead" },
+        { name: "Teammate Beta", role: "Data Scientist" }
+      ])
     };
+
+    // 1) Test with URL-encoded form data (as sent by HTML form in the browser)
+    const urlEncodedFormData = new URLSearchParams(maxWizardPayload);
+    const wizardUrlRes = await studentClient.post(
+      "/team-requirement/new/define-team",
+      urlEncodedFormData
+    );
+    assert.notStrictEqual(wizardUrlRes.statusCode, 413, "Maximum realistic wizard URL-encoded payload must NOT be rejected with 413");
+    assert.strictEqual(wizardUrlRes.statusCode, 200, "Wizard step 2 URL-encoded post should return 200 with open-roles view");
+    console.log("   ✓ Realistic maximum-size URL-encoded wizard payload safely processed without 413.");
+
+    // 2) Also test with JSON payload format
+    const csrfForWizardJson = await getFreshCsrf();
+    maxWizardPayload._csrf = csrfForWizardJson;
     const wizardRes = await studentClient.post(
       "/team-requirement/new/define-team",
       maxWizardPayload
     );
-    assert.notStrictEqual(wizardRes.statusCode, 413, "Maximum realistic wizard payload must NOT be rejected with 413");
-    assert.strictEqual(wizardRes.statusCode, 200, "Wizard step 2 should return 200 with open-roles view");
-    console.log("   ✓ Realistic maximum-size wizard payload safely processed without 413.");
+    assert.notStrictEqual(wizardRes.statusCode, 413, "Maximum realistic wizard JSON payload must NOT be rejected with 413");
+    assert.strictEqual(wizardRes.statusCode, 200, "Wizard step 2 JSON post should return 200 with open-roles view");
+    console.log("   ✓ Realistic maximum-size JSON wizard payload safely processed without 413.");
 
     // 6h. Rate limit test: trigger actionLimiter on POST /profile/photo and assert 429 appears
     console.log("   Testing actionLimiter 429 response on rapid /profile/photo requests...");

@@ -3283,8 +3283,9 @@ h1 {
 }
 
 .is-disabled {
-    opacity: 0.5;
-    cursor: default;
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+    pointer-events: none !important;
 }
 
 .tab-pane {

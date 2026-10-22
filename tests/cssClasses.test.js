@@ -4,6 +4,7 @@
  * Verifies that all CSS classes introduced or refactored in Phase 11F-b
  * have valid, defined rules in either public/css/style.css or the <style>
  * block of the view where they are used.
+ * Dynamically parses CSS rules and reports exact line numbers.
  * No external dependencies (uses Node.js built-in fs, path, assert).
  */
 
@@ -23,14 +24,36 @@ function getViewContent(viewRelPath) {
 }
 
 /**
- * Checks if a selector is matched in the CSS content (either in style.css or a view's <style> block).
+ * Finds the 1-indexed line number where a CSS rule for the given selector is defined.
+ * If isEjs is true, only searches inside <style>...</style> blocks.
  */
-function hasCssRule(content, selector) {
-    // Escape special regex chars like . # $ ^ etc.
+function findCssRuleLine(content, selector, isEjs = false) {
     const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    // Match selector followed eventually by {
-    const regex = new RegExp(escaped + '[^{]*\\{', 'm');
-    return regex.test(content);
+    // Matches selector followed by other selectors/whitespace up to '{'
+    const ruleRegex = new RegExp('(?:^|[,\\s\\n])(' + escaped + ')(?:[^{]*)\\{', 'gm');
+
+    if (isEjs) {
+        const styleTagRegex = /<style[^>]*>([\s\S]*?)<\/style>/gi;
+        let styleTagMatch;
+        while ((styleTagMatch = styleTagRegex.exec(content)) !== null) {
+            const blockStartOffset = styleTagMatch.index + styleTagMatch[0].indexOf(styleTagMatch[1]);
+            const blockContent = styleTagMatch[1];
+            let match;
+            while ((match = ruleRegex.exec(blockContent)) !== null) {
+                const matchOffset = blockStartOffset + match.index;
+                const line = content.slice(0, matchOffset).split('\n').length;
+                return line;
+            }
+        }
+        return null;
+    } else {
+        let match;
+        while ((match = ruleRegex.exec(content)) !== null) {
+            const line = content.slice(0, match.index).split('\n').length;
+            return line;
+        }
+        return null;
+    }
 }
 
 // 0a Class verification table mapping: class/selector -> file where rule should be present
@@ -64,7 +87,7 @@ const classManifest = [
     // Profile Edit page photo button
     { selector: '#removePhotoBtn', viewFile: 'profile-edit.ejs' },
     { selector: '#removePhotoBtn.is-hidden', viewFile: 'profile-edit.ejs' },
-    { selector: '.is-hidden', viewFile: 'profile-edit.ejs', checkGlobal: true },
+    { selector: '.is-hidden', globalOnly: true },
 
     // Notifications page cards & icons
     { selector: '.notif-card.notif-read', viewFile: 'notifications.ejs' },
@@ -76,7 +99,7 @@ const classManifest = [
     { selector: '.notif-icon-circle.notif-info', viewFile: 'notifications.ejs' },
     { selector: '#markAllReadBtn', viewFile: 'notifications.ejs' },
     { selector: '#markAllReadBtn.is-disabled', viewFile: 'notifications.ejs' },
-    { selector: '.is-disabled', viewFile: 'notifications.ejs', checkGlobal: true },
+    { selector: '.is-disabled', globalOnly: true },
 
     // Leaderboard cache indicator
     { selector: '.cache-status-cached', viewFile: 'leaderboard.ejs' },
@@ -86,25 +109,27 @@ const classManifest = [
 let passCount = 0;
 
 classManifest.forEach(item => {
-    let matchedIn = null;
+    const locations = [];
 
-    // Check view <style> block
-    if (item.viewFile) {
+    // Check view <style> block if specified and not global-only
+    if (item.viewFile && !item.globalOnly) {
         const viewContent = getViewContent(item.viewFile);
-        if (hasCssRule(viewContent, item.selector)) {
-            matchedIn = `views/${item.viewFile} <style>`;
+        const line = findCssRuleLine(viewContent, item.selector, true);
+        if (line !== null) {
+            locations.push(`views/${item.viewFile}:${line}`);
         }
     }
 
-    // Check public/css/style.css
-    if (!matchedIn && hasCssRule(styleCssContent, item.selector)) {
-        matchedIn = 'public/css/style.css';
-    } else if (item.checkGlobal && hasCssRule(styleCssContent, item.selector)) {
-        matchedIn += ' & public/css/style.css';
+    // Check public/css/style.css if requested, if not found in view, or if global-only
+    if (item.globalOnly || item.checkGlobal || locations.length === 0) {
+        const line = findCssRuleLine(styleCssContent, item.selector, false);
+        if (line !== null) {
+            locations.push(`public/css/style.css:${line}`);
+        }
     }
 
-    assert(matchedIn !== null, `CSS selector "${item.selector}" has no matching rule in views/${item.viewFile} or style.css`);
-    console.log(`✓ Rule verified for selector "${item.selector}" in ${matchedIn}`);
+    assert(locations.length > 0, `CSS selector "${item.selector}" has no matching rule in ${item.viewFile ? 'views/' + item.viewFile : ''} or public/css/style.css`);
+    console.log(`✓ Rule verified for selector "${item.selector}" at ${locations.join(' & ')}`);
     passCount++;
 });
 
@@ -112,6 +137,6 @@ const totalChecks = classManifest.length;
 assert.strictEqual(passCount, totalChecks, `Expected ${totalChecks} checks to pass, but passed ${passCount}`);
 
 console.log(`\n=================================================`);
-console.log(`ALL ${passCount} OF ${totalChecks} CSS CLASS RULES VERIFIED SUCCESSFULLY (100%)`);
+console.log(`ALL ${passCount} OF ${totalChecks} CSS CLASS RULES VERIFIED WITH REAL LINE NUMBERS (100%)`);
 console.log('=================================================\n');
 process.exit(0);

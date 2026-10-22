@@ -73,7 +73,23 @@ router.post("/apply", requireLogin, actionLimiter, async (req, res) => {
 });
 
 // -----------------------------------------------------------------
-// 2. GET /applications/team/:teamId - View applications received for team
+// 2. GET /applications - Root applications router, redirects to user's team applications
+// -----------------------------------------------------------------
+router.get("/", requireLogin, async (req, res) => {
+  try {
+    const team = await TeamRequirement.findOne({ createdBy: req.user._id }).sort({ createdAt: -1 });
+    if (team) {
+      return res.redirect(`/applications/team/${team._id}`);
+    }
+    res.redirect("/dashboard");
+  } catch (err) {
+    console.error("Error resolving applications route:", err.message);
+    res.redirect("/dashboard");
+  }
+});
+
+// -----------------------------------------------------------------
+// 2b. GET /applications/team/:teamId - View applications received for team
 // -----------------------------------------------------------------
 router.get("/team/:teamId", requireLogin, async (req, res) => {
   try {
@@ -88,8 +104,8 @@ router.get("/team/:teamId", requireLogin, async (req, res) => {
 
     // Retrieve actions submitted to this team (APPLY or INVITE)
     const actions = await TeamRequestAction.find({ teamRequirementId: team._id })
-      .populate("senderId", "name email department role skills credibility github linkedin portfolio")
-      .populate("receiverId", "name email department role skills credibility github linkedin portfolio")
+      .populate("senderId", "name email department role skills credibility github linkedin portfolio profilePic")
+      .populate("receiverId", "name email department role skills credibility github linkedin portfolio profilePic")
       .sort({ createdAt: -1 });
 
     // Map to normalized structure for view compatibility
@@ -104,7 +120,8 @@ router.get("/team/:teamId", requireLogin, async (req, res) => {
           department: rawApplicant.department,
           role: rawApplicant.role,
           skills: rawApplicant.skills,
-          credibility: rawApplicant.credibility
+          credibility: rawApplicant.credibility,
+          profilePic: rawApplicant.profilePic
         };
       }
       return {
