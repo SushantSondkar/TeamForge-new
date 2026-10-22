@@ -15,24 +15,12 @@
                 <span>Dashboard</span>
             </a>
 
-            <a href="/landing" class="sidebar-link" style="color: #475569; font-weight: 500; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: block; text-decoration: none; transition: all 0.15s ease;">
-                <span>Public Landing Page</span>
-            </a>
-
             <a href="/events" class="sidebar-link" style="color: #475569; font-weight: 500; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: block; text-decoration: none; transition: all 0.15s ease;">
                 <span>Events & Hackathons</span>
             </a>
 
             <a href="/discover" class="sidebar-link" style="color: #475569; font-weight: 500; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: block; text-decoration: none; transition: all 0.15s ease;">
                 <span>Discover Opportunities</span>
-            </a>
-
-            <a href="/leaderboard" class="sidebar-link" style="color: #475569; font-weight: 500; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: block; text-decoration: none; transition: all 0.15s ease;">
-                <span>Campus Leaderboard</span>
-            </a>
-
-            <a href="/reviews" class="sidebar-link" style="color: #475569; font-weight: 500; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: block; text-decoration: none; transition: all 0.15s ease;">
-                <span>Peer Reviews</span>
             </a>
 
             <a href="/notifications" class="sidebar-link" style="color: #475569; font-weight: 500; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; text-decoration: none; transition: all 0.15s ease;">
@@ -49,13 +37,6 @@
             <% if (currentUser.isAdmin) { %>
             <a href="/admin/stats" class="sidebar-link" style="color: #1e3a8a; font-weight: 600; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: block; text-decoration: none; transition: all 0.15s ease;">
                 <span>Live Stats (Admin)</span>
-            </a>
-            <a href="/admin/organizers" class="sidebar-link" style="color: #dc2626; font-weight: 600; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: block; text-decoration: none; transition: all 0.15s ease;">
-                <span>Admin Approvals</span>
-            </a>
-            <% } else { %>
-            <a href="/organizer/apply" class="sidebar-link" style="color: #475569; font-weight: 500; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: block; text-decoration: none; transition: all 0.15s ease;">
-                <span>Apply as Organizer</span>
             </a>
             <% } %>
         <% } else { %>
