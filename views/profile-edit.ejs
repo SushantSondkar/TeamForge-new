@@ -648,15 +648,20 @@
                 alertBox.innerHTML = `<span>⏳ Saving cropped photo directly to database...</span>`;
                 alertBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
-                // 4. Background persist to MongoDB via /profile/photo
+                // 4. Background persist to MongoDB via /profile/photo with CSRF token
                 try {
+                    const csrfInput = document.querySelector('input[name="_csrf"]');
+                    const csrfToken = csrfInput ? csrfInput.value : '';
+
                     const response = await fetch('/profile/photo', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'Accept': 'application/json'
+                            'Accept': 'application/json',
+                            'X-CSRF-Token': csrfToken
                         },
                         body: JSON.stringify({
+                            _csrf: csrfToken,
                             profilePic: croppedDataUrl,
                             avatar: croppedDataUrl,
                             photo: croppedDataUrl
@@ -667,12 +672,13 @@
                         alertBox.style.background = '#f0fdf4';
                         alertBox.style.borderColor = '#bbf7d0';
                         alertBox.style.color = '#166534';
-                        alertBox.innerHTML = `<span>✅ Profile photo cropped and saved directly to the MongoDB database!</span><button type="button" onclick="this.parentElement.remove()" style="background:none; border:none; cursor:pointer; color:#166534; font-size:18px;">&times;</button>`;
+                        alertBox.innerHTML = `<span>✅ Profile photo cropped and saved directly to the database!</span><button type="button" onclick="this.parentElement.remove()" style="background:none; border:none; cursor:pointer; color:#166534; font-size:18px;">&times;</button>`;
                     } else {
-                        alertBox.style.background = '#f0fdf4';
-                        alertBox.style.borderColor = '#bbf7d0';
-                        alertBox.style.color = '#166534';
-                        alertBox.innerHTML = `<span>✅ Photo cropped and set! Click "Save Changes" below to finalize.</span><button type="button" onclick="this.parentElement.remove()" style="background:none; border:none; cursor:pointer; color:#166534; font-size:18px;">&times;</button>`;
+                        const errData = await response.json().catch(() => ({}));
+                        alertBox.style.background = '#fef2f2';
+                        alertBox.style.borderColor = '#fecaca';
+                        alertBox.style.color = '#991b1b';
+                        alertBox.innerHTML = `<span>⚠️ ${errData.error || 'Failed to save photo directly'}. Click "Save Changes" below to retry.</span><button type="button" onclick="this.parentElement.remove()" style="background:none; border:none; cursor:pointer; color:#991b1b; font-size:18px;">&times;</button>`;
                     }
                 } catch (saveErr) {
                     console.warn('Background save notice:', saveErr);

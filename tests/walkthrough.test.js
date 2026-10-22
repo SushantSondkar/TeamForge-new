@@ -144,15 +144,26 @@ async function runTests() {
     process.env.GITHUB_CLIENT_ID = "stubbed_client_id";
     process.env.GITHUB_CLIENT_SECRET = "stubbed_client_secret";
 
+    // 4a. Manual username-only sync must NOT mark user as verified
+    const manualUser = {
+      isGithubVerified: false,
+      github: "https://github.com/rohit-coder",
+      save: async function() { this._saved = true; }
+    };
+    await syncUserGithubData(manualUser, null, true);
+    assert.strictEqual(manualUser.isGithubVerified, false, "Manual username entry must NEVER mark user as verified");
+    assert.strictEqual(manualUser.githubUsername, "rohit-coder");
+
+    // 4b. OAuth handshake with valid token and GitHub profile ID DOES verify
     await syncUserGithubData(userToVerify, "stubbed_oauth_access_token_12345", true);
     await userToVerify.save();
 
     const githubVerifiedUser = await User.findById(userToVerify._id);
-    assert.strictEqual(githubVerifiedUser.isGithubVerified, true);
+    assert.strictEqual(githubVerifiedUser.isGithubVerified, true, "OAuth exchange with valid token MUST mark user verified");
     assert.strictEqual(githubVerifiedUser.githubUsername, "rohit-coder");
     assert.strictEqual(githubVerifiedUser.githubAccessToken, undefined, "Raw GitHub token must NEVER be stored in DB");
     setFetch(null); // Reset stub
-    console.log("   ✓ Step 4 passed: GitHub linked via stubbed HTTP; stats synced with zero token persistence.");
+    console.log("   ✓ Step 4 passed: manual username does NOT verify; OAuth with stubbed HTTP verifies with zero token persistence.");
 
     // -------------------------------------------------------------
     // Step 5: Create Event

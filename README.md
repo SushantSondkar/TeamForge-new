@@ -15,7 +15,7 @@ TeamForge connects student developers, designers, and project leads for hackatho
 - **Profile Completeness Guide**: Real-time completeness calculation with missing fields checklist ensuring fair algorithmic recommendations.
 - **Privacy Controls**: "Hide my profile" toggle instantly excludes users from public searches, recommendation carousels, and the campus leaderboard while preserving active team memberships.
 - **Double-Blind Peer Reviews**: Post-event mutual teammate reviews unlock only after both sides submit, preventing retaliatory scores and cultivating verified skill badges.
-- **Campus Email Gatekeeper**: Hardened domain verification (`ALLOWED_DOMAIN`) restricting account registration to authorized campus students, complemented by GitHub and LinkedIn OAuth account verification.
+- **Campus Email Gatekeeper & OAuth Verification**: Hardened domain verification (`ALLOWED_DOMAIN`) restricting account registration to authorized campus students, complemented by GitHub and LinkedIn OAuth verification. Verification badges and credibility score bonuses strictly require real OAuth handshakes, ensuring unverified or manually entered handles remain self-reported with zero credibility bonus.
 - **Responsive & Accessible**: Native CSS design system tailored for mobile (360px) up to ultra-wide displays (1280px+) with accessible tap targets and clean typography.
 
 ---
@@ -81,30 +81,32 @@ TeamForge connects student developers, designers, and project leads for hackatho
 
 ## 🧪 Testing & Quality Assurance
 
-Run the comprehensive 13-suite automated test matrix:
+Run the comprehensive 19-suite automated test matrix:
 
 ```bash
 npm test
 ```
 
 ### Test Suites Included:
-1. `validateEnv.test.js`: Production environment validation, secret length & zero-leak checks.
-2. `matchingEngine.test.js`: Algorithmic scoring, skill level weighting, and 5-stage tie-breaker logic.
-3. `phase5StateMachine.test.js`: Action lifecycle, mutual confirmation, and event-locking.
-4. `phase6GithubVerification.test.js`: GitHub/LinkedIn profile link extraction, REST sync, and verification.
-5. `phase7PostEventReviews.test.js`: Double-blind review submission, peer endorsements, and reputation.
-6. `phase8Leaderboard.test.js`: Department, year, and skill leaderboard rankings.
-7. `mailer.test.js`: Email masking, SMTP integration, and email template link generation.
-8. `integration.test.js`: Complete student journey from registration to team lock.
-9. `securityFixes.test.js`: NoSQL injection guards, object-level access controls, and XSS escaping.
-10. `discoverSearch.test.js`: Server-side text search with regex escaping, dynamic filters, and pagination.
-11. `scheduler.test.js`: Background cron scheduler, MongoDB distributed locks, and reminder idempotency.
-12. `branding.test.js`: Brand asset presence, web manifest, favicon metadata, and Open Graph tags.
-13. `phase10eSmallGaps.test.js`: Notification batching, unread count badges, 404/500 error pages, and missing fields guide.
-14. `phase11bPilotKit.test.js`: Feedback model, live platform telemetry, formula injection defense, and announcement banner.
-15. `walkthrough.test.js`: 16-step complete end-to-end platform walkthrough test suite.
-16. `raceAndNegative.test.js`: 5c concurrency race conditions on final openings & 5d negative validation test suites.
-17. `appSmoke.test.js`: Express server boot, route loading, healthz probes, and unauthenticated endpoint guards.
+1. `cssClasses.test.js`: Structural CSS class verification across stylesheets and views.
+2. `validateEnv.test.js`: Production environment validation, secret length & zero-leak checks.
+3. `matchingEngine.test.js`: Algorithmic scoring, skill level weighting, and 5-stage tie-breaker logic.
+4. `phase5StateMachine.test.js`: Action lifecycle, mutual confirmation, and event-locking.
+5. `phase6GithubVerification.test.js`: GitHub/LinkedIn profile link extraction, REST sync, and OAuth verification.
+6. `phase7PostEventReviews.test.js`: Double-blind review submission, peer endorsements, and reputation.
+7. `phase8Leaderboard.test.js`: Department, year, and skill leaderboard rankings.
+8. `mailer.test.js`: Email masking, SMTP integration, and email template link generation.
+9. `integration.test.js`: Complete student journey from registration to team lock.
+10. `securityFixes.test.js`: NoSQL injection guards, object-level access controls, and XSS escaping.
+11. `discoverSearch.test.js`: Server-side text search with regex escaping, dynamic filters, and pagination.
+12. `scheduler.test.js`: Background cron scheduler, MongoDB distributed locks, and reminder idempotency.
+13. `branding.test.js`: Brand asset presence, web manifest, favicon metadata, and Open Graph tags.
+14. `phase10eSmallGaps.test.js`: Notification batching, unread count badges, 404/500 error pages, and missing fields guide.
+15. `phase11bPilotKit.test.js`: Feedback model, live platform telemetry, formula injection defense, and announcement banner.
+16. `walkthrough.test.js`: 16-step complete end-to-end platform walkthrough test suite.
+17. `raceAndNegative.test.js`: 5c concurrency race conditions on final openings & 5d negative validation test suites.
+18. `appSmoke.test.js`: Express server boot, route loading, healthz probes, and unauthenticated endpoint guards.
+19. `appSmokeAuth.test.js`: Authenticated HTTP session probes, CSRF photo upload hardening, Discover tab isolation, and admin CSV exports.
 
 Audit secrets hygiene:
 ```bash

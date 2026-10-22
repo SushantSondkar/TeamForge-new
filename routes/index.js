@@ -17,6 +17,7 @@ const {
 } = require('../utils/recommendations');
 const { formatDateTime } = require('../utils/dateUtils');
 const requireLogin = require('../middleware/auth');
+const { actionLimiter } = require('../middleware/rateLimiters');
 
 const ALLOWED_DEPARTMENTS = [
   "Computer Engineering",
@@ -344,15 +345,88 @@ router.get("/profile/edit", requireLogin, (req, res) => {
   res.render("profile-edit", { currentUser: req.user, error: null });
 });
 
+/**
+ * Helper to validate uploaded photo base64 strings:
+ * - Accepts data:image/jpeg, data:image/png, data:image/webp base64 strings
+ * - Decodes buffer and verifies magic bytes match declared format
+ * - Rejects anything over 300 KB decoded with friendly error
+ */
+function validateBase64Photo(dataUri) {
+  if (!dataUri || typeof dataUri !== 'string') {
+    return { valid: false, error: "No photo data provided" };
+  }
+
+  const mimeMatch = dataUri.match(/^data:(image\/(jpeg|jpg|png|webp));base64,(.+)$/s);
+  if (!mimeMatch) {
+    return {
+      valid: false,
+      error: "Invalid image format. Only JPEG, PNG, or WebP images are allowed."
+    };
+  }
+
+  const declaredMime = mimeMatch[1].toLowerCase();
+  const rawBase64 = mimeMatch[3].replace(/\s/g, "");
+  const buffer = Buffer.from(rawBase64, "base64");
+
+  const MAX_DECODED_BYTES = 300 * 1024; // 300 KB
+  if (buffer.length > MAX_DECODED_BYTES) {
+    return {
+      valid: false,
+      error: `Photo exceeds the 300 KB limit (actual: ${Math.round(buffer.length / 1024)} KB). Please choose a smaller image.`
+    };
+  }
+
+  if (buffer.length < 12) {
+    return { valid: false, error: "Photo file is corrupted or too small." };
+  }
+
+  let matches = false;
+  if (declaredMime === "image/jpeg" || declaredMime === "image/jpg") {
+    // JPEG magic bytes: 0xFF, 0xD8, 0xFF
+    matches = buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF;
+  } else if (declaredMime === "image/png") {
+    // PNG magic bytes: 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A
+    matches = (
+      buffer[0] === 0x89 &&
+      buffer[1] === 0x50 &&
+      buffer[2] === 0x4E &&
+      buffer[3] === 0x47 &&
+      buffer[4] === 0x0D &&
+      buffer[5] === 0x0A &&
+      buffer[6] === 0x1A &&
+      buffer[7] === 0x0A
+    );
+  } else if (declaredMime === "image/webp") {
+    // WebP magic bytes: bytes 0-3 'RIFF' and bytes 8-11 'WEBP'
+    const isRiff = buffer[0] === 0x52 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x46;
+    const isWebp = buffer[8] === 0x57 && buffer[9] === 0x45 && buffer[10] === 0x42 && buffer[11] === 0x50;
+    matches = isRiff && isWebp;
+  }
+
+  if (!matches) {
+    return {
+      valid: false,
+      error: "Image content does not match the declared file type. Only authentic JPEG, PNG, or WebP images are allowed."
+    };
+  }
+
+  return { valid: true, buffer, mime: declaredMime };
+}
+
 // -------------------------------------------------------------
 // 5b. POST /profile/photo - Directly Save Profile Photo to MongoDB
 // -------------------------------------------------------------
-router.post("/profile/photo", requireLogin, async (req, res) => {
+router.post("/profile/photo", requireLogin, actionLimiter, async (req, res) => {
   try {
     const { photo, profilePic, avatar } = req.body;
     const picData = (photo || profilePic || avatar || "").trim();
     if (!picData) {
       return res.status(400).json({ success: false, error: "No photo data provided" });
+    }
+
+    const validation = validateBase64Photo(picData);
+    if (!validation.valid) {
+      return res.status(400).json({ success: false, error: validation.error });
     }
 
     const user = req.user;

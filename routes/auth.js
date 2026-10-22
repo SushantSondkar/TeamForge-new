@@ -765,18 +765,10 @@ router.post("/logout", (req, res) => {
 // 11. GET /auth/github - Initiate GitHub OAuth flow
 router.get("/auth/github", requireLogin, async (req, res) => {
   if (!process.env.GITHUB_CLIENT_ID || !process.env.GITHUB_CLIENT_SECRET) {
-    // If OAuth app keys are not configured, auto-verify via GitHub REST API if username/URL is available
-    const rawTarget = req.user.githubUsername || req.user.github;
-    if (rawTarget && rawTarget.trim()) {
-      try {
-        await githubService.syncUserGithubData(req.user, null, true);
-        return res.redirect("/profile?verified=github");
-      } catch (err) {
-        console.error("Direct GitHub verification error:", err.message);
-        return res.redirect("/profile?error=" + encodeURIComponent("Could not verify GitHub profile: " + err.message));
-      }
-    }
-    return res.redirect("/profile?prompt=github");
+    return res.status(200).render("oauth-unavailable", {
+      serviceName: "GitHub",
+      message: "GitHub OAuth verification is not available right now. Missing server credentials."
+    });
   }
 
   const state = crypto.randomBytes(16).toString("hex");
@@ -790,7 +782,7 @@ router.get("/auth/github", requireLogin, async (req, res) => {
   res.redirect(authUrl);
 });
 
-// 11b. POST /auth/github/verify - Direct Public REST API Verification & Sync
+// 11b. POST /auth/github/verify - Link GitHub username as self-reported (Unverified)
 router.post("/auth/github/verify", requireLogin, async (req, res) => {
   try {
     let inputUser = req.body.githubUsername || req.body.github || req.user.githubUsername || req.user.github;
@@ -807,16 +799,23 @@ router.post("/auth/github/verify", requireLogin, async (req, res) => {
     if (!req.user.github || req.user.github.trim() === "" || githubService.cleanGithubUsername(req.user.github) === cleanUsername) {
       req.user.github = `https://github.com/${cleanUsername}`;
     }
+    // Username-only entry must NEVER mark a user verified
+    req.user.isGithubVerified = false;
+    req.user.githubId = "";
 
     const result = await githubService.syncUserGithubData(req.user, null, true);
+    // Explicitly guarantee unverified status persists after sync
+    req.user.isGithubVerified = false;
+    await req.user.save();
+
     if (result.rateLimited) {
-      return res.redirect("/profile?warning=" + encodeURIComponent("GitHub API rate limit reached. Displaying cached data."));
+      return res.redirect("/profile?warning=" + encodeURIComponent("GitHub API rate limit reached. Displaying cached data. Username linked, not verified."));
     }
 
-    res.redirect("/profile?verified=github");
+    res.redirect("/profile?info=" + encodeURIComponent("GitHub linked, not verified. Verification requires OAuth sign-in."));
   } catch (err) {
-    console.error("GitHub verification error:", err.message);
-    res.redirect("/profile?error=" + encodeURIComponent("GitHub verification failed: " + err.message));
+    console.error("GitHub link error:", err.message);
+    res.redirect("/profile?error=" + encodeURIComponent("Could not link GitHub profile: " + err.message));
   }
 });
 

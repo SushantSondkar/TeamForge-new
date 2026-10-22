@@ -300,9 +300,13 @@ async function syncUserGithubData(user, accessToken = null, force = false) {
       updated_at: r.updated_at ? formatDate(r.updated_at) : ""
     }));
 
-    user.isGithubVerified = true;
-    if (profile.id) {
+    // isGithubVerified becomes true ONLY after a real OAuth handshake with an access token and valid GitHub profile ID
+    if (accessToken && profile && profile.id) {
+      user.isGithubVerified = true;
       user.githubId = String(profile.id);
+    } else if (!user.isGithubVerified) {
+      user.isGithubVerified = false;
+      user.githubId = "";
     }
     user.githubUsername = resolvedUsername;
     user.github = resolvedUsername;

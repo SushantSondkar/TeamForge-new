@@ -287,16 +287,16 @@ async function runTests() {
   assert.strictEqual(cleanGithubUsername("@aaradhyawabale"), "aaradhyawabale");
   assert.strictEqual(cleanGithubUsername("aaradhyawabale"), "aaradhyawabale");
 
-  // Test token-less sync using full URL in user.github
+  // Test token-less sync using full URL in user.github (must NOT verify user)
   const fakeUrlUserDoc = {
     isGithubVerified: false,
     github: "https://github.com/kkwagh-coder",
     save: async function() { this._saved = true; }
   };
   await syncUserGithubData(fakeUrlUserDoc, null, true);
-  assert.strictEqual(fakeUrlUserDoc.isGithubVerified, true);
+  assert.strictEqual(fakeUrlUserDoc.isGithubVerified, false, "Token-less manual username sync must NEVER set isGithubVerified to true");
   assert.strictEqual(fakeUrlUserDoc.githubUsername, "kkwagh-coder");
-  console.log("   ✓ Stubbed GitHub HTTP calls and token-less sync successfully verified.");
+  console.log("   ✓ Stubbed GitHub HTTP calls verified: OAuth sync verifies user, token-less sync remains unverified.");
 
   // Clean up GitHub credentials & fetch
   delete process.env.GITHUB_CLIENT_ID;

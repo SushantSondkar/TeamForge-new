@@ -105,7 +105,10 @@ app.use("/images", express.static(path.join(__dirname, "public", "images"), {
 app.use(express.static(path.join(__dirname, "public")));
 
 // Request Parsers
-app.use(express.json({ limit: "10mb" }));
+// Dedicated JSON limit for profile photo uploads (500 KB)
+app.use("/profile/photo", express.json({ limit: "500kb" }));
+// Global JSON parser for standard JSON payloads (100 KB)
+app.use(express.json({ limit: "100kb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 // Cookie Parser (CSRF dependency)
@@ -163,8 +166,7 @@ const wizardIntermediateUrls = [
   "/team-requirement/new",
   "/team-requirement/new/define-team",
   "/team-requirement/new/open-roles",
-  "/team-requirement/new/review",
-  "/profile/photo"
+  "/team-requirement/new/review"
 ];
 app.use(csurf(csrfSecret, ["POST", "PUT", "PATCH", "DELETE"], wizardIntermediateUrls));
 
@@ -284,7 +286,7 @@ app.use((req, res, next) => {
 app.use((err, req, res, next) => {
   if (err.message && err.message.includes("CSRF token")) {
     console.warn("CSRF Warning:", err.message);
-    if (req.xhr || req.headers.accept?.includes("application/json")) {
+    if (req.xhr || req.headers.accept?.includes("application/json") || req.headers["content-type"]?.includes("application/json")) {
       return res.status(403).json({ error: "Session token expired. Please refresh and try again." });
     }
 

@@ -12,7 +12,7 @@ This document provides a transparent, rigorous accounting of all implemented fea
 | **Password Security & Rate Limiting** | Done | Verified in Test Suite | bcrypt hashing with 10 salt rounds; brute-force protection with express-rate-limit; session invalidation on password change. |
 | **Session & CSRF Protection** | Done | Verified in Test Suite | HttpOnly, SameSite, double-submit CSRF cookie protection verified across mutation routes. |
 | **Student Profile & Portfolio Setup** | Done | Verified in Test Suite | Multi-skill tagging (levels 1-5), bio, availability settings, and dynamic completeness percentage calculation verified. |
-| **GitHub Profile Verification** | Done | **Tested with stubbed HTTP only, not with a real GitHub app** | OAuth verification flow and statistical sync tested via simulated HTTP responses (`setFetch`). Zero token persistence in MongoDB confirmed. |
+| **GitHub Profile Verification** | Done | **Verified (OAuth-only requirement)** | Account verification (`isGithubVerified = true`) strictly requires a valid OAuth handshake with GitHub account ID. Self-reported username submissions are badged as "GitHub linked, not verified" with no credibility bonus. Zero token persistence confirmed. Tested with stubbed HTTP harness. |
 | **Campus Hackathon Event Publishing** | Done | Verified in Test Suite | Event schema, roles, countdown deadlines, and permission guards (Admin & Approved Organizers) verified. |
 | **Team Requirement Wizard** | Done | Verified in Test Suite | 4-step wizard: context, define-team, open-roles, and review steps validated and persisted. |
 | **Candidate Discovery & Skill Search** | Done | Verified in Test Suite | MongoDB compound indexed search with skill, event, and keyword filtering; closed teams (openings = 0) strictly excluded. |
@@ -46,5 +46,5 @@ Per project design decisions and technical audit findings:
 3. **Double-Blind Review Window**:
    - Reviews can only be submitted after the associated event date has elapsed. Team members cannot review before the competition concludes.
 4. **Third-Party Integrations**:
-   - GitHub OAuth verification was executed and tested using a stubbed HTTP test harness; live GitHub OAuth client credentials must be supplied in `.env` for production OAuth handshakes.
+   - GitHub verification strictly requires OAuth authorization code exchange (`isGithubVerified = true`). Manual username-only entry remains unverified ("GitHub linked, not verified") with no credibility bonus. Live GitHub OAuth client credentials must be supplied in `.env` for production OAuth handshakes; test harness uses stubbed HTTP.
    - SMTP notifications require valid third-party credentials (e.g., Brevo or Gmail App Password); automated tests verify template rendering and payload composition using an in-memory transport stub.

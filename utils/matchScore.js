@@ -120,12 +120,10 @@ function calculateSkillTerm(candidate, role) {
  * @returns {Object} { C, githubVerified, peerShare }
  */
 function calculateCredibilityTerm(candidate) {
-  // Check if GitHub is verified
+  // Check if GitHub is verified (OAuth verified only; self-reported github handle does NOT qualify)
   const githubVerified = !!(
     candidate &&
-    (candidate.isGithubVerified ||
-     candidate.githubVerified ||
-     (candidate.github && String(candidate.github).trim().length > 0))
+    (candidate.isGithubVerified === true || candidate.githubVerified === true)
   );
 
   // Calculate peerShare

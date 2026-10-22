@@ -319,6 +319,14 @@ userSchema.virtual("trustBadges").get(function() {
       style: "github-verified",
       color: "#059669"
     });
+  } else if (this.github || this.githubUsername) {
+    badges.push({
+      key: "github_unverified",
+      label: "GitHub linked, not verified",
+      sublabel: "Self-Reported Username",
+      style: "github-unverified",
+      color: "#64748b"
+    });
   }
   if (this.isLinkedinLinked) {
     badges.push({
