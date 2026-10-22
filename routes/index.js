@@ -8,6 +8,7 @@ const Application = require('../models/Application');
 const TeamRequestAction = require('../models/TeamRequestAction');
 const Notification = require('../models/Notification');
 const Event = require('../models/Event');
+const SuccessStory = require('../models/SuccessStory');
 const {
   getRecommendedCandidates,
   getRecommendedOpportunities,
