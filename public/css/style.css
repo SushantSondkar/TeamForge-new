@@ -3276,3 +3276,21 @@ h1 {
     color: #2563eb !important;
     text-decoration: underline !important;
 }
+
+/* Phase 11F-b: Utilities and State Classes */
+.is-hidden {
+    display: none !important;
+}
+
+.is-disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.tab-pane {
+    display: none;
+}
+
+.tab-pane.active {
+    display: block;
+}

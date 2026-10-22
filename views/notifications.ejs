@@ -5,6 +5,39 @@
 %>
 
 <div class="notifications-page page-container" style="max-width: 900px;">
+    <style>
+        #markAllReadBtn {
+            font-size: 13px;
+            padding: 6px 14px;
+            cursor: pointer;
+        }
+        #markAllReadBtn.is-disabled,
+        .is-disabled {
+            opacity: 0.5;
+            cursor: default;
+        }
+        .notif-card.notif-read {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+        }
+        .notif-card.notif-unread {
+            background: #f8fafc;
+            border: 1px solid #bfdbfe;
+        }
+        .notif-icon-circle {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .notif-icon-circle.notif-success { background: #f0fdf4; color: #10b981; }
+        .notif-icon-circle.notif-danger { background: #fef2f2; color: #ef4444; }
+        .notif-icon-circle.notif-warning { background: #fffbeb; color: #f59e0b; }
+        .notif-icon-circle.notif-info { background: #eff6ff; color: #2563eb; }
+    </style>
     
     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
         <div>
@@ -14,7 +47,7 @@
 
         <form action="/notifications/mark-read" method="POST" style="margin: 0;">
             <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
-            <button type="submit" class="btn-small-outline" id="markAllReadBtn" <%= unreadCount === 0 ? 'disabled style="opacity: 0.5; cursor: default; font-size: 13px; padding: 6px 14px;"' : 'style="font-size: 13px; padding: 6px 14px; cursor: pointer;"' %>>
+            <button type="submit" class="btn-small-outline <%= unreadCount === 0 ? 'is-disabled' : '' %>" id="markAllReadBtn" <%= unreadCount === 0 ? 'disabled' : '' %>>
                 ✓ Mark all as read
             </button>
         </form>
@@ -33,9 +66,9 @@
     <div class="notif-list" style="display: flex; flex-direction: column; gap: 12px;">
         <% if (notifications && notifications.length > 0) { %>
             <% notifications.forEach(n => { %>
-                <div class="notif-card <%= n.read ? 'notif-read' : 'notif-unread' %>" data-read="<%= n.read %>" style="background: <%= n.read ? '#ffffff' : '#f8fafc' %>; border: 1px solid <%= n.read ? '#e2e8f0' : '#bfdbfe' %>; border-radius: 12px; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; transition: all 0.2s ease;">
+                <div class="notif-card <%= n.read ? 'notif-read' : 'notif-unread' %>" data-read="<%= n.read %>" style="border-radius: 12px; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; transition: all 0.2s ease;">
                     <div style="display: flex; align-items: center; gap: 16px; flex: 1;">
-                        <div style="width: 42px; height: 42px; border-radius: 50%; background: <%= n.type === 'success' ? '#f0fdf4' : (n.type === 'danger' ? '#fef2f2' : (n.type === 'warning' ? '#fffbeb' : '#eff6ff')) %>; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: <%= n.type === 'success' ? '#10b981' : (n.type === 'danger' ? '#ef4444' : (n.type === 'warning' ? '#f59e0b' : '#2563eb')) %>;">
+                        <div class="notif-icon-circle notif-<%= n.type || 'info' %>">
                             <% if (n.type === 'success') { %>
                                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
                             <% } else if (n.type === 'danger') { %>

@@ -48,9 +48,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (numBadge) {
                 numBadge.textContent = idx + 1;
                 if (idx > 0) {
+                    numBadge.classList.add('secondary-role');
                     numBadge.style.backgroundColor = '#dbeafe';
                     numBadge.style.color = '#2563eb';
                 } else {
+                    numBadge.classList.remove('secondary-role');
                     numBadge.style.backgroundColor = '';
                     numBadge.style.color = '';
                 }
@@ -58,7 +60,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const removeBtn = card.querySelector('.btn-remove-role');
             if (removeBtn) {
-                removeBtn.style.display = cards.length > 1 ? 'inline-block' : 'none';
+                if (cards.length > 1) {
+                    removeBtn.classList.remove('is-hidden');
+                    removeBtn.style.display = 'inline-block';
+                } else {
+                    removeBtn.classList.add('is-hidden');
+                    removeBtn.style.display = 'none';
+                }
             }
         });
     }

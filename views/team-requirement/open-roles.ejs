@@ -1,6 +1,23 @@
 <% layout("/layouts/boilerplate") -%>
 
 <div class="team-requirement-page">
+    <style>
+        .role-number.secondary-role {
+            background-color: #dbeafe;
+            color: #2563eb;
+        }
+        .btn-remove-role {
+            background: none;
+            border: none;
+            color: #ef4444;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-remove-role.is-hidden {
+            display: none;
+        }
+    </style>
 
     <!-- Top Stepper Card -->
     <div class="stepper-card-new">
@@ -68,12 +85,12 @@
                 <div class="role-profile-card">
                     <div class="role-profile-header">
                         <div class="role-profile-title">
-                            <span class="role-number" <%- idx > 0 ? 'style="background-color: #dbeafe; color: #2563eb;"' : '' %>><%= idx + 1 %></span>
+                            <span class="role-number <%= idx > 0 ? 'secondary-role' : '' %>"><%= idx + 1 %></span>
                             <strong>Role Profile</strong>
                         </div>
                         <div class="role-profile-meta" style="display: flex; align-items: center; gap: 12px;">
                             <span class="badge badge-success-light">Urgency: Open</span>
-                            <button type="button" class="btn-remove-role" style="background: none; border: none; color: #ef4444; font-size: 13px; font-weight: 600; cursor: pointer; display: <%= activeRoles.length > 1 ? 'inline-block' : 'none' %>;">Remove</button>
+                            <button type="button" class="btn-remove-role <%= activeRoles.length > 1 ? '' : 'is-hidden' %>">Remove</button>
                         </div>
                     </div>
 

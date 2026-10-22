@@ -1,6 +1,18 @@
 <% layout("/layouts/boilerplate") -%>
 
 <div class="profile-page page-container profile-layout-grid">
+    <style>
+        .badge-avail {
+            font-size: 12px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+        .badge-avail-free { background-color: #dcfce7; color: #15803d; }
+        .badge-avail-partly { background-color: #fef3c7; color: #b45309; }
+        .badge-avail-busy { background-color: #fee2e2; color: #b91c1c; }
+        .comp-progress-fill { background: linear-gradient(90deg, #3b82f6, #10b981); height: 100%; }
+    </style>
     
     <!-- Page Header -->
     <div style="grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; flex-wrap: wrap; gap: 12px;">
@@ -114,19 +126,16 @@
             <% 
                 const avail = (currentUser && currentUser.availability !== undefined) ? Number(currentUser.availability) : 1.0;
                 let availLabel = "Free (Open)";
-                let availBg = "#dcfce7";
-                let availColor = "#15803d";
+                let availClass = "badge-avail-free";
                 if (avail === 0.5) {
                     availLabel = "Partly Free";
-                    availBg = "#fef3c7";
-                    availColor = "#b45309";
+                    availClass = "badge-avail-partly";
                 } else if (avail === 0) {
                     availLabel = "Busy";
-                    availBg = "#fee2e2";
-                    availColor = "#b91c1c";
+                    availClass = "badge-avail-busy";
                 }
             %>
-            <span style="background-color: <%= availBg %>; color: <%= availColor %>; font-size: 12px; padding: 5px 12px; border-radius: 20px; font-weight: 600;">
+            <span class="badge-avail <%= availClass %>">
                 ● <%= availLabel %>
             </span>
 
@@ -164,9 +173,9 @@
                 <span style="font-size: 13px; font-weight: 700; color: #2563eb;"><%= compPct %>%</span>
             </div>
             <div style="background: #e2e8f0; height: 8px; border-radius: 4px; overflow: hidden;">
-                <div style="background: linear-gradient(90deg, #3b82f6, #10b981); height: 100%; width: <%= compPct %>%;"></div>
+                <div class="comp-progress-fill" style="width: <%= compPct %>%;"></div>
             </div>
-            <div style="font-size: 11px; color: #94a3b8; margin-top: 6px;">Used as a tie-breaker in candidate recommendations and leaderboard ranking</div>
+            <div style="font-size: 11px; color: #64748b; margin-top: 6px;">Used as a tie-breaker in candidate recommendations and leaderboard ranking</div>
 
             <% if (missing.length > 0) { %>
                 <div style="margin-top: 10px; padding: 10px 12px; background: #ffffff; border: 1px dashed #cbd5e1; border-radius: 8px;">

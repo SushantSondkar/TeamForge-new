@@ -7,18 +7,52 @@
         <p class="page-subtitle" style="color: #64748b; font-size: 14.5px; margin: 0;">Find teams and open roles matching your skills. Server-side filtering with real MatchScore calculation.</p>
     </div>
 
+    <style>
+        .discover-tabs {
+            display: flex;
+            gap: 8px;
+            border-bottom: 1px solid #e2e8f0;
+            margin-bottom: 24px;
+        }
+        .discover-tab {
+            padding: 10px 18px;
+            font-size: 14px;
+            font-weight: 600;
+            background: none;
+            border: none;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            color: #64748b;
+            transition: color 0.15s ease, border-color 0.15s ease;
+        }
+        .discover-tab.active {
+            border-bottom-color: #2563eb;
+            color: #2563eb;
+        }
+        .discover-tab:hover:not(.active) {
+            color: #1e293b;
+        }
+        .tab-pane {
+            display: none;
+        }
+        .tab-pane.active {
+            display: block;
+        }
+        #smart-recs.tab-pane.active {
+            display: flex;
+            gap: 30px;
+        }
+    </style>
+
     <!-- Tabs Navigation -->
-    <div class="discover-tabs" style="display: flex; gap: 8px; border-bottom: 1px solid #e2e8f0; margin-bottom: 24px;">
-        <button type="button" class="discover-tab <%= (typeof activeTab === 'undefined' || activeTab === 'smart-recs') ? 'active' : '' %>" data-target="smart-recs"
-                style="padding: 10px 18px; font-size: 14px; font-weight: 600; background: none; border: none; cursor: pointer; border-bottom: 2px solid <%= (typeof activeTab === 'undefined' || activeTab === 'smart-recs') ? '#2563eb' : 'transparent' %>; color: <%= (typeof activeTab === 'undefined' || activeTab === 'smart-recs') ? '#2563eb' : '#64748b' %>;">
+    <div class="discover-tabs">
+        <button type="button" class="discover-tab <%= (typeof activeTab === 'undefined' || activeTab === 'smart-recs') ? 'active' : '' %>" data-target="smart-recs">
             Smart Recommendations
         </button>
-        <button type="button" class="discover-tab <%= (typeof activeTab !== 'undefined' && activeTab === 'search') ? 'active' : '' %>" data-target="search-teams"
-                style="padding: 10px 18px; font-size: 14px; font-weight: 600; background: none; border: none; cursor: pointer; border-bottom: 2px solid <%= (typeof activeTab !== 'undefined' && activeTab === 'search') ? '#2563eb' : 'transparent' %>; color: <%= (typeof activeTab !== 'undefined' && activeTab === 'search') ? '#2563eb' : '#64748b' %>;">
+        <button type="button" class="discover-tab <%= (typeof activeTab !== 'undefined' && activeTab === 'search') ? 'active' : '' %>" data-target="search-teams">
             Search Teams (<%= (typeof searchResults !== 'undefined' && searchResults.totalCount !== undefined) ? searchResults.totalCount : 0 %>)
         </button>
-        <button type="button" class="discover-tab <%= (typeof activeTab !== 'undefined' && activeTab === 'browse-events') ? 'active' : '' %>" data-target="browse-events"
-                style="padding: 10px 18px; font-size: 14px; font-weight: 600; background: none; border: none; cursor: pointer; border-bottom: 2px solid <%= (typeof activeTab !== 'undefined' && activeTab === 'browse-events') ? '#2563eb' : 'transparent' %>; color: <%= (typeof activeTab !== 'undefined' && activeTab === 'browse-events') ? '#2563eb' : '#64748b' %>;">
+        <button type="button" class="discover-tab <%= (typeof activeTab !== 'undefined' && activeTab === 'browse-events') ? 'active' : '' %>" data-target="browse-events">
             Browse by Event
         </button>
     </div>
@@ -26,7 +60,7 @@
     <div class="discover-content-area">
         
         <!-- Tab 1: Smart Recommendations -->
-        <div id="smart-recs" class="tab-pane" style="<%= (typeof activeTab === 'undefined' || activeTab === 'smart-recs') ? 'display: flex;' : 'display: none;' %> gap: 30px;">
+        <div id="smart-recs" class="tab-pane <%= (typeof activeTab === 'undefined' || activeTab === 'smart-recs') ? 'active' : '' %>">
             <div class="teams-list" style="flex: 1; display: flex; flex-direction: column; gap: 16px;">
                 <% if (typeof recommendedOpportunities !== 'undefined' && recommendedOpportunities && recommendedOpportunities.length > 0) { %>
                     <% recommendedOpportunities.forEach(opp => { %>
@@ -46,7 +80,7 @@
                             
                             <div class="team-card-meta" style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 14px; font-size: 13px; color: #475569;">
                                 <div class="meta-col">
-                                    <span class="meta-label" style="font-size: 11px; text-transform: uppercase; color: #94a3b8; display: block;">Required Skills</span>
+                                    <span class="meta-label" style="font-size: 11px; text-transform: uppercase; color: #64748b; display: block;">Required Skills</span>
                                     <div class="meta-value" style="font-weight: 500; color: #334155;">
                                         <%= (opp.role.requiredSkills || []).join(', ') %>
                                     </div>
@@ -82,7 +116,7 @@
                 <% } else { %>
                     <div style="text-align: center; padding: 48px 24px; background: white; border-radius: 12px; border: 1px solid #e2e8f0;">
                         <p style="color: #64748b; font-size: 15px; margin: 0 0 12px 0;">No matching recommendations found for your current skills.</p>
-                        <p style="color: #94a3b8; font-size: 13px; margin: 0 0 18px 0;">Try updating your profile skills, or use the Search Teams tab to explore all open requirements.</p>
+                        <p style="color: #64748b; font-size: 13px; margin: 0 0 18px 0;">Try updating your profile skills, or use the Search Teams tab to explore all open requirements.</p>
                         <a href="/profile/edit" class="btn-small-outline" style="text-decoration: none;">Update My Skills</a>
                     </div>
                 <% } %>
@@ -90,7 +124,7 @@
         </div>
 
         <!-- Tab 2: Search Teams (Server-Side Filtered & Paginated) -->
-        <div id="search-teams" class="tab-pane" style="<%= (typeof activeTab !== 'undefined' && activeTab === 'search') ? 'display: block;' : 'display: none;' %>">
+        <div id="search-teams" class="tab-pane <%= (typeof activeTab !== 'undefined' && activeTab === 'search') ? 'active' : '' %>">
             
             <!-- Server-Side GET Form (Works with JS disabled) -->
             <form action="/discover" method="GET" class="search-filters-form" id="discoverSearchForm" style="margin-bottom: 24px;">
@@ -230,7 +264,7 @@
                                                     <span style="background: #f1f5f9; color: #334155; padding: 1px 6px; border-radius: 4px;"><%= sk %></span>
                                                 <% }); %>
                                                 <% if (r.preferredSkills && r.preferredSkills.length > 0) { %>
-                                                    <span style="color: #94a3b8; margin-left: 4px;">Pref:</span>
+                                                    <span style="color: #64748b; margin-left: 4px;">Pref:</span>
                                                     <% r.preferredSkills.forEach(ps => { %>
                                                         <span style="background: #fffbeb; color: #b45309; padding: 1px 6px; border-radius: 4px;"><%= ps %></span>
                                                     <% }); %>
@@ -314,7 +348,7 @@
         </div>
 
         <!-- Tab 3: Browse by Event -->
-        <div id="browse-events" class="tab-pane" style="<%= (typeof activeTab !== 'undefined' && activeTab === 'browse-events') ? 'display: block;' : 'display: none;' %>">
+        <div id="browse-events" class="tab-pane <%= (typeof activeTab !== 'undefined' && activeTab === 'browse-events') ? 'active' : '' %>">
             <div class="events-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
                 <% if (typeof events !== 'undefined' && events && events.length > 0) { %>
                     <% events.forEach(evt => { %>
@@ -356,24 +390,13 @@
         // Tab Switching
         tabs.forEach(tab => {
             tab.addEventListener('click', () => {
-                tabs.forEach(t => {
-                    t.classList.remove('active');
-                    t.style.borderBottomColor = 'transparent';
-                    t.style.color = '#64748b';
-                });
-                panes.forEach(p => p.style.display = 'none');
+                tabs.forEach(t => t.classList.remove('active'));
+                panes.forEach(p => p.classList.remove('active'));
                 
                 tab.classList.add('active');
-                tab.style.borderBottomColor = '#2563eb';
-                tab.style.color = '#2563eb';
-                
                 const target = document.getElementById(tab.dataset.target);
                 if (target) {
-                    if (tab.dataset.target === 'smart-recs') {
-                        target.style.display = 'flex';
-                    } else {
-                        target.style.display = 'block';
-                    }
+                    target.classList.add('active');
                 }
             });
         });

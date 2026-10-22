@@ -1,6 +1,15 @@
 <% layout("/layouts/boilerplate") -%>
 
 <div class="profile-edit-page page-container" style="max-width: 840px;">
+    <style>
+        #removePhotoBtn {
+            display: inline-flex;
+        }
+        #removePhotoBtn.is-hidden,
+        .is-hidden {
+            display: none !important;
+        }
+    </style>
     
     <div style="margin-bottom: 24px;">
         <a href="/profile" style="color: #64748b; text-decoration: none; font-size: 13.5px; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 12px; font-weight: 500;">
@@ -60,7 +69,8 @@
                         <% } %>
 
                         <button type="button" id="removePhotoBtn" onclick="removePhoto()"
-                                style="background: white; color: #ef4444; border: 1px solid #fca5a5; padding: 8px 14px; border-radius: 6px; font-size: 12.5px; font-weight: 500; cursor: pointer; display: <%= (currentUser && currentUser.profilePic) ? 'inline-flex' : 'none' %>; align-items: center; gap: 5px;">
+                                class="<%= (currentUser && currentUser.profilePic) ? '' : 'is-hidden' %>"
+                                style="background: white; color: #ef4444; border: 1px solid #fca5a5; padding: 8px 14px; border-radius: 6px; font-size: 12.5px; font-weight: 500; cursor: pointer; align-items: center; gap: 5px;">
                             ✕ Remove
                         </button>
                     </div>
@@ -612,7 +622,10 @@
                 if (avatarPreview) avatarPreview.src = croppedDataUrl;
                 if (profilePicInput) profilePicInput.value = croppedDataUrl;
                 if (avatarUrlInput) avatarUrlInput.value = '';
-                if (removePhotoBtn) removePhotoBtn.style.display = 'inline-flex';
+                if (removePhotoBtn) {
+                    removePhotoBtn.classList.remove('is-hidden');
+                    removePhotoBtn.style.display = 'inline-flex';
+                }
 
                 // Update navbar avatar if present
                 const navAvatar = document.querySelector('.navbar .user-avatar');
@@ -690,7 +703,10 @@
                 if (profilePicInput) profilePicInput.value = '';
                 if (avatarUrlInput) avatarUrlInput.value = '';
                 if (avatarFileInput) avatarFileInput.value = '';
-                if (removePhotoBtn) removePhotoBtn.style.display = 'none';
+                if (removePhotoBtn) {
+                    removePhotoBtn.classList.add('is-hidden');
+                    removePhotoBtn.style.display = 'none';
+                }
             };
         })();
     </script>

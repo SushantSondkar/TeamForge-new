@@ -1,6 +1,10 @@
 <% layout("/layouts/boilerplate") -%>
 
 <div class="leaderboard-page page-container">
+    <style>
+        .cache-status-cached { color: #15803d; }
+        .cache-status-fresh { color: #2563eb; }
+    </style>
     
     <!-- Header -->
     <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px; margin-bottom: 24px;">
@@ -18,7 +22,7 @@
 
         <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
             <div style="font-size: 12.5px; color: #64748b; text-align: right;">
-                <div>Cache Status: <span style="font-weight: 600; color: <%= isCached ? '#15803d' : '#2563eb' %>;"><%= isCached ? 'Cached (24h Daily)' : 'Freshly Computed' %></span></div>
+                <div>Cache Status: <span class="<%= isCached ? 'cache-status-cached' : 'cache-status-fresh' %>" style="font-weight: 600;"><%= isCached ? 'Cached (24h Daily)' : 'Freshly Computed' %></span></div>
                 <% if (cachedAt) { %>
                     <div style="font-size: 11.5px; color: #64748b;">Updated: <%= formatDateTime(cachedAt) %></div>
                 <% } %>

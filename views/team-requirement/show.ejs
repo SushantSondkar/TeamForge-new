@@ -2,6 +2,33 @@
 
 <div class="team-requirement-show page-container" style="max-width: 1100px;">
     
+    <style>
+        .team-role-item {
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 16px;
+        }
+        .team-role-item.selected {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+        .role-openings-badge {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .role-openings-badge.has-openings {
+            background: #dcfce7;
+            color: #15803d;
+        }
+        .role-openings-badge.no-openings {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+    </style>
+
     <div style="margin-bottom: 20px;">
         <a href="/dashboard" style="color: #64748b; text-decoration: none; font-size: 13.5px; display: inline-flex; align-items: center; gap: 6px; font-weight: 500;">
             ← Back to Dashboard
@@ -51,10 +78,10 @@
         
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
             <% (team.roles || []).forEach((r, idx) => { %>
-                <div style="border: 1px solid <%= (role && role.title === r.title) ? '#3b82f6' : '#e2e8f0' %>; background: <%= (role && role.title === r.title) ? '#eff6ff' : '#f8fafc' %>; border-radius: 10px; padding: 16px;">
+                <div class="team-role-item <%= (role && role.title === r.title) ? 'selected' : '' %>">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                         <strong style="font-size: 15px; color: #0f172a;"><%= r.title %></strong>
-                        <span style="font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 4px; background: <%= r.openings > 0 ? '#dcfce7' : '#fee2e2' %>; color: <%= r.openings > 0 ? '#15803d' : '#b91c1c' %>;">
+                        <span class="role-openings-badge <%= r.openings > 0 ? 'has-openings' : 'no-openings' %>">
                             <%= r.openings %> Openings
                         </span>
                     </div>

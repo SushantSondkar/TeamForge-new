@@ -78,7 +78,7 @@ function renderEmailLayout({ title, heading, bodyHtml, buttonText, actionUrl, di
               </p>
               ${disclaimer ? `
               <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
-              <p style="margin: 0; font-size: 12px; color: #94a3b8; line-height: 1.5;">
+              <p style="margin: 0; font-size: 12px; color: #64748b; line-height: 1.5;">
                 ${disclaimer}
               </p>` : ""}
             </td>
