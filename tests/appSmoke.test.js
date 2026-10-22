@@ -9,6 +9,7 @@
  *    - GET /, /login, /signup, /how-it-works, /forgot-password return 200.
  *    - GET /dashboard, /discover, /profile, /notifications, /leaderboard, /events, /admin/stats
  *      without login redirect to /login or return 401/403 (never 200 and never 500).
+ *    - GET /events/<24-hex-id> and /events/not-an-id without login redirect to /login (302).
  *    - GET /does-not-exist returns the 404 page.
  *    - Response bodies contain no "Cannot GET", no "stack", and no server file paths.
  */
@@ -147,6 +148,47 @@ async function runSmokeTests() {
       assertCleanBody(res.body, ep);
       console.log(`   ✓ GET ${ep} correctly guarded (Status: ${res.statusCode}, Location: ${res.headers.location || 'none'}).`);
     }
+
+    // -------------------------------------------------------------
+    // Step 5b: Event detail protection checks (over real HTTP without login)
+    // -------------------------------------------------------------
+    console.log("\n5b. Testing event detail protection without login (/events/:id)...");
+    const validHexId = "507f1f77bcf86cd799439011";
+    const resValidEventId = await makeRequest(`/events/${validHexId}`);
+    assert.strictEqual(
+      resValidEventId.statusCode,
+      302,
+      `GET /events/${validHexId} without login must redirect to /login (302), got ${resValidEventId.statusCode}`
+    );
+    assert.notStrictEqual(
+      resValidEventId.statusCode,
+      200,
+      `GET /events/${validHexId} without login must NEVER return 200`
+    );
+    assert.ok(
+      resValidEventId.headers.location && resValidEventId.headers.location.includes("/login"),
+      `GET /events/${validHexId} location must redirect to /login, got ${resValidEventId.headers.location}`
+    );
+    assertCleanBody(resValidEventId.body, `/events/${validHexId}`);
+    console.log(`   ✓ GET /events/${validHexId} without login redirected to /login (302, never 200).`);
+
+    const resInvalidEventId = await makeRequest("/events/not-an-id");
+    assert.strictEqual(
+      resInvalidEventId.statusCode,
+      302,
+      `GET /events/not-an-id without login must redirect to /login (302), got ${resInvalidEventId.statusCode}`
+    );
+    assert.notStrictEqual(
+      resInvalidEventId.statusCode,
+      500,
+      `GET /events/not-an-id without login must NEVER return 500`
+    );
+    assert.ok(
+      resInvalidEventId.headers.location && resInvalidEventId.headers.location.includes("/login"),
+      `GET /events/not-an-id location must redirect to /login, got ${resInvalidEventId.headers.location}`
+    );
+    assertCleanBody(resInvalidEventId.body, "/events/not-an-id");
+    console.log(`   ✓ GET /events/not-an-id without login redirected to /login (302, never 500).`);
 
     // -------------------------------------------------------------
     // Step 6: GET /does-not-exist returns 404 page

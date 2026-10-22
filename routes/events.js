@@ -98,25 +98,21 @@ router.post("/new", requireLogin, async (req, res) => {
 // -------------------------------------------------------------
 // 4. GET /events/:id - Event detail page & Team creation entry point
 // -------------------------------------------------------------
-router.get("/:id", async (req, res) => {
+router.get("/:id", requireLogin, async (req, res) => {
   try {
     const mongoose = require("mongoose");
     if (!mongoose.isValidObjectId(req.params.id)) {
-      return res.status(400).send("Invalid event ID format.");
+      return res.status(404).render("404", {
+        currentUser: req.user || null,
+        pageTitle: "404 - Page Not Found"
+      });
     }
 
     const event = await Event.findById(req.params.id);
     if (!event) {
-      return res.status(404).render("home", {
-        latestTeam: null,
-        recommendedCandidates: [],
-        recommendedOpportunities: [],
-        myApplications: [],
-        teamApplicationCount: 0,
-        sentInvites: [],
-        receivedInvites: [],
+      return res.status(404).render("404", {
         currentUser: req.user || null,
-        error: "Event not found"
+        pageTitle: "404 - Page Not Found"
       });
     }
 
