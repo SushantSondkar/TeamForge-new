@@ -346,7 +346,17 @@ router.get("/profile/edit", requireLogin, (req, res) => {
 });
 
 /**
+ * Maximum string length for base64 photo data URI:
+ * 300 KB binary = 409,600 chars of base64 + ~30 chars prefix = ~409,630 chars.
+ * Any string over 450,000 characters is rejected immediately before decoding.
+ */
+const MAX_PHOTO_STRING_LENGTH = 450000;
+const STRICT_BASE64_REGEX = /^[A-Za-z0-9+/]+={0,2}$/;
+
+/**
  * Helper to validate uploaded photo base64 strings:
+ * - Checks maximum string length BEFORE decoding (early rejection)
+ * - Checks strict base64 character set BEFORE decoding (early rejection)
  * - Accepts data:image/jpeg, data:image/png, data:image/webp base64 strings
  * - Decodes buffer and verifies magic bytes match declared format
  * - Rejects anything over 300 KB decoded with friendly error
@@ -356,6 +366,15 @@ function validateBase64Photo(dataUri) {
     return { valid: false, error: "No photo data provided" };
   }
 
+  // 1. Check maximum string length BEFORE regex or decoding
+  if (dataUri.length > MAX_PHOTO_STRING_LENGTH) {
+    return {
+      valid: false,
+      error: "Photo exceeds the maximum allowed payload size limit. Please choose an image smaller than 300 KB."
+    };
+  }
+
+  // 2. Validate prefix format (wrong prefix check)
   const mimeMatch = dataUri.match(/^data:(image\/(jpeg|jpg|png|webp));base64,(.+)$/s);
   if (!mimeMatch) {
     return {
@@ -366,6 +385,20 @@ function validateBase64Photo(dataUri) {
 
   const declaredMime = mimeMatch[1].toLowerCase();
   const rawBase64 = mimeMatch[3].replace(/\s/g, "");
+
+  // 3. Check against strict base64 regex BEFORE decoding (garbage input check)
+  if (rawBase64.length % 4 !== 0 || !STRICT_BASE64_REGEX.test(rawBase64)) {
+    return {
+      valid: false,
+      error: "Photo data is corrupted or contains invalid base64 characters."
+    };
+  }
+
+  if (rawBase64.length < 16) {
+    return { valid: false, error: "Photo file is corrupted or too small." };
+  }
+
+  // 4. Decode buffer
   const buffer = Buffer.from(rawBase64, "base64");
 
   const MAX_DECODED_BYTES = 300 * 1024; // 300 KB
@@ -412,6 +445,8 @@ function validateBase64Photo(dataUri) {
 
   return { valid: true, buffer, mime: declaredMime };
 }
+
+router.validateBase64Photo = validateBase64Photo;
 
 // -------------------------------------------------------------
 // 5b. POST /profile/photo - Directly Save Profile Photo to MongoDB

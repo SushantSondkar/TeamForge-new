@@ -426,6 +426,108 @@ async function runAuthSmokeTests() {
     assert.strictEqual(photoJson.success, true);
     console.log("   ✓ Valid photo upload with CSRF token and valid magic bytes succeeded (200 OK).");
 
+    // Helper to fetch fresh CSRF token from /profile/edit
+    async function getFreshCsrf() {
+      const res = await studentClient.get("/profile/edit");
+      const match = res.body.match(/name="_csrf"\s+value="([^"]+)"/);
+      assert.ok(match, "Must find CSRF token on /profile/edit");
+      return match[1];
+    }
+
+    // 6d. Strict photo validation: wrong prefix must be rejected early (400)
+    const csrfForWrongPrefix = await getFreshCsrf();
+    const wrongPrefixRes = await studentClient.post(
+      "/profile/photo",
+      {
+        _csrf: csrfForWrongPrefix,
+        profilePic: "data:text/plain;base64,aGVsbG8gd29ybGQ="
+      },
+      { "X-CSRF-Token": csrfForWrongPrefix }
+    );
+    assert.strictEqual(wrongPrefixRes.statusCode, 400, "Wrong prefix must be rejected with 400");
+    const wrongPrefixJson = JSON.parse(wrongPrefixRes.body);
+    assert.ok(wrongPrefixJson.error.includes("Invalid image format"));
+    console.log("   ✓ Photo with wrong prefix rejected early before decoding (400).");
+
+    // 6e. Strict photo validation: garbage base64 input must be rejected early (400)
+    const csrfForGarbage = await getFreshCsrf();
+    const garbageRes = await studentClient.post(
+      "/profile/photo",
+      {
+        _csrf: csrfForGarbage,
+        profilePic: "data:image/png;base64,!!!NotValidBase64@@@"
+      },
+      { "X-CSRF-Token": csrfForGarbage }
+    );
+    assert.strictEqual(garbageRes.statusCode, 400, "Garbage base64 must be rejected with 400");
+    const garbageJson = JSON.parse(garbageRes.body);
+    assert.ok(garbageJson.error.includes("corrupted or contains invalid base64"));
+    console.log("   ✓ Photo with garbage input rejected early by strict base64 regex (400).");
+
+    // 6f. Strict photo validation: oversized string input (>450k chars)
+    const csrfForOversized = await getFreshCsrf();
+    const oversizedStr = "data:image/png;base64," + "A".repeat(460000);
+    const oversizedRes = await studentClient.post(
+      "/profile/photo",
+      {
+        _csrf: csrfForOversized,
+        profilePic: oversizedStr
+      },
+      { "X-CSRF-Token": csrfForOversized }
+    );
+    assert.ok([400, 413].includes(oversizedRes.statusCode), `Oversized photo must return 400 or 413 (got ${oversizedRes.statusCode})`);
+    console.log("   ✓ Oversized photo payload rejected early with size limit error.");
+
+    // 6g. JSON limit audit: realistic maximum-size payload to wizard (must not return 413)
+    const csrfForWizard = await getFreshCsrf();
+    const maxWizardPayload = {
+      _csrf: csrfForWizard,
+      eventId: String(testEvent._id),
+      theme: "Artificial Intelligence & Edge Computing",
+      projectName: "Automated Campus Energy Grid Optimization & Distributed Telemetry",
+      projectRequirement: "X".repeat(4000), // 4 KB description
+      deliverables: "Y".repeat(4000), // 4 KB deliverables
+      teamSize: "4",
+      deadline: new Date(Date.now() + 5 * 24 * 3600 * 1000).toISOString().slice(0, 10)
+    };
+    const wizardRes = await studentClient.post(
+      "/team-requirement/new/define-team",
+      maxWizardPayload
+    );
+    assert.notStrictEqual(wizardRes.statusCode, 413, "Maximum realistic wizard payload must NOT be rejected with 413");
+    assert.strictEqual(wizardRes.statusCode, 200, "Wizard step 2 should return 200 with open-roles view");
+    console.log("   ✓ Realistic maximum-size wizard payload safely processed without 413.");
+
+    // 6h. Rate limit test: trigger actionLimiter on POST /profile/photo and assert 429 appears
+    console.log("   Testing actionLimiter 429 response on rapid /profile/photo requests...");
+    let hit429 = false;
+    for (let i = 0; i < 35; i++) {
+      const csrfForRate = await getFreshCsrf();
+      const rateRes = await studentClient.post(
+        "/profile/photo",
+        {
+          _csrf: csrfForRate,
+          profilePic: validPngBase64
+        },
+        { "X-CSRF-Token": csrfForRate }
+      );
+      if (rateRes.statusCode === 429) {
+        hit429 = true;
+        break;
+      }
+    }
+    assert.strictEqual(hit429, true, "actionLimiter must trigger a 429 after exceeding max requests");
+    console.log("   ✓ actionLimiter successfully triggered with 429 Too Many Requests.");
+
+    // Reset & isolate limiter state so other tests and suites are unaffected
+    const { actionLimiter } = require("../middleware/rateLimiters");
+    if (actionLimiter.resetKey) {
+      actionLimiter.resetKey("127.0.0.1");
+      actionLimiter.resetKey("::1");
+      actionLimiter.resetKey("::ffff:127.0.0.1");
+    }
+    console.log("   ✓ actionLimiter state cleanly reset after test.");
+
     // -----------------------------------------------------------
     // Step 7: Admin Login over HTTP & Admin Views
     // -----------------------------------------------------------

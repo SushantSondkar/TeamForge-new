@@ -50,7 +50,7 @@ async function getRecommendedCandidates(team, role, currentUserId, filters = {})
   if (currentUserId) {
     userQuery._id = { $ne: currentUserId };
   }
-  const allUsers = await User.find(userQuery);
+  const allUsers = await User.find(userQuery).select("-profilePic");
 
   // Determine event lock key: use eventId if present, fallback to projectName
   const eventLockKey = team.eventId ? (team.eventId._id || team.eventId).toString() : (team.projectName || "");

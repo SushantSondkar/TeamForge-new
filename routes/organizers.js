@@ -63,9 +63,9 @@ router.post("/organizer/apply", requireLogin, async (req, res) => {
 // -------------------------------------------------------------
 router.get("/admin/organizers", requireLogin, requireAdmin, async (req, res) => {
   try {
-    const pendingOrganizers = await User.find({ organizerStatus: "PENDING" }).sort({ updatedAt: -1 });
-    const approvedOrganizers = await User.find({ organizerStatus: "APPROVED" }).sort({ updatedAt: -1 });
-    const rejectedOrganizers = await User.find({ organizerStatus: "REJECTED" }).sort({ updatedAt: -1 });
+    const pendingOrganizers = await User.find({ organizerStatus: "PENDING" }).select("-profilePic").sort({ updatedAt: -1 });
+    const approvedOrganizers = await User.find({ organizerStatus: "APPROVED" }).select("-profilePic").sort({ updatedAt: -1 });
+    const rejectedOrganizers = await User.find({ organizerStatus: "REJECTED" }).select("-profilePic").sort({ updatedAt: -1 });
 
     res.render("admin/organizers", {
       pendingOrganizers,

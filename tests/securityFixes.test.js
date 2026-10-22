@@ -358,8 +358,52 @@ async function runTests() {
     assert.strictEqual(checkEventCreationAccess(organizerReq).status, 200, "Approved organizer must get 200 OK");
     console.log("   ✓ Event creation permissions correctly enforce 403 for normal students and permit admins.");
 
+    // -----------------------------------------------------------------
+    // TEST 11: Strict Photo Base64 Validation Unit Tests
+    // -----------------------------------------------------------------
+    console.log("\n11. Testing Strict Photo Base64 Validation (validateBase64Photo)...");
+    const indexRoute = require("../routes/index");
+    const validateBase64Photo = indexRoute.validateBase64Photo;
+    assert.strictEqual(typeof validateBase64Photo, "function", "validateBase64Photo must be exported");
+
+    // A. Empty / non-string
+    assert.strictEqual(validateBase64Photo(null).valid, false);
+    assert.strictEqual(validateBase64Photo("").valid, false);
+
+    // B. Wrong prefix
+    const wrongPrefixRes = validateBase64Photo("data:text/plain;base64,aGVsbG8=");
+    assert.strictEqual(wrongPrefixRes.valid, false);
+    assert.ok(wrongPrefixRes.error.includes("Invalid image format"));
+
+    const notDataUriRes = validateBase64Photo("just_some_random_string");
+    assert.strictEqual(notDataUriRes.valid, false);
+    assert.ok(notDataUriRes.error.includes("Invalid image format"));
+
+    // C. Garbage base64 input (invalid characters)
+    const garbageRes = validateBase64Photo("data:image/png;base64,!!!NotBase64Chars@@@");
+    assert.strictEqual(garbageRes.valid, false);
+    assert.ok(garbageRes.error.includes("corrupted or contains invalid base64"));
+
+    // D. Oversized string input (>450k chars)
+    const oversizedString = "data:image/png;base64," + "A".repeat(450005);
+    const oversizedRes = validateBase64Photo(oversizedString);
+    assert.strictEqual(oversizedRes.valid, false);
+    assert.ok(oversizedRes.error.includes("maximum allowed payload size"));
+
+    // E. Mismatched magic bytes
+    const mismatchedRes = validateBase64Photo("data:image/png;base64,VGhpcyBpcyBub3QgYSBwbmcgaW1hZ2UgZGF0YQ==");
+    assert.strictEqual(mismatchedRes.valid, false);
+    assert.ok(mismatchedRes.error.includes("does not match the declared file type"));
+
+    // F. Valid 1x1 PNG
+    const validPng = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+    const validRes = validateBase64Photo(validPng);
+    assert.strictEqual(validRes.valid, true);
+    assert.strictEqual(validRes.mime, "image/png");
+    console.log("   ✓ Strict photo validation correctly rejects garbage, oversized, and wrong prefixes before decoding.");
+
     console.log("\n=================================================");
-    console.log("ALL 10 SECURITY FIX REGRESSION TESTS PASSED (100%)");
+    console.log("ALL 11 SECURITY FIX REGRESSION TESTS PASSED (100%)");
     console.log("=================================================\n");
   } finally {
     await teardown();

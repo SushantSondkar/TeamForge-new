@@ -60,7 +60,7 @@ function computeLeaderboardScore(user) {
  * Tie-breakers: raw wins -> shortlists -> completeness -> name
  */
 async function computeLeaderboard() {
-  const users = await User.find({ isProfileHidden: { $ne: true } });
+  const users = await User.find({ isProfileHidden: { $ne: true } }).select("-profilePic");
 
   const leaderboard = users.map(user => {
     const { score, reputation, activity, breakdown } = computeLeaderboardScore(user);
