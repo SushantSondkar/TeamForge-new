@@ -37,13 +37,34 @@ const connectDB = async () => {
       }
 
       const maskedUri = mongoURI.replace(/\/\/([^:]+):([^@]+)@/, "//$1:****@");
+      const connectOptions = {
+        serverSelectionTimeoutMS: 5000
+      };
+      // If URI path lacks database name (e.g. ends in .mongodb.net/), default to teamforge
+      if (process.env.MONGODB_DB_NAME) {
+        connectOptions.dbName = process.env.MONGODB_DB_NAME;
+      } else {
+        try {
+          const parsed = new URL(mongoURI.replace(/^mongodb(\+srv)?:\/\//, "http://"));
+          const pathname = (parsed.pathname || "").replace(/^\//, "").trim();
+          if (!pathname) {
+            connectOptions.dbName = "teamforge";
+          }
+        } catch (_) {}
+      }
+
       try {
-        await mongoose.connect(mongoURI, {
-          serverSelectionTimeoutMS: 5000
-        });
+        await mongoose.connect(mongoURI, connectOptions);
         console.log(`MongoDB connected successfully via MONGODB_URI (${maskedUri})`);
       } catch (error) {
         console.error(`FATAL: Failed to connect to MongoDB (${maskedUri}): ${error.message}`);
+        if (error.message.includes("bad auth") || error.message.includes("Authentication failed")) {
+          console.error("\n💡 TROUBLESHOOTING MONGODB AUTHENTICATION FAILURE:");
+          console.error("1. Check Atlas Database Access: Ensure the username matches exactly and the password is correct.");
+          console.error("2. If your password contains special characters (@, :, #, %, ?, etc.), URL-encode them (e.g. @ -> %40).");
+          console.error("3. Ensure the Atlas Database User has 'Read and write to any database' privilege.");
+          console.error("4. Check Atlas Network Access: Ensure '0.0.0.0/0' (Allow access from anywhere) is configured.\n");
+        }
         process.exit(1);
       }
     }
