@@ -154,7 +154,7 @@
                                         <span style="font-size: 12px; font-weight: 700; color: #15803d; background: #dcfce7; padding: 1px 6px; border-radius: 4px;">
                                             <%= cand.score %>% Match
                                         </span>
-                                        <% if (cand.user.isGithubVerified) { %>
+                                        <% if (cand.user.isGithubVerified && cand.user.githubId) { %>
                                             <span style="font-size: 10px; background: #0f172a; color: #38bdf8; padding: 1px 6px; border-radius: 4px; font-weight: 600;">✓ GitHub</span>
                                         <% } %>
                                         <% if (cand.user.isLinkedinLinked) { %>

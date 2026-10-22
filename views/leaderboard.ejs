@@ -133,7 +133,7 @@
                                         <%= entry.user.name %>
                                     </div>
                                     <div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center;">
-                                        <% if (entry.user.isGithubVerified) { %>
+                                        <% if (entry.user.isGithubVerified && entry.user.githubId) { %>
                                             <span style="background: #f0fdf4; color: #166534; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 12px; border: 1px solid #bbf7d0; display: inline-flex; align-items: center; gap: 4px;">
                                                 ✓ GitHub Verified
                                             </span>

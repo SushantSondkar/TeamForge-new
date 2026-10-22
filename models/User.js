@@ -311,7 +311,7 @@ userSchema.virtual("missingFields").get(function() {
 // Tiered Trust Badges getter: honest trust labels, never fake 100% verified
 userSchema.virtual("trustBadges").get(function() {
   const badges = [];
-  if (this.isGithubVerified) {
+  if (this.isGithubVerified && this.githubId) {
     badges.push({
       key: "github",
       label: "GitHub Verified",

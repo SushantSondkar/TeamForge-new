@@ -96,7 +96,7 @@ const credBase = calculateCredibilityTerm(candNoCred);
 assert.strictEqual(credBase.C, 0.30, "Baseline without GitHub or verifiers should be 0.30");
 
 // GitHub verified = 0.30 + 0.40 = 0.70
-const candGithubOnly = { githubVerified: true, skills: [] };
+const candGithubOnly = { githubVerified: true, githubId: "gh-oauth-1", skills: [] };
 const credGithub = calculateCredibilityTerm(candGithubOnly);
 assert.strictEqual(credGithub.C, 0.70, "GitHub verified adds 0.40");
 
@@ -105,6 +105,7 @@ assert.strictEqual(credGithub.C, 0.70, "GitHub verified adds 0.40");
 // Total C = 0.30 + 0.40 + (0.30 * 0.6667) = 0.70 + 0.20 = 0.90
 const candPeer = {
   githubVerified: true,
+  githubId: "gh-oauth-2",
   skills: [
     { name: "React", distinctVerifiers: 3 },
     { name: "Node.js", distinctVerifiers: 1 }
@@ -181,6 +182,7 @@ console.log("7. Testing MatchScore Formula & Breakdown...");
 const perfectCandidate = {
   name: "Perfect Match",
   githubVerified: true,
+  githubId: "gh-oauth-3",
   skills: [
     { name: "React", level: 5, distinctVerifiers: 3 },
     { name: "JavaScript", level: 5, distinctVerifiers: 3 },

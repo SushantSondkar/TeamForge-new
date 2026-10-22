@@ -123,7 +123,7 @@ async function runTests() {
   console.log("6. Testing Tiered Trust Badges System...");
   function generateTrustBadges(candidate) {
     const badges = [];
-    if (candidate.isGithubVerified) {
+    if (candidate.isGithubVerified && candidate.githubId) {
       badges.push({ key: "github", label: "GitHub Verified" });
     }
     if (candidate.isLinkedinLinked) {
@@ -137,6 +137,7 @@ async function runTests() {
 
   const verifiedUser = {
     isGithubVerified: true,
+    githubId: "gh-12345",
     isLinkedinLinked: true,
     portfolio: "https://myportfolio.dev"
   };
@@ -166,8 +167,20 @@ async function runTests() {
   assert.strictEqual(termCUnverified.githubVerified, false);
   assert.strictEqual(Math.round(termCUnverified.C * 100) / 100, 0.30, "Baseline credibility without verification is 0.30");
 
+  // Legacy user test: isGithubVerified: true BUT missing OAuth githubId
+  const legacyCandidateWithoutGithubId = {
+    isGithubVerified: true,
+    github: "legacy-unauthenticated",
+    skills: []
+  };
+  const termCLegacy = calculateCredibilityTerm(legacyCandidateWithoutGithubId);
+  assert.strictEqual(termCLegacy.githubVerified, false, "Candidate with isGithubVerified: true but no githubId must NOT receive verified status in Term C");
+  assert.strictEqual(Math.round(termCLegacy.C * 100) / 100, 0.30, "Candidate without OAuth githubId must NOT receive credibility bonus");
+  console.log("   ✓ Candidate with isGithubVerified: true but no githubId correctly denied credibility bonus.");
+
   const verifiedCandidate = {
     isGithubVerified: true,
+    githubId: "gh-998877",
     github: "kkwagh-dev",
     skills: []
   };
@@ -175,7 +188,7 @@ async function runTests() {
   assert.strictEqual(termCVerified.githubVerified, true);
   // Formula: 0.30 + 0.40 * 1 = 0.70
   assert.strictEqual(Math.round(termCVerified.C * 100) / 100, 0.70, "GitHub verified candidate receives 0.70 credibility");
-  console.log("   ✓ Verified GitHub correctly elevates Term C credibility (+0.40).");
+  console.log("   ✓ Verified GitHub with valid githubId correctly elevates Term C credibility (+0.40).");
 
   // -------------------------------------------------------------
   // Test 8: Stubbed GitHub HTTP Calls (Injected Fake Fetch)

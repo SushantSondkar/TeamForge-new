@@ -108,7 +108,10 @@ classManifest.forEach(item => {
     passCount++;
 });
 
+const totalChecks = classManifest.length;
+assert.strictEqual(passCount, totalChecks, `Expected ${totalChecks} checks to pass, but passed ${passCount}`);
+
 console.log(`\n=================================================`);
-console.log(`ALL ${passCount} CSS CLASS RULES VERIFIED SUCCESSFULLY (100%)`);
+console.log(`ALL ${passCount} OF ${totalChecks} CSS CLASS RULES VERIFIED SUCCESSFULLY (100%)`);
 console.log('=================================================\n');
 process.exit(0);
