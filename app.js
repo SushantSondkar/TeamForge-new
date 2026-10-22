@@ -104,8 +104,8 @@ app.use("/images", express.static(path.join(__dirname, "public", "images"), {
 app.use(express.static(path.join(__dirname, "public")));
 
 // Request Parsers
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 // Cookie Parser (CSRF dependency)
 const cookieSecret = (process.env.COOKIE_SECRET || process.env.SESSION_SECRET || "teamforge-cookie-secret-32-chars!").slice(0, 32).padEnd(32, "x");

@@ -363,10 +363,12 @@ router.post("/profile/edit", requireLogin, async (req, res) => {
       emailNotifications,
       skills,
       projectsRaw,
-      pastHackathonsRaw
+      pastHackathonsRaw,
+      profilePic
     } = req.body;
 
     if (name && name.trim()) user.name = name.trim();
+    if (profilePic !== undefined) user.profilePic = profilePic.trim();
     if (role && role.trim()) user.role = role.trim();
     if (department !== undefined) {
       const cleanDept = department.trim();

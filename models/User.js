@@ -22,6 +22,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: "Candidate"
   },
+  profilePic: {
+    type: String,
+    default: ""
+  },
   department: {
     type: String,
     default: ""

@@ -20,6 +20,56 @@
         <form action="/profile/edit" method="POST" style="display: flex; flex-direction: column; gap: 20px;">
             <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
             
+            <!-- Profile Photo Section -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; display: flex; align-items: center; gap: 24px; flex-wrap: wrap;">
+                <div style="position: relative; width: 92px; height: 92px; flex-shrink: 0;">
+                    <img id="avatarPreview"
+                         src="<%= (currentUser && currentUser.profilePic) ? currentUser.profilePic : 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\'%3E%3Ccircle cx=\'12\' cy=\'12\' r=\'12\' fill=\'%23e2e8f0\'/%3E%3Cpath d=\'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z\' fill=\'%239ca3af\'/%3E%3C/svg%3E' %>"
+                         alt="Profile Avatar"
+                         style="width: 92px; height: 92px; border-radius: 50%; object-fit: cover; border: 3px solid #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.08); background: #f1f5f9;">
+                </div>
+
+                <div style="flex: 1; min-width: 260px;">
+                    <label style="display: block; font-size: 13.5px; font-weight: 700; color: #0f172a; margin-bottom: 4px;">Profile Photo</label>
+                    <p style="font-size: 12.5px; color: #64748b; margin: 0 0 12px 0;">Upload a picture from your device or paste an image URL.</p>
+
+                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <input type="file" id="avatarFileInput" accept="image/png, image/jpeg, image/jpg, image/webp, image/gif" style="display: none;">
+                        <button type="button" onclick="document.getElementById('avatarFileInput').click()"
+                                style="background: #2563eb; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                            Choose Photo
+                        </button>
+
+                        <% 
+                            const ghUser = (currentUser && (currentUser.githubUsername || currentUser.github)) ? (currentUser.githubUsername || currentUser.github).replace(/https?:\/\/github\.com\//, '').replace(/\/$/, '') : '';
+                        %>
+                        <% if (ghUser) { %>
+                            <button type="button" onclick="setGithubAvatar('<%= ghUser %>')"
+                                    style="background: #0f172a; color: #38bdf8; border: 1px solid #1e293b; padding: 8px 14px; border-radius: 6px; font-size: 12.5px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+                                Use GitHub Avatar
+                            </button>
+                        <% } %>
+
+                        <button type="button" id="removePhotoBtn" onclick="removePhoto()"
+                                style="background: white; color: #ef4444; border: 1px solid #fca5a5; padding: 8px 14px; border-radius: 6px; font-size: 12.5px; font-weight: 500; cursor: pointer; display: <%= (currentUser && currentUser.profilePic) ? 'inline-flex' : 'none' %>; align-items: center; gap: 5px;">
+                            ✕ Remove
+                        </button>
+                    </div>
+
+                    <div style="margin-top: 10px;">
+                        <input type="text" id="avatarUrlInput" placeholder="Or paste an image URL (https://...)"
+                               value="<%= (currentUser && currentUser.profilePic && !currentUser.profilePic.startsWith('data:')) ? currentUser.profilePic : '' %>"
+                               style="width: 100%; box-sizing: border-box; padding: 7px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 12.5px; color: #334155;"
+                               oninput="handleUrlInput(this.value)">
+                    </div>
+
+                    <input type="hidden" name="profilePic" id="profilePicInput" value="<%= currentUser ? (currentUser.profilePic || '') : '' %>">
+                    <span id="avatarSizeError" style="display: none; font-size: 11.5px; color: #dc2626; margin-top: 4px;">Photo exceeds 5MB limit. Please choose a smaller file.</span>
+                </div>
+            </div>
+            
             <!-- Basic Details -->
             <div class="form-grid-2">
                 <div>
@@ -196,4 +246,65 @@
         </form>
     </div>
 
+    <script>
+        (function() {
+            const defaultAvatar = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='12' fill='%23e2e8f0'/%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z' fill='%239ca3af'/%3E%3C/svg%3E";
+            const avatarFileInput = document.getElementById('avatarFileInput');
+            const avatarPreview = document.getElementById('avatarPreview');
+            const profilePicInput = document.getElementById('profilePicInput');
+            const avatarUrlInput = document.getElementById('avatarUrlInput');
+            const removePhotoBtn = document.getElementById('removePhotoBtn');
+            const avatarSizeError = document.getElementById('avatarSizeError');
+
+            if (avatarFileInput) {
+                avatarFileInput.addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    if (!file) return;
+
+                    if (file.size > 5 * 1024 * 1024) {
+                        if (avatarSizeError) avatarSizeError.style.display = 'block';
+                        return;
+                    }
+                    if (avatarSizeError) avatarSizeError.style.display = 'none';
+
+                    const reader = new FileReader();
+                    reader.onload = function(evt) {
+                        const dataUrl = evt.target.result;
+                        if (avatarPreview) avatarPreview.src = dataUrl;
+                        if (profilePicInput) profilePicInput.value = dataUrl;
+                        if (avatarUrlInput) avatarUrlInput.value = "";
+                        if (removePhotoBtn) removePhotoBtn.style.display = 'inline-flex';
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            window.handleUrlInput = function(url) {
+                const clean = (url || '').trim();
+                if (clean) {
+                    if (avatarPreview) avatarPreview.src = clean;
+                    if (profilePicInput) profilePicInput.value = clean;
+                    if (removePhotoBtn) removePhotoBtn.style.display = 'inline-flex';
+                } else {
+                    window.removePhoto();
+                }
+            };
+
+            window.setGithubAvatar = function(username) {
+                const url = "https://github.com/" + username + ".png?size=200";
+                if (avatarPreview) avatarPreview.src = url;
+                if (profilePicInput) profilePicInput.value = url;
+                if (avatarUrlInput) avatarUrlInput.value = url;
+                if (removePhotoBtn) removePhotoBtn.style.display = 'inline-flex';
+            };
+
+            window.removePhoto = function() {
+                if (avatarPreview) avatarPreview.src = defaultAvatar;
+                if (profilePicInput) profilePicInput.value = "";
+                if (avatarUrlInput) avatarUrlInput.value = "";
+                if (avatarFileInput) avatarFileInput.value = "";
+                if (removePhotoBtn) removePhotoBtn.style.display = 'none';
+            };
+        })();
+    </script>
 </div>
