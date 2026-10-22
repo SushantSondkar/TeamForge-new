@@ -8,7 +8,7 @@ TeamForge connects student developers, designers, and project leads for hackatho
 
 ## 🚀 Key Features
 
-- **Algorithmic Compatibility Scoring**: Multi-dimensional candidate matching based on required/preferred technical skills, experience levels, availability, and reputation score with a deterministic 5-stage tie-breaker.
+- **Algorithmic Compatibility Scoring**: Multi-dimensional candidate matching based on required/preferred technical skills, experience levels, availability, and reputation score: $\text{MatchScore} = \text{round}(100 \times (0.40 \cdot S + 0.25 \cdot C + 0.20 \cdot R + 0.10 \cdot A + 0.05 \cdot T))$ with a deterministic 5-stage tie-breaker and campus leaderboard scored as $70\% \text{ Reputation} + 30\% \text{ Activity Recency}$.
 - **Unified Action State Machine**: Safe, transactional lifecycle (`PENDING` → `ACCEPTED` → `LOCKED` or `DECLINED` / `EXPIRED`) for invitations and applications with 24-hour mutual confirmation locking and event-scoped concurrency guards.
 - **Background Cron Scheduler**: Distributed atomic MongoDB locking (`jobs` collection) running every 10 minutes to process reminders, expiries, and confirmation timeouts safely without duplicate processing across server instances.
 - **Smart Notification Digests**: In-app unread badges (desktop navbar, mobile drawer, and sidebar) paired with 5-minute rolling window batched transactional email digests.
@@ -91,7 +91,7 @@ npm test
 1. `validateEnv.test.js`: Production environment validation, secret length & zero-leak checks.
 2. `matchingEngine.test.js`: Algorithmic scoring, skill level weighting, and 5-stage tie-breaker logic.
 3. `phase5StateMachine.test.js`: Action lifecycle, mutual confirmation, and event-locking.
-4. `phase6GithubVerification.test.js`: GitHub/LinkedIn profile link extraction and verification.
+4. `phase6GithubVerification.test.js`: GitHub/LinkedIn profile link extraction, REST sync, and verification.
 5. `phase7PostEventReviews.test.js`: Double-blind review submission, peer endorsements, and reputation.
 6. `phase8Leaderboard.test.js`: Department, year, and skill leaderboard rankings.
 7. `mailer.test.js`: Email masking, SMTP integration, and email template link generation.
@@ -101,6 +101,10 @@ npm test
 11. `scheduler.test.js`: Background cron scheduler, MongoDB distributed locks, and reminder idempotency.
 12. `branding.test.js`: Brand asset presence, web manifest, favicon metadata, and Open Graph tags.
 13. `phase10eSmallGaps.test.js`: Notification batching, unread count badges, 404/500 error pages, and missing fields guide.
+14. `phase11bPilotKit.test.js`: Feedback model, live platform telemetry, formula injection defense, and announcement banner.
+15. `walkthrough.test.js`: 16-step complete end-to-end platform walkthrough test suite.
+16. `raceAndNegative.test.js`: 5c concurrency race conditions on final openings & 5d negative validation test suites.
+17. `appSmoke.test.js`: Express server boot, route loading, healthz probes, and unauthenticated endpoint guards.
 
 Audit secrets hygiene:
 ```bash
@@ -142,12 +146,20 @@ npm run check-secrets
 ```text
 TeamForge/
 ├── app.js                   # Application entry point & Express configuration
+├── index.js                 # Production process launcher (alias to app.js)
+├── start.js                 # Container startup entry point (alias to app.js)
 ├── models/                  # Mongoose data schemas & business logic
 │   ├── User.js              # Student profiles, skills, verification & completeness
 │   ├── TeamRequirement.js   # Open hackathon team roles & skill specifications
 │   ├── TeamRequestAction.js # Unified invitation/application state machine
 │   ├── Event.js             # Campus hackathon events & registration deadlines
 │   ├── TeamReview.js        # Double-blind peer reviews & skill endorsements
+│   ├── Notification.js      # Persistent user notification records
+│   ├── Feedback.js          # User platform feedback & star ratings
+│   ├── Announcement.js      # Pinned event-day dashboard announcement banners
+│   ├── Shortlist.js         # Saved candidate shortlists by team leaders
+│   ├── SuccessStory.js      # Verified team success stories
+│   ├── Job.js               # Distributed MongoDB scheduler lease locks
 │   └── db.js                # Database connection manager & lifecycle
 ├── routes/                  # Express route handlers
 │   ├── index.js             # Core navigation, dashboard, discover & profile routes
@@ -155,25 +167,42 @@ TeamForge/
 │   ├── invites.js           # Team invitation management & actions
 │   ├── applications.js      # Candidate role applications
 │   ├── events.js            # Hackathon event creation & management
-│   └── admin.js             # Campus organizer review & administration
+│   ├── admin.js             # Campus organizer review, telemetry & administration
+│   ├── feedback.js          # User feedback submission
+│   ├── leaderboard.js       # Campus leaderboard views & filtering
+│   ├── organizers.js        # Club organizer applications & approval
+│   ├── reviews.js           # Double-blind post-event reviews & endorsements
+│   └── teamRequirements.js  # Multi-step team requirement wizard
+├── middleware/              # Express middleware guards
+│   ├── auth.js              # Session-based authentication & privilege guards
+│   └── rateLimiters.js      # Endpoint-specific brute-force rate limiters
 ├── utils/                   # Shared utility modules
-│   ├── matchingEngine.js    # Algorithmic candidate compatibility scoring
+│   ├── matchScore.js        # Algorithmic candidate compatibility scoring engine
+│   ├── recommendations.js   # Recommendation query builder & discover search
+│   ├── dateUtils.js         # Centralized Asia/Kolkata date & time formatter
 │   ├── actionStateMachine.js# State machine transitions & notification batcher
-│   ├── scheduler.js         # Distributed background cron runner
+│   ├── leaderboardService.js# Daily reputation rankings & tie-breakers
+│   ├── scheduler.js         # Distributed background cron runner & lease locks
+│   ├── githubService.js     # GitHub OAuth & unauthenticated public REST sync
+│   ├── linkedinService.js   # LinkedIn OAuth profile integration
 │   ├── mailer.js            # SMTP transport & masked recipient logger
 │   ├── emailTemplates.js    # Responsive HTML & text email templates
-│   ├── leaderboardService.js# Daily reputation rankings & tie-breakers
 │   └── validateEnv.js       # Production startup environment validator
 ├── views/                   # EJS interface templates
 │   ├── layouts/             # Master boilerplate layout
 │   ├── includes/            # Navbar, footer, and dashboard sidebar partials
+│   ├── admin/               # Admin telemetry, feedback, stories & banner management
+│   ├── events/              # Event directory and event details views
+│   ├── team-requirement/   # 4-step requirement builder wizard
+│   ├── reviews/             # Peer review submission and listings
+│   ├── applications/        # Incoming candidate application management
 │   ├── 404.ejs              # Friendly not-found page
 │   ├── 500.ejs              # Server error page with report CTA
 │   └── how-it-works.ejs     # 4-step interactive platform guide
 ├── scripts/                 # Operational management CLI scripts
 │   ├── setupAdmin.js        # Provision campus administrators
 │   └── checkSecrets.js      # Audit repository secrets hygiene
-├── tests/                   # Automated unit, integration & regression test suites
+├── tests/                   # 17 automated unit, integration & regression test suites
 ├── public/                  # Static assets (CSS, client JS, brand logos, icons)
 ├── render.yaml              # Render Cloud Blueprint deployment specification
 ├── DEPLOYMENT_CHECKLIST.md  # Step-by-step production rollout guide

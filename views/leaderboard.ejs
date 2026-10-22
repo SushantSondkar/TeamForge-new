@@ -20,7 +20,7 @@
             <div style="font-size: 12.5px; color: #64748b; text-align: right;">
                 <div>Cache Status: <span style="font-weight: 600; color: <%= isCached ? '#15803d' : '#2563eb' %>;"><%= isCached ? 'Cached (24h Daily)' : 'Freshly Computed' %></span></div>
                 <% if (cachedAt) { %>
-                    <div style="font-size: 11.5px; color: #94a3b8;">Updated: <%= new Date(cachedAt).toLocaleString() %></div>
+                    <div style="font-size: 11.5px; color: #64748b;">Updated: <%= formatDateTime(cachedAt) %></div>
                 <% } %>
             </div>
             <a href="/leaderboard?refresh=true<%= filters.branch ? '&branch=' + encodeURIComponent(filters.branch) : '' %><%= filters.year ? '&year=' + encodeURIComponent(filters.year) : '' %><%= filters.skill ? '&skill=' + encodeURIComponent(filters.skill) : '' %>" 

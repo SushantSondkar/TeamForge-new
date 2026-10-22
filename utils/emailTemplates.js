@@ -6,6 +6,8 @@
  * and accessible plain-text fallbacks.
  */
 
+const { formatDate, formatDateTime, formatTime } = require("./dateUtils");
+
 /**
  * Retrieve sanitized base application URL from environment.
  * Defaults to http://localhost:8080 if APP_BASE_URL is not set.
@@ -496,7 +498,10 @@ module.exports = {
   actionClosingSoon,
   actionExpired,
   confirmationTimeout,
-  notificationEmail
+  notificationEmail,
+  formatDate,
+  formatDateTime,
+  formatTime
 };
 
 

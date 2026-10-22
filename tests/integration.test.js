@@ -153,6 +153,13 @@ async function runTests() {
     assert.ok(duplicateUser !== null, "Duplicate check detects existing account");
     console.log("   ✓ Duplicate institutional email detection verified.");
 
+    // Unified password policy test for signup & reset (min 8 chars, >=1 letter, >=1 number)
+    assert.strictEqual(isValidPasswordPolicy("short7"), false, "Signup password < 8 characters must fail");
+    assert.strictEqual(isValidPasswordPolicy("allletters"), false, "Signup password without numbers must fail");
+    assert.strictEqual(isValidPasswordPolicy("12345678"), false, "Signup password without letters must fail");
+    assert.strictEqual(isValidPasswordPolicy("ValidPass1"), true, "Signup password with 8+ chars, letters and numbers must pass");
+    console.log("   ✓ Unified password policy (8+ chars, letter and number) verified on signup.");
+
     // -------------------------------------------------------------
     // PHASE 9B: EMAIL VERIFICATION, DOMAIN RULES & TOKEN HASHING
     // -------------------------------------------------------------

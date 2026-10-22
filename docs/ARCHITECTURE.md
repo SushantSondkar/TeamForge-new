@@ -17,33 +17,42 @@ Represents student and administrator profiles.
 * `name` (String, required): Student full name.
 * `email` (String, required, unique, lowercase): Institutional email ending with `@kkwagh.edu.in`.
 * `password` (String, required): bcrypt-hashed password (salt rounds: 10).
-* `department` (String, enum): Engineering department (e.g., Computer, IT, AI & DS, E&TC).
-* `year` (String, enum): Academic year (FE, SE, TE, BE).
-* `skills` (Array of objects): `[{ name: String, level: Number (1-5), verified: Boolean, verificationsCount: Number }]`.
+* `role` (String, default: "Candidate"): User role.
+* `department` (String): Engineering department (e.g., Computer Engineering, Information Technology, AI & Data Science).
+* `year` (String): Academic year (FE, SE, TE, BE).
 * `bio` (String): Student background and technical goals.
-* `availability` (String, enum): `Immediate`, `Flexible`, `Weekends Only`, `Not Available`.
-* `portfolioUrl` (String): URL to student portfolio or personal website.
-* `contact` (Object): `{ email: String, phone: String, linkedin: String, discord: String }`.
-* `contactConsent` (Boolean): Master toggle for sharing contact details with locked teammates.
+* `profilePic` / `avatar` / `photo` (String): Base64 data URL profile photo string.
+* `skills` (Array of objects): `[{ name: String, level: Number (1-5), distinctVerifiers: Number, verifiedBy: [ObjectId -> User] }]`.
+* `projects` (Array of objects): `[{ title: String, description: String, link: String, techStack: String }]`.
+* `pastHackathons` (Array of objects): `[{ name: String, year: String, projectTitle: String, role: String, placement: String }]`.
+* `availability` (Number, 0.0 - 1.0): Candidate availability status: `1.0` = Free, `0.5` = Partly free, `0.0` = Busy/Not available.
+* `portfolio` (String): URL to student portfolio or personal website.
+* `linkedin` (String): LinkedIn username or profile URL.
+* `isLinkedinLinked` (Boolean): Flag indicating linked LinkedIn account.
+* `linkedinId` (String): LinkedIn member ID.
 * `isProfileHidden` (Boolean): User privacy toggle to hide profile from discover and leaderboard.
 * `emailNotifications` (Boolean): User toggle for email delivery of platform notifications.
 * `isEmailVerified` (Boolean): Institutional email verification flag.
-* `verificationToken` (String, hashed): One-time verification token.
-* `verificationExpires` (Date): Verification token expiry (24 hours).
+* `emailVerificationToken` (String, hashed): One-time verification token.
+* `emailVerificationExpires` (Date): Verification token expiry (24 hours).
 * `resetPasswordToken` (String, hashed): Forgot-password token.
-* `resetPasswordExpires` (Date): Password reset token expiry (1 hour).
-* `isGithubVerified` (Boolean): Flag indicating linked GitHub account.
-* `githubUsername` (String): GitHub profile handle.
-* `githubData` (Object): Synced public statistics (`publicRepos`, `followers`, `totalStars`, `topLanguages`, `lastSyncedAt`). Notice: OAuth tokens are strictly excluded from storage.
-* `lockedEvents` (Array of Strings): Event IDs or project keys where the candidate is committed to a locked team.
+* `resetPasswordExpires` (Date): Password reset token expiry (30 minutes).
+* `passwordChangedAt` (Date): Timestamp when password was last updated.
+* `isGithubVerified` (Boolean): Flag indicating verified GitHub account.
+* `githubId` (String): GitHub user ID.
+* `githubUsername` / `github` (String): GitHub profile handle.
+* `githubData` (Object): Synced public statistics: `{ reposCount: Number, totalCommits: Number, languages: [String], topRepos: [{ name, html_url, description, stargazers_count, language, updated_at }], cachedAt: Date, rateLimitedUntil: Date }`. Zero token persistence.
+* `lockedEvents` (Array of Strings): Event IDs where candidate is committed to a locked team.
+* `credibility` (Number, 0.0 - 1.0): Candidate credibility term ($C$).
 * `teammateRating` (Number, 0.0 - 1.0): Aggregate peer rating normalized from 5-star reviews.
 * `reviewCount` (Number): Number of revealed post-event peer reviews.
-* `hackathonsWon` (Number): Verified wins count.
-* `shortlistCount` (Number): Number of times shortlisted by team leads.
+* `competitionWins` (Number): Verified wins count.
+* `uniqueShortlisters` (Number): Number of unique team leads who shortlisted this candidate.
 * `isAdmin` (Boolean): Campus administrator privilege flag.
 * `isOrganizer` (Boolean): Student club or hackathon organizer privilege flag.
 * `organizerStatus` (String, enum): `NONE`, `PENDING`, `APPROVED`, `REJECTED`.
 * `organizationName` (String): Campus club / council name for organizers.
+* `organizerReason` (String): Statement of intent submitted for organizer status.
 * `lastActive` (Date): Timestamp of most recent user interaction.
 
 ### `events`
@@ -55,7 +64,6 @@ Campus hackathons and engineering competitions.
 * `mode` (String, enum): `Online`, `Offline`, `Hybrid`.
 * `link` (String): Official competition link.
 * `description` (String): Event details, problem tracks, and eligibility.
-* `minTeamSize` / `maxTeamSize` (Number): Team member boundary limits.
 * `isPromoted` (Boolean): Pinned spotlight banner flag.
 * `promotedTagline` (String): Subtitle for featured events.
 * `prizePool` (String): Competition prize pool description.
@@ -225,27 +233,51 @@ stateDiagram-v2
 
 ---
 
-## 5. Candidate Matching Engine & Formula
+## 5. Candidate Matching Engine & Leaderboard Formulas
 
-The matching engine (`utils/recommendations.js`) scores and ranks candidates for a given role:
+### Candidate MatchScore Engine (`utils/matchScore.js`)
 
-$$\text{MatchScore} = (0.50 \times S) + (0.20 \times P) + (0.15 \times A) + (0.15 \times R)$$
+The matching engine scores and ranks candidates for a given team opening:
+
+$$\text{MatchScore} = \text{round}(100 \times (0.40 \cdot S + 0.25 \cdot C + 0.20 \cdot R + 0.10 \cdot A + 0.05 \cdot T))$$
 
 Where:
-* **Skill Overlap Score ($S \in [0, 1]$)**:
-  $$S = \frac{|\text{UserSkills} \cap \text{RequiredSkills}|}{|\text{RequiredSkills}|}$$
-  Plus a bonus of $+0.1$ for each matched preferred skill (normalized to a maximum of $1.0$).
-* **Proficiency Match ($P \in [0, 1]$)**:
-  Evaluates candidate skill levels against the target proficiency (`Intermediate` = 2, `Advanced` = 3, `Expert` = 4). Candidates meeting or exceeding the target receive $1.0$; lower proficiencies receive fractional credit ($0.66$ or $0.33$).
-* **Availability Match ($A \in [0, 1]$)**:
-  * `Immediate`: $1.0$
-  * `Flexible`: $0.8$
-  * `Weekends Only`: $0.5$
-  * `Not Available`: $0.0$
-* **Reputation & Verification Score ($R \in [0, 1]$)**:
-  Weighted combination of peer-reviewed rating (`teammateRating` $\times 0.6$), GitHub verification status ($+0.2$), and institutional verification ($+0.2$).
-* **Tie-Breaker**:
-  When candidates have equal MatchScores, the candidate with the higher **Profile Completeness Percentage** is ranked first.
+* **Skill Match Term ($S \in [0, 1]$)**:
+  * For each required skill: $\min(1, \text{candidateLevel} / \text{targetLevel})$, where proficiency targets are `Intermediate` = 3, `Advanced` = 4, `Expert` = 5 (missing required skills score 0).
+  * Averaged across all required skills.
+  * Preferred skill bonus: $+0.05$ per matched preferred skill up to a maximum bonus of $+0.10$ (capped at $1.0$).
+  * **Hard Qualification Filter**: Candidates appear in recommendations and search results **only** if they cover at least $50\%$ of the required skills (`minRequiredSkillCoverage = 0.50`).
+* **Credibility Term ($C \in [0, 1]$)**:
+  $$C = 0.30 + 0.40 \cdot (\text{isGithubVerified}) + 0.30 \cdot \text{peerShare}$$
+  Where $\text{peerShare}$ is the candidate's average over claimed skills of $\min(1, \text{distinctVerifiers} / 3)$. Derived dynamically on calculation.
+* **Reputation Term ($R \in [0, 1]$)**:
+  $$R = 0.40 \cdot W + 0.40 \cdot Q + 0.20 \cdot H$$
+  * $W = \text{win points} / 5$ (college win = 1, state win = 2, national win = 3, capped at 1.0).
+  * $Q = \text{average review rating} / 5.0$ (from double-blind teammate reviews; defaults to neutral 0.5 if unreviewed).
+  * $H = \min(1, \text{uniqueShortlisters} / 10)$.
+  * Missing reputation components default to neutral 0.5.
+* **Availability Term ($A \in [0, 1]$)**:
+  * Excluded (scores 0.0 / filtered) if the candidate is locked for this specific competition event or if `isProfileHidden` is enabled.
+  * Otherwise evaluated directly from `user.availability`: `1.0` = Free, `0.5` = Partly free, `0.0` = Busy.
+* **Activity Recency Term ($T \in [0, 1]$)**:
+  * Last active within $\le 7$ days: $1.0$
+  * Last active within $\le 30$ days: $0.6$
+  * Inactive $> 30$ days: $0.2$
+
+### Campus Leaderboard Formula (`utils/leaderboardService.js`)
+
+The campus leaderboard scores students across 24-hour cached snapshots:
+
+$$\text{LeaderboardScore} = \text{round}(100 \times (0.70 \cdot \text{Reputation} + 0.30 \cdot \text{Activity Recency}))$$
+
+* **Reputation Component**: $R = 0.40 \cdot W + 0.40 \cdot Q + 0.20 \cdot H$ (reputation term from matching engine).
+* **Activity Recency Component**: $T = 1.0$ ($\le 7$d), $0.6$ ($\le 30$d), $0.2$ ($> 30$d).
+* **5-Stage Deterministic Tie-Breaker**:
+  1. Highest Leaderboard Score
+  2. Highest Raw Hackathon Win Points ($W$)
+  3. Highest Unique Shortlist Count ($H$)
+  4. Highest Profile Completeness Percentage
+  5. Alphabetical by Student Name
 
 ---
 
@@ -255,10 +287,10 @@ Where:
    * Restricted registration strictly requiring `@kkwagh.edu.in` email addresses.
    * Cryptographically secure SHA-256 hashed one-time verification tokens sent via institutional SMTP.
 2. **GitHub Activity Verification**:
-   * OAuth linkage synchronizing public activity (repositories, total stars, top languages, follower count).
-   * **Zero Token Persistence**: Access tokens are utilized only in-memory during sync and are immediately discarded. No access tokens are ever written to the database.
+   * **OAuth Linkage (`GET /auth/github` -> `GET /auth/github/callback`)**: Exchanges authorization code for an ephemeral OAuth token in-memory, verifies user identity, pulls public repositories, commit counts, and language distribution, and sets `isGithubVerified = true`. **Zero Token Persistence**: Access tokens are never stored in the database.
+   * **Public REST API Fallback (`POST /auth/github/verify`)**: Allows students to submit a public GitHub username (or profile URL). The server queries GitHub's unauthenticated public REST API (`api.github.com/users/:username` and `/repos`). If the profile exists, public statistics are synced and `isGithubVerified = true` is set. *Note*: This public REST API path verifies account existence and pulls public activity, but does not prove account ownership as no OAuth handshake or password login is required.
 3. **Post-Event Double-Blind Reviews**:
-   * Teammates locked into an event evaluate each other after the event date passes.
+   * Teammates locked into an event evaluate each other after the event date passes (`routes/reviews.js`).
    * Reviews remain hidden until both teammates submit their reviews, preventing retaliatory scores.
    * Endorsed skills increment the candidate's verified skill count on their profile.
 4. **Privacy and Safety Controls**:

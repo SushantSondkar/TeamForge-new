@@ -50,7 +50,7 @@
                                 <strong style="font-size: 16px; color: #1e293b;"><%= app.applicantId ? app.applicantId.name : 'Unknown Candidate' %></strong>
                                 <div class="item-meta-row" style="margin-top: 4px; display: flex; align-items: center; gap: 10px;">
                                     <span class="tag tag-blue"><%= app.role %></span>
-                                    <span class="text-gray" style="font-size: 13px;">Applied on <%= new Date(app.createdAt).toLocaleDateString() %></span>
+                                    <span class="text-gray" style="font-size: 13px;">Applied on <%= formatDate(app.createdAt) %></span>
                                 </div>
                                 <% if (app.applicantId && app.applicantId.skills) { %>
                                     <div style="margin-top: 6px; font-size: 12px; color: #64748b;">

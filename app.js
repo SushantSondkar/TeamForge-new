@@ -43,6 +43,7 @@ const feedbackRoutes = require("./routes/feedback");
 const Announcement = require("./models/Announcement");
 
 const { startScheduler } = require("./utils/scheduler");
+const { formatDate, formatDateTime, formatTime } = require("./utils/dateUtils");
 
 // Connect to Database and start scheduled daemon
 connectDB().then(() => {
@@ -184,6 +185,9 @@ app.use(async (req, res, next) => {
   res.locals.appBaseUrl = (process.env.APP_BASE_URL || "http://localhost:8080").replace(/\/+$/, "");
   res.locals.currentPath = req.path || "";
   res.locals.supportEmail = (process.env.SUPPORT_EMAIL && process.env.SUPPORT_EMAIL.trim()) ? process.env.SUPPORT_EMAIL.trim() : null;
+  res.locals.formatDate = formatDate;
+  res.locals.formatDateTime = formatDateTime;
+  res.locals.formatTime = formatTime;
 
   // Active Pinned Announcement for Dashboard (Event-Day Banner)
   try {

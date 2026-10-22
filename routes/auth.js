@@ -209,9 +209,9 @@ router.post("/signup", authLimiter, async (req, res) => {
       });
     }
 
-    if (password.length < 6) {
+    if (!isValidPasswordPolicy(password)) {
       return res.render("signup", {
-        error: "Password must be at least 6 characters long.",
+        error: "Password must be at least 8 characters long and contain at least one letter and one number.",
         success: null,
         formData,
         allowedDomain

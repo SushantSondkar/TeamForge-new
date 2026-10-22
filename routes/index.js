@@ -15,6 +15,7 @@ const {
   searchTeamRequirements,
   getAvailableFilterOptions
 } = require('../utils/recommendations');
+const { formatDateTime } = require('../utils/dateUtils');
 const requireLogin = require('../middleware/auth');
 
 const ALLOWED_DEPARTMENTS = [
@@ -300,7 +301,7 @@ router.get("/notifications", requireLogin, async (req, res) => {
       _id: n._id,
       title: n.title,
       subtitle: n.subtitle,
-      time: new Date(n.createdAt).toLocaleDateString() + ' ' + new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      time: formatDateTime(n.createdAt),
       type: n.type,
       link: n.link || "/",
       read: n.read

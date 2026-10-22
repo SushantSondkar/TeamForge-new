@@ -121,16 +121,7 @@
                                         <div>
                                             <span class="stat-label-mini">Project Deadline</span>
                                             <span class="stat-value-mini">
-                                                <% 
-                                                    let displayDate = teamData.deadline || '';
-                                                    try {
-                                                        const d = new Date(teamData.deadline);
-                                                        if (!isNaN(d.getTime())) {
-                                                            displayDate = d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-                                                        }
-                                                    } catch(e) {}
-                                                %>
-                                                <%= displayDate %>
+                                                <%= formatDate(teamData.deadline, { month: 'long' }) || teamData.deadline || '' %>
                                             </span>
                                         </div>
                                     </div>

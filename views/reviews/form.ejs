@@ -16,7 +16,7 @@
                 <h1 style="font-size: 22px; font-weight: 700; color: #0f172a; margin: 4px 0 6px 0;"><%= event ? event.name : 'Hackathon Event' %></h1>
                 <p style="color: #64748b; font-size: 13.5px; margin: 0;">
                     Project Team: <strong><%= team ? team.projectName : 'Collaborative Team' %></strong> · 
-                    Event Concluded: <strong><%= event && event.date ? new Date(event.date).toLocaleDateString() : '' %></strong>
+                    Event Concluded: <strong><%= event && event.date ? formatDate(event.date) : '' %></strong>
                 </p>
             </div>
             <div style="display: flex; align-items: center; gap: 10px; background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px 14px; border-radius: 10px;">

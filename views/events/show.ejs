@@ -65,11 +65,11 @@
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; background: #f8fafc; padding: 16px 20px; border-radius: 10px; margin-top: 20px; border: 1px solid #e2e8f0;">
             <div>
                 <span style="color: #64748b; font-size: 12px; font-weight: 600; text-transform: uppercase;">Event Date</span>
-                <div style="color: #0f172a; font-size: 15px; font-weight: 700; margin-top: 2px;"><%= new Date(event.date).toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }) %></div>
+                <div style="color: #0f172a; font-size: 15px; font-weight: 700; margin-top: 2px;"><%= formatDate(event.date, { weekday: 'short' }) %></div>
             </div>
             <div>
                 <span style="color: #64748b; font-size: 12px; font-weight: 600; text-transform: uppercase;">Registration Deadline</span>
-                <div style="color: #b45309; font-size: 15px; font-weight: 700; margin-top: 2px;"><%= new Date(event.deadline).toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }) %></div>
+                <div style="color: #b45309; font-size: 15px; font-weight: 700; margin-top: 2px;"><%= formatDate(event.deadline, { weekday: 'short' }) %></div>
             </div>
             <div>
                 <span style="color: #64748b; font-size: 12px; font-weight: 600; text-transform: uppercase;">Active Teams</span>

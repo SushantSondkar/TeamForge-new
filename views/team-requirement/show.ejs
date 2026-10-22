@@ -30,7 +30,7 @@
 
                 <div style="display: flex; gap: 24px; flex-wrap: wrap; font-size: 13px; color: #475569;">
                     <div><strong>Team Size:</strong> <%= team.teamSize %> members</div>
-                    <div><strong>Deadline:</strong> <%= new Date(team.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %></div>
+                    <div><strong>Deadline:</strong> <%= formatDate(team.deadline) %></div>
                     <% if (team.deliverables) { %>
                         <div><strong>Deliverables:</strong> <%= team.deliverables %></div>
                     <% } %>

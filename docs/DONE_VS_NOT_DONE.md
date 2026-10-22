@@ -16,12 +16,12 @@ This document provides a transparent, rigorous accounting of all implemented fea
 | **Campus Hackathon Event Publishing** | Done | Verified in Test Suite | Event schema, roles, countdown deadlines, and permission guards (Admin & Approved Organizers) verified. |
 | **Team Requirement Wizard** | Done | Verified in Test Suite | 4-step wizard: context, define-team, open-roles, and review steps validated and persisted. |
 | **Candidate Discovery & Skill Search** | Done | Verified in Test Suite | MongoDB compound indexed search with skill, event, and keyword filtering; closed teams (openings = 0) strictly excluded. |
-| **Candidate Matching Engine** | Done | Verified in Test Suite | Multi-factor weighted formula (50% skills, 20% proficiency, 15% availability, 15% reputation/verification, completeness tie-breaker). |
+| **Candidate Matching Engine** | Done | Verified in Test Suite | Multi-factor weighted formula: round(100 * (40% Skill Match + 25% Credibility + 20% Reputation + 10% Availability + 5% Recency)). Candidates must cover >= 50% of required skills. |
 | **Unified Action State Machine** | Done | **Verified (Atomic Concurrency Fixed)** | Symmetric 4-stage lifecycle (`PENDING` -> `ACCEPTED` -> `CONFIRMED` -> `LOCKED`). Atomic `findOneAndUpdate` prevents role double-allocation under race conditions. |
 | **Double-Blind Teammate Reviews** | Done | Verified in Test Suite | Reviews remain concealed until both teammates submit reviews or event deadline passes, preventing retaliatory bias. |
 | **Peer Skill Endorsement System** | Done | Verified in Test Suite | Endorsed skills increment candidate's verified skill counter on profile. |
 | **Mutual Contact Sharing Consent** | Done | Verified in Test Suite | Personal contact details (phone, email, discord) are masked by default; unmasked only when both teammates mutually opt in after locking. |
-| **Campus Leaderboard** | Done | Verified in Test Suite | Dynamic score calculation: peer reputation rating (60%), hackathon wins (25%), active platform participation (15%). |
+| **Campus Leaderboard** | Done | Verified in Test Suite | Dynamic score calculation: round(100 * (70% Reputation + 30% Activity Recency)), where Reputation = 40% wins + 40% review rating + 20% shortlists, with daily caching and 5-stage tie-breaking hierarchy. |
 | **Background Scheduler Daemon** | Done | Verified in Test Suite | 24h reminders, 7d action timeouts, and atomic distributed lock document (`jobs` collection) with `.unref()` clean exit. |
 | **Branding & Social Visual Assets** | Done | Verified in Test Suite | Brand lockup logos, square icon, favicons (16, 32, 180px apple touch), web manifest, Open Graph & Twitter meta tags verified. |
 | **Admin Stats & Telemetry** | Done | Verified in Test Suite | Real-time counts across users, verified credentials, locked matches, and reviews with last 7 days delta. |

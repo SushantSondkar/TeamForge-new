@@ -56,11 +56,11 @@
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #f8fafc; padding: 12px; border-radius: 8px; margin-bottom: 18px; font-size: 12.5px;">
                             <div>
                                 <span style="color: #64748b; display: block;">Event Date</span>
-                                <strong style="color: #1e293b;"><%= new Date(evt.date).toLocaleDateString() %></strong>
+                                <strong style="color: #1e293b;"><%= formatDate(evt.date) %></strong>
                             </div>
                             <div>
                                 <span style="color: #64748b; display: block;">Reg. Deadline</span>
-                                <strong style="color: #b45309;"><%= new Date(evt.deadline).toLocaleDateString() %></strong>
+                                <strong style="color: #b45309;"><%= formatDate(evt.deadline) %></strong>
                             </div>
                         </div>
                     </div>

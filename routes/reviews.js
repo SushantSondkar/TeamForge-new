@@ -9,6 +9,7 @@ const Notification = require("../models/Notification");
 const SuccessStory = require("../models/SuccessStory");
 const requireLogin = require("../middleware/auth");
 const { reviewLimiter } = require("../middleware/rateLimiters");
+const { formatDate } = require("../utils/dateUtils");
 
 /**
  * Helper to recalculate aggregate teammateRating and reviewCount for a user
@@ -159,7 +160,7 @@ router.get("/events/:eventId/review/:peerId", requireLogin, async (req, res) => 
     // Unlocks ONLY after the event date passes
     if (new Date(event.date) > now) {
       return res.status(400).send(
-        `Reviews and peer skill verifications unlock after the event date (${new Date(event.date).toLocaleDateString()}).`
+        `Reviews and peer skill verifications unlock after the event date (${formatDate(event.date)}).`
       );
     }
 
@@ -226,7 +227,7 @@ router.post("/events/:eventId/review/:peerId", requireLogin, reviewLimiter, asyn
     // Unlocks ONLY after event date
     if (new Date(event.date) > now) {
       return res.status(400).send(
-        `Reviews and peer skill verifications unlock after the event date (${new Date(event.date).toLocaleDateString()}).`
+        `Reviews and peer skill verifications unlock after the event date (${formatDate(event.date)}).`
       );
     }
 

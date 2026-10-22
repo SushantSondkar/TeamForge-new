@@ -7,6 +7,7 @@
 const GITHUB_AUTH_URL = "https://github.com/login/oauth/authorize";
 const GITHUB_TOKEN_URL = "https://github.com/login/oauth/access_token";
 const GITHUB_API_BASE = "https://api.github.com";
+const { formatDate } = require("./dateUtils");
 
 let customFetch = null;
 
@@ -296,7 +297,7 @@ async function syncUserGithubData(user, accessToken = null, force = false) {
       description: r.description || "",
       stargazers_count: r.stargazers_count || 0,
       language: r.language || "",
-      updated_at: r.updated_at ? new Date(r.updated_at).toLocaleDateString() : ""
+      updated_at: r.updated_at ? formatDate(r.updated_at) : ""
     }));
 
     user.isGithubVerified = true;
