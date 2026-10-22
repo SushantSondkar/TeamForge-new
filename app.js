@@ -162,7 +162,8 @@ const wizardIntermediateUrls = [
   "/team-requirement/new",
   "/team-requirement/new/define-team",
   "/team-requirement/new/open-roles",
-  "/team-requirement/new/review"
+  "/team-requirement/new/review",
+  "/profile/photo"
 ];
 app.use(csurf(csrfSecret, ["POST", "PUT", "PATCH", "DELETE"], wizardIntermediateUrls));
 

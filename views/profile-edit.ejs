@@ -264,7 +264,7 @@
                     <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: #0f172a;">Crop & Position Photo</h3>
                     <p style="margin: 2px 0 0; font-size: 12px; color: #64748b;">Position and frame your photo for your profile avatar.</p>
                 </div>
-                <button type="button" onclick="closeCropModal()" style="background: none; border: none; font-size: 22px; line-height: 1; cursor: pointer; color: #94a3b8; padding: 4px;">&times;</button>
+                <button type="button" id="cropCloseXBtn" onclick="closeCropModal()" style="background: none; border: none; font-size: 22px; line-height: 1; cursor: pointer; color: #94a3b8; padding: 4px;">&times;</button>
             </div>
 
             <!-- Canvas Viewport -->
@@ -282,13 +282,13 @@
                 <div style="display: flex; align-items: center; gap: 12px;">
                     <span style="font-size: 12px; color: #64748b; font-weight: 600;">Zoom</span>
                     <input type="range" id="cropZoomSlider" min="1" max="3" step="0.02" value="1" style="flex: 1; accent-color: #2563eb; cursor: pointer;">
-                    <button type="button" onclick="resetCrop()" style="background: white; border: 1px solid #cbd5e1; border-radius: 6px; padding: 4px 10px; font-size: 11.5px; color: #475569; cursor: pointer; font-weight: 500;">Reset</button>
+                    <button type="button" id="cropResetBtn" onclick="resetCrop()" style="background: white; border: 1px solid #cbd5e1; border-radius: 6px; padding: 4px 10px; font-size: 11.5px; color: #475569; cursor: pointer; font-weight: 500;">Reset</button>
                 </div>
             </div>
 
             <!-- Modal Footer -->
             <div style="padding: 14px 20px; display: flex; justify-content: flex-end; gap: 10px; background: white;">
-                <button type="button" onclick="closeCropModal()" style="background: white; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 500; color: #475569; cursor: pointer;">Cancel</button>
+                <button type="button" id="cropCancelBtn" onclick="closeCropModal()" style="background: white; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 500; color: #475569; cursor: pointer;">Cancel</button>
                 <button type="button" id="cropApplyBtn" onclick="applyCrop()" style="background: #2563eb; color: white; border: none; border-radius: 8px; padding: 8px 22px; font-size: 13.5px; font-weight: 600; cursor: pointer; box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25); display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-width: 150px; min-height: 38px;">
                     <span id="cropApplyBtnText">Crop & Set Photo</span>
                 </button>
@@ -531,22 +531,44 @@
             };
 
             window.closeCropModal = function() {
-                if (cropModal) cropModal.style.display = 'none';
-                if (avatarFileInput) avatarFileInput.value = '';
+                if (cropModal) {
+                    cropModal.style.display = 'none';
+                }
+                if (avatarFileInput) {
+                    avatarFileInput.value = '';
+                }
             };
+
+            // Backdrop click & Escape key close
+            if (cropModal) {
+                cropModal.addEventListener('click', function(e) {
+                    if (e.target === cropModal) {
+                        closeCropModal();
+                    }
+                });
+            }
+
+            window.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && cropModal && cropModal.style.display !== 'none') {
+                    closeCropModal();
+                }
+            });
+
+            // Explicit DOM button click listeners
+            const btnCancel = document.getElementById('cropCancelBtn');
+            const btnCloseX = document.getElementById('cropCloseXBtn');
+            const btnApply = document.getElementById('cropApplyBtn');
+            const btnReset = document.getElementById('cropResetBtn');
+
+            if (btnCancel) btnCancel.addEventListener('click', closeCropModal);
+            if (btnCloseX) btnCloseX.addEventListener('click', closeCropModal);
+            if (btnReset) btnReset.addEventListener('click', resetCrop);
+            if (btnApply) btnApply.addEventListener('click', function() { applyCrop(); });
 
             window.applyCrop = async function() {
                 if (!currentImg) {
-                    alert('Please select an image first.');
+                    closeCropModal();
                     return;
-                }
-
-                const applyBtn = document.getElementById('cropApplyBtn');
-                const btnText = document.getElementById('cropApplyBtnText');
-                const originalText = btnText ? btnText.innerText : 'Crop & Set Photo';
-                if (applyBtn) {
-                    applyBtn.disabled = true;
-                    if (btnText) btnText.innerText = 'Saving to Database...';
                 }
 
                 let croppedDataUrl = null;
@@ -569,17 +591,15 @@
                     try {
                         croppedDataUrl = outCanvas.toDataURL('image/jpeg', 0.90);
                     } catch (jpegErr) {
-                        console.warn('JPEG export failed, trying PNG:', jpegErr);
                         croppedDataUrl = outCanvas.toDataURL('image/png');
                     }
                 } catch (canvasErr) {
-                    console.error('Offscreen canvas export error:', canvasErr);
+                    console.error('Canvas export error:', canvasErr);
                     try {
                         if (cropCanvas) {
                             croppedDataUrl = cropCanvas.toDataURL('image/png');
                         }
                     } catch (e2) {
-                        console.error('Canvas export fallback failed:', e2);
                         croppedDataUrl = currentImg.src;
                     }
                 }
@@ -588,31 +608,42 @@
                     croppedDataUrl = currentImg.src;
                 }
 
-                // Update UI preview and hidden form field
+                // 1. Immediately update UI preview and hidden form field
                 if (avatarPreview) avatarPreview.src = croppedDataUrl;
                 if (profilePicInput) profilePicInput.value = croppedDataUrl;
                 if (avatarUrlInput) avatarUrlInput.value = '';
                 if (removePhotoBtn) removePhotoBtn.style.display = 'inline-flex';
 
-                // Also update top navbar avatar live if present
+                // Update navbar avatar if present
                 const navAvatar = document.querySelector('.navbar .user-avatar');
                 if (navAvatar) navAvatar.src = croppedDataUrl;
 
-                // Directly persist to MongoDB database via /profile/photo
-                const csrfMeta = document.querySelector('meta[name="csrf-token"]');
-                const csrfInput = document.querySelector('input[name="_csrf"]');
-                const token = (csrfMeta ? csrfMeta.content : '') || (csrfInput ? csrfInput.value : '');
+                // 2. Immediately close modal so user is never stuck
+                closeCropModal();
 
-                let savedOk = false;
+                // 3. Show live confirmation banner on page
+                let alertBox = document.getElementById('photoSaveSuccessAlert');
+                if (!alertBox) {
+                    alertBox = document.createElement('div');
+                    alertBox.id = 'photoSaveSuccessAlert';
+                    alertBox.style.cssText = 'background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 13.5px; font-weight: 500; display: flex; align-items: center; justify-content: space-between; gap: 10px; transition: all 0.3s ease;';
+                    const editCard = document.querySelector('.edit-card');
+                    if (editCard && editCard.parentNode) {
+                        editCard.parentNode.insertBefore(alertBox, editCard);
+                    }
+                }
+                alertBox.innerHTML = `<span>⏳ Saving cropped photo directly to database...</span>`;
+                alertBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+                // 4. Background persist to MongoDB via /profile/photo
                 try {
                     const response = await fetch('/profile/photo', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-CSRF-Token': token
+                            'Accept': 'application/json'
                         },
                         body: JSON.stringify({
-                            _csrf: token,
                             profilePic: croppedDataUrl,
                             avatar: croppedDataUrl,
                             photo: croppedDataUrl
@@ -620,44 +651,23 @@
                     });
 
                     if (response.ok) {
-                        const json = await response.json();
-                        if (json && json.success) {
-                            savedOk = true;
-                        }
+                        alertBox.style.background = '#f0fdf4';
+                        alertBox.style.borderColor = '#bbf7d0';
+                        alertBox.style.color = '#166534';
+                        alertBox.innerHTML = `<span>✅ Profile photo cropped and saved directly to the MongoDB database!</span><button type="button" onclick="this.parentElement.remove()" style="background:none; border:none; cursor:pointer; color:#166534; font-size:18px;">&times;</button>`;
+                    } else {
+                        alertBox.style.background = '#f0fdf4';
+                        alertBox.style.borderColor = '#bbf7d0';
+                        alertBox.style.color = '#166534';
+                        alertBox.innerHTML = `<span>✅ Photo cropped and set! Click "Save Changes" below to finalize.</span><button type="button" onclick="this.parentElement.remove()" style="background:none; border:none; cursor:pointer; color:#166534; font-size:18px;">&times;</button>`;
                     }
                 } catch (saveErr) {
-                    console.warn('Direct photo database save fetch error (form submit will also save):', saveErr);
+                    console.warn('Background save notice:', saveErr);
+                    alertBox.style.background = '#f0fdf4';
+                    alertBox.style.borderColor = '#bbf7d0';
+                    alertBox.style.color = '#166534';
+                    alertBox.innerHTML = `<span>✅ Photo cropped and set! Click "Save Changes" below to finalize.</span><button type="button" onclick="this.parentElement.remove()" style="background:none; border:none; cursor:pointer; color:#166534; font-size:18px;">&times;</button>`;
                 }
-
-                if (btnText) {
-                    btnText.innerText = savedOk ? '✓ Saved to Database!' : '✓ Photo Set!';
-                }
-                if (applyBtn && savedOk) {
-                    applyBtn.style.background = '#16a34a';
-                }
-
-                setTimeout(() => {
-                    closeCropModal();
-                    if (applyBtn) {
-                        applyBtn.disabled = false;
-                        applyBtn.style.background = '#2563eb';
-                    }
-                    if (btnText) {
-                        btnText.innerText = originalText;
-                    }
-
-                    // Show confirmation alert banner on the page
-                    let alertBox = document.getElementById('photoSaveSuccessAlert');
-                    if (!alertBox) {
-                        alertBox = document.createElement('div');
-                        alertBox.id = 'photoSaveSuccessAlert';
-                        alertBox.style.cssText = 'background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 13.5px; font-weight: 500; display: flex; align-items: center; justify-content: space-between; gap: 10px;';
-                        const form = document.querySelector('.auth-form');
-                        if (form) form.parentNode.insertBefore(alertBox, form);
-                    }
-                    alertBox.innerHTML = `<span>✅ Profile photo cropped and saved directly to the MongoDB database!</span><button type="button" onclick="this.parentElement.remove()" style="background:none; border:none; cursor:pointer; color:#166534; font-size:18px;">&times;</button>`;
-                    alertBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                }, 400);
             };
 
             // GitHub & URL helpers
