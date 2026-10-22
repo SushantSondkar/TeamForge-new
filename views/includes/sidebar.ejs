@@ -1,69 +1,66 @@
 <aside class="sidebar" id="appSidebar">
 
-    <div class="sidebar-header-row" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 15px 20px 15px;">
-        <div class="sidebar-brand" style="display: flex; align-items: center; gap: 10px; padding: 0;">
-            <a href="/" style="text-decoration: none; display: flex; align-items: center;">
-                <img src="/images/logo-horizontal.svg" alt="TeamForge" style="height: 32px; width: auto;">
-            </a>
-        </div>
+    <!-- Mobile Drawer Header (Hidden on Desktop) -->
+    <div class="sidebar-mobile-header" style="display: none; align-items: center; justify-content: space-between; padding: 12px 16px; margin-bottom: 10px; border-bottom: 1px solid #f1f5f9;">
+        <span style="font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Navigation</span>
         <button type="button" class="sidebar-close-btn" id="sidebarCloseBtn" aria-label="Close navigation drawer">
             ✕
         </button>
     </div>
 
-    <nav class="sidebar-nav" style="padding: 0 15px;">
+    <nav class="sidebar-nav" style="padding: 10px 15px;">
 
         <% if (currentUser) { %>
-            <a href="/dashboard" class="sidebar-link" style="color: #475569; font-weight: 500; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: block; text-decoration: none;">
+            <a href="/dashboard" class="sidebar-link" style="color: #475569; font-weight: 500; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: block; text-decoration: none; transition: all 0.15s ease;">
                 <span>Dashboard</span>
             </a>
 
-            <a href="/landing" class="sidebar-link" style="color: #475569; font-weight: 500; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: block; text-decoration: none;">
+            <a href="/landing" class="sidebar-link" style="color: #475569; font-weight: 500; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: block; text-decoration: none; transition: all 0.15s ease;">
                 <span>Public Landing Page</span>
             </a>
 
-            <a href="/events" class="sidebar-link" style="color: #475569; font-weight: 500; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: block; text-decoration: none;">
+            <a href="/events" class="sidebar-link" style="color: #475569; font-weight: 500; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: block; text-decoration: none; transition: all 0.15s ease;">
                 <span>Events & Hackathons</span>
             </a>
 
-            <a href="/discover" class="sidebar-link" style="color: #475569; font-weight: 500; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: block; text-decoration: none;">
+            <a href="/discover" class="sidebar-link" style="color: #475569; font-weight: 500; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: block; text-decoration: none; transition: all 0.15s ease;">
                 <span>Discover Opportunities</span>
             </a>
 
-            <a href="/notifications" class="sidebar-link" style="color: #475569; font-weight: 500; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; text-decoration: none;">
+            <a href="/notifications" class="sidebar-link" style="color: #475569; font-weight: 500; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; text-decoration: none; transition: all 0.15s ease;">
                 <span>Notifications</span>
                 <% if (typeof unreadNotificationCount !== 'undefined' && unreadNotificationCount > 0) { %>
                     <span style="background-color: #ef4444; color: white; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 12px;"><%= unreadNotificationCount > 99 ? '99+' : unreadNotificationCount %></span>
                 <% } %>
             </a>
 
-            <a href="/profile" class="sidebar-link" style="color: #475569; font-weight: 500; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: block; text-decoration: none;">
+            <a href="/profile" class="sidebar-link" style="color: #475569; font-weight: 500; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: block; text-decoration: none; transition: all 0.15s ease;">
                 <span>Profile & Settings</span>
             </a>
 
-            <a href="/feedback" class="sidebar-link" style="color: #475569; font-weight: 500; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: block; text-decoration: none;">
+            <a href="/feedback" class="sidebar-link" style="color: #475569; font-weight: 500; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: block; text-decoration: none; transition: all 0.15s ease;">
                 <span>Give Feedback</span>
             </a>
 
             <% if (currentUser.isAdmin) { %>
-            <a href="/admin/stats" class="sidebar-link" style="color: #1e3a8a; font-weight: 600; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: block; text-decoration: none;">
+            <a href="/admin/stats" class="sidebar-link" style="color: #1e3a8a; font-weight: 600; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: block; text-decoration: none; transition: all 0.15s ease;">
                 <span>Live Stats (Admin)</span>
             </a>
             <% } %>
         <% } else { %>
-            <a href="/events" class="sidebar-link" style="color: #475569; font-weight: 500; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: block; text-decoration: none;">
+            <a href="/events" class="sidebar-link" style="color: #475569; font-weight: 500; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: block; text-decoration: none; transition: all 0.15s ease;">
                 <span>Events & Hackathons</span>
             </a>
 
-            <a href="/discover" class="sidebar-link" style="color: #475569; font-weight: 500; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: block; text-decoration: none;">
+            <a href="/discover" class="sidebar-link" style="color: #475569; font-weight: 500; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: block; text-decoration: none; transition: all 0.15s ease;">
                 <span>Discover Opportunities</span>
             </a>
 
-            <a href="/login" class="sidebar-link" style="color: #475569; font-weight: 500; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: block; text-decoration: none;">
+            <a href="/login" class="sidebar-link" style="color: #475569; font-weight: 500; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: block; text-decoration: none; transition: all 0.15s ease;">
                 <span>Log In</span>
             </a>
 
-            <a href="/signup" class="sidebar-link" style="color: #475569; font-weight: 500; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: block; text-decoration: none;">
+            <a href="/signup" class="sidebar-link" style="color: #475569; font-weight: 500; border-radius: 8px; margin-bottom: 5px; padding: 12px 16px; display: block; text-decoration: none; transition: all 0.15s ease;">
                 <span>Sign Up</span>
             </a>
         <% } %>
@@ -79,11 +76,17 @@
         links.forEach(link => {
             const href = link.getAttribute('href');
             if (href === currentPath || (href !== '/' && currentPath.startsWith(href))) {
-                link.style.backgroundColor = '#4f46e5';
-                link.style.color = 'white';
+                link.classList.add('active');
+                link.style.backgroundColor = '#2563eb';
+                link.style.color = '#ffffff';
+                link.style.fontWeight = '600';
+                link.style.boxShadow = '0 2px 6px rgba(37, 99, 235, 0.25)';
             } else {
+                link.classList.remove('active');
                 link.style.backgroundColor = 'transparent';
                 link.style.color = '#475569';
+                link.style.fontWeight = '500';
+                link.style.boxShadow = 'none';
             }
         });
     });
