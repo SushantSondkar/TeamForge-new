@@ -964,9 +964,23 @@ router.get("/auth/linkedin/callback", requireLogin, async (req, res) => {
     // Assign "LinkedIn Linked" honest trust badge
     req.user.isLinkedinLinked = true;
     req.user.linkedinId = String(userInfo.sub || userInfo.id || "");
+    
+    // Automatically import profile photo from LinkedIn if user hasn't uploaded a custom photo
+    if (userInfo.picture && (!req.user.profilePic || req.user.profilePic.startsWith("data:image/svg") || req.user.profilePic.includes("default"))) {
+      req.user.profilePic = userInfo.picture;
+      req.user.photo = userInfo.picture;
+    }
+
     if (!req.user.linkedin && userInfo.vanityName) {
       req.user.linkedin = `https://www.linkedin.com/in/${userInfo.vanityName}`;
     }
+
+    req.user.linkedinData = {
+      name: userInfo.name || `${userInfo.given_name || ""} ${userInfo.family_name || ""}`.trim(),
+      picture: userInfo.picture || "",
+      email: userInfo.email || "",
+      linkedAt: new Date()
+    };
 
     await req.user.save();
 

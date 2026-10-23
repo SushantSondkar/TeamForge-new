@@ -104,14 +104,21 @@ router.get("/team/:teamId", requireLogin, async (req, res) => {
 
     // Retrieve actions submitted to this team (APPLY or INVITE)
     const actions = await TeamRequestAction.find({ teamRequirementId: team._id })
+<<<<<<< HEAD
       .populate("senderId", "name email department role skills credibility github linkedin portfolio profilePic")
       .populate("receiverId", "name email department role skills credibility github linkedin portfolio profilePic")
+=======
+      .populate("senderId", "name email department role skills credibility github linkedin portfolio profilePic avatar photo")
+      .populate("receiverId", "name email department role skills credibility github linkedin portfolio profilePic avatar photo")
+>>>>>>> eaf95f4 (fix: resolve unauthorized accept error on team invites and enhance LinkedIn profile integration)
       .sort({ createdAt: -1 });
 
     // Map to normalized structure for view compatibility
     const applications = actions.map(act => {
-      const rawApplicant = act.direction === "APPLY" ? act.senderId : act.receiverId;
-      const bothOptedIn = act.senderContactOptIn && act.receiverContactOptIn;
+      const isIncoming = act.direction === "APPLY";
+      const isOutgoing = act.direction === "INVITE";
+      const rawApplicant = isIncoming ? act.senderId : act.receiverId;
+      const bothOptedIn = Boolean(act.senderContactOptIn && act.receiverContactOptIn);
       let applicant = rawApplicant;
       if (rawApplicant && !bothOptedIn) {
         applicant = {
@@ -121,7 +128,7 @@ router.get("/team/:teamId", requireLogin, async (req, res) => {
           role: rawApplicant.role,
           skills: rawApplicant.skills,
           credibility: rawApplicant.credibility,
-          profilePic: rawApplicant.profilePic
+          profilePic: rawApplicant.profilePic || rawApplicant.avatar || rawApplicant.photo || ""
         };
       }
       return {
@@ -130,17 +137,27 @@ router.get("/team/:teamId", requireLogin, async (req, res) => {
         role: act.role,
         status: act.status,
         direction: act.direction,
+        isIncoming,
+        isOutgoing,
+        canAccept: isIncoming && act.status === "PENDING",
+        canConfirm: isOutgoing && act.status === "ACCEPTED",
+        canDecline: act.status === "PENDING",
         confirmedByRequester: act.confirmedByRequester,
         confirmationExpiresAt: act.confirmationExpiresAt,
         bothOptedIn,
-        myContactOptIn: act.receiverId._id.equals(req.user._id) ? act.receiverContactOptIn : act.senderContactOptIn,
+        myContactOptIn: act.receiverId && act.receiverId._id && act.receiverId._id.equals(req.user._id) ? act.receiverContactOptIn : act.senderContactOptIn,
         createdAt: act.createdAt
       };
     });
 
+    const receivedApplications = applications.filter(a => a.isIncoming);
+    const sentInvitations = applications.filter(a => a.isOutgoing);
+
     res.render("applications/team", {
       team,
-      applications
+      applications,
+      receivedApplications,
+      sentInvitations
     });
   } catch (err) {
     console.error("Error fetching team applications:", err.message);
@@ -153,9 +170,10 @@ router.get("/team/:teamId", requireLogin, async (req, res) => {
 // NOTE: Accepting never locks! Requester subsequently confirms.
 // -----------------------------------------------------------------
 router.post("/:id/accept", requireLogin, async (req, res) => {
+  let action;
   try {
     // Find unified action
-    let action = await TeamRequestAction.findById(req.params.id);
+    action = await TeamRequestAction.findById(req.params.id);
     if (!action) {
       // Check legacy application
       const legacyApp = await Application.findById(req.params.id);
@@ -169,7 +187,31 @@ router.post("/:id/accept", requireLogin, async (req, res) => {
     }
 
     if (!action) {
-      return res.status(404).send("Application action not found.");
+      if (req.xhr || req.headers.accept?.includes("application/json")) {
+        return res.status(404).json({ error: "Application action not found." });
+      }
+      return res.redirect("/dashboard?error=" + encodeURIComponent("Application action not found."));
+    }
+
+    // Direction Guard: If this is an INVITE sent by the current user
+    if (action.direction === "INVITE" && action.senderId.equals(req.user._id)) {
+      if (action.status === "ACCEPTED") {
+        // Candidate has accepted; confirming locks the match
+        await confirmAction(action._id, req.user._id);
+        const msg = "Candidate confirmed and locked into the team!";
+        if (req.xhr || req.headers.accept?.includes("application/json")) {
+          return res.json({ success: true, status: "LOCKED", message: msg });
+        }
+        req.session.success = msg;
+        return res.redirect(`/applications/team/${action.teamRequirementId}?success=` + encodeURIComponent(msg));
+      } else {
+        const msg = "This is an outgoing invitation waiting for the candidate to accept.";
+        if (req.xhr || req.headers.accept?.includes("application/json")) {
+          return res.status(400).json({ error: msg });
+        }
+        req.session.error = msg;
+        return res.redirect(`/applications/team/${action.teamRequirementId}?error=` + encodeURIComponent(msg));
+      }
     }
 
     const updated = await acceptAction(action._id, req.user._id);
@@ -183,27 +225,39 @@ router.post("/:id/accept", requireLogin, async (req, res) => {
   } catch (err) {
     console.error("Error accepting application:", err.message);
     req.session.error = err.message;
-    res.status(400).send(err.message);
+    if (req.xhr || req.headers.accept?.includes("application/json")) {
+      return res.status(400).json({ error: err.message });
+    }
+    const redirectUrl = action?.teamRequirementId ? `/applications/team/${action.teamRequirementId}` : "/dashboard";
+    res.redirect(`${redirectUrl}?error=` + encodeURIComponent(err.message));
   }
 });
 
 // -----------------------------------------------------------------
-// 4. POST /applications/:id/confirm - Applicant confirms accepted spot -> LOCKED
+// 4. POST /applications/:id/confirm - Requester confirms accepted spot -> LOCKED
 // -----------------------------------------------------------------
 router.post("/:id/confirm", requireLogin, async (req, res) => {
+  let action;
   try {
-    const action = await confirmAction(req.params.id, req.user._id);
+    action = await TeamRequestAction.findById(req.params.id);
+    const updated = await confirmAction(req.params.id, req.user._id);
 
+    const msg = "Spot confirmed and locked for this event!";
     if (req.xhr || req.headers.accept?.includes("application/json")) {
-      return res.json({ success: true, status: "LOCKED", message: "Spot confirmed and locked for this event!" });
+      return res.json({ success: true, status: "LOCKED", message: msg });
     }
 
-    req.session.success = "Spot confirmed and locked for this event!";
-    res.redirect("/notifications?success=" + encodeURIComponent("Spot confirmed and locked for this event!"));
+    req.session.success = msg;
+    const redirectUrl = action?.teamRequirementId ? `/applications/team/${action.teamRequirementId}` : "/notifications";
+    res.redirect(`${redirectUrl}?success=` + encodeURIComponent(msg));
   } catch (err) {
     console.error("Error confirming spot:", err.message);
     req.session.error = err.message;
-    res.status(400).send(err.message);
+    if (req.xhr || req.headers.accept?.includes("application/json")) {
+      return res.status(400).json({ error: err.message });
+    }
+    const redirectUrl = action?.teamRequirementId ? `/applications/team/${action.teamRequirementId}` : "/notifications";
+    res.redirect(`${redirectUrl}?error=` + encodeURIComponent(err.message));
   }
 });
 
@@ -211,8 +265,9 @@ router.post("/:id/confirm", requireLogin, async (req, res) => {
 // 5. POST /applications/:id/reject or decline
 // -----------------------------------------------------------------
 router.post("/:id/reject", requireLogin, async (req, res) => {
+  let action;
   try {
-    let action = await TeamRequestAction.findById(req.params.id);
+    action = await TeamRequestAction.findById(req.params.id);
     if (!action) {
       const legacyApp = await Application.findById(req.params.id);
       if (legacyApp) {
@@ -225,7 +280,10 @@ router.post("/:id/reject", requireLogin, async (req, res) => {
     }
 
     if (!action) {
-      return res.status(404).send("Application action not found.");
+      if (req.xhr || req.headers.accept?.includes("application/json")) {
+        return res.status(404).json({ error: "Application action not found." });
+      }
+      return res.redirect("/dashboard?error=" + encodeURIComponent("Application action not found."));
     }
 
     const updated = await declineAction(action._id, req.user._id);
@@ -234,10 +292,18 @@ router.post("/:id/reject", requireLogin, async (req, res) => {
       return res.json({ success: true, status: updated.status });
     }
 
-    res.redirect(`/applications/team/${action.teamRequirementId}`);
+    const msg = action.direction === "INVITE" ? "Invitation cancelled." : "Application declined.";
+    req.session.success = msg;
+    const redirectUrl = action?.teamRequirementId ? `/applications/team/${action.teamRequirementId}` : "/dashboard";
+    res.redirect(`${redirectUrl}?success=` + encodeURIComponent(msg));
   } catch (err) {
-    console.error("Error declining application:", err.message);
-    res.status(400).send(err.message);
+    console.error("Error declining action:", err.message);
+    req.session.error = err.message;
+    if (req.xhr || req.headers.accept?.includes("application/json")) {
+      return res.status(400).json({ error: err.message });
+    }
+    const redirectUrl = action?.teamRequirementId ? `/applications/team/${action.teamRequirementId}` : "/dashboard";
+    res.redirect(`${redirectUrl}?error=` + encodeURIComponent(err.message));
   }
 });
 
@@ -245,9 +311,11 @@ router.post("/:id/reject", requireLogin, async (req, res) => {
 // 6. POST /applications/:id/contact-consent - Mutual Contact Opt-in
 // -----------------------------------------------------------------
 router.post("/:id/contact-consent", requireLogin, async (req, res) => {
+  let action;
   try {
-    const action = await optInContactSharing(req.params.id, req.user._id);
-    const bothOptedIn = action.senderContactOptIn && action.receiverContactOptIn;
+    action = await TeamRequestAction.findById(req.params.id);
+    const updated = await optInContactSharing(req.params.id, req.user._id);
+    const bothOptedIn = Boolean(updated.senderContactOptIn && updated.receiverContactOptIn);
 
     if (req.xhr || req.headers.accept?.includes("application/json")) {
       return res.json({
@@ -257,10 +325,16 @@ router.post("/:id/contact-consent", requireLogin, async (req, res) => {
       });
     }
 
-    res.redirect(`/applications/team/${action.teamRequirementId}`);
+    const redirectUrl = action?.teamRequirementId ? `/applications/team/${action.teamRequirementId}` : "/dashboard";
+    res.redirect(redirectUrl);
   } catch (err) {
     console.error("Error updating contact consent:", err.message);
-    res.status(400).send(err.message);
+    req.session.error = err.message;
+    if (req.xhr || req.headers.accept?.includes("application/json")) {
+      return res.status(400).json({ error: err.message });
+    }
+    const redirectUrl = action?.teamRequirementId ? `/applications/team/${action.teamRequirementId}` : "/dashboard";
+    res.redirect(`${redirectUrl}?error=` + encodeURIComponent(err.message));
   }
 });
 
