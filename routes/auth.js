@@ -8,7 +8,7 @@ const mongoose = require("mongoose");
 const requireLogin = require("../middleware/auth");
 const githubService = require("../utils/githubService");
 const linkedinService = require("../utils/linkedinService");
-const { sendMail } = require("../utils/mailer");
+const { sendMail, getRecipientDomain } = require("../utils/mailer");
 const {
   verifyEmail: verifyEmailTemplate,
   resetPassword: resetPasswordTemplate,
@@ -44,6 +44,56 @@ function checkEmailResetLimit(email) {
   return true;
 }
 
+// Per-account rate limiter for email verification resends: 1 per 60 seconds, max 5 per hour
+const resendVerificationAttempts = new Map();
+
+function checkResendRateLimit(email) {
+  if (!email || typeof email !== "string") return { allowed: false, reason: "Invalid college email address." };
+  const cleanEmail = email.toLowerCase().trim();
+  const now = Date.now();
+  const oneHour = 60 * 60 * 1000;
+  const sixtySeconds = 60 * 1000;
+
+  const timestamps = (resendVerificationAttempts.get(cleanEmail) || []).filter(t => now - t < oneHour);
+
+  if (timestamps.length > 0) {
+    const lastAttempt = timestamps[timestamps.length - 1];
+    const elapsed = now - lastAttempt;
+    if (elapsed < sixtySeconds) {
+      const waitSeconds = Math.ceil((sixtySeconds - elapsed) / 1000);
+      return {
+        allowed: false,
+        reason: `Please wait ${waitSeconds} seconds before requesting another verification email.`,
+        retryAfterSeconds: waitSeconds
+      };
+    }
+  }
+
+  if (timestamps.length >= 5) {
+    return {
+      allowed: false,
+      reason: "Too many verification requests for this account (maximum 5 per hour). Please try again later.",
+      retryAfterSeconds: 3600
+    };
+  }
+
+  return { allowed: true };
+}
+
+function recordResendAttempt(email) {
+  if (!email || typeof email !== "string") return;
+  const cleanEmail = email.toLowerCase().trim();
+  const now = Date.now();
+  const oneHour = 60 * 60 * 1000;
+  const timestamps = (resendVerificationAttempts.get(cleanEmail) || []).filter(t => now - t < oneHour);
+  timestamps.push(now);
+  resendVerificationAttempts.set(cleanEmail, timestamps);
+}
+
+function _resetResendRateLimits() {
+  resendVerificationAttempts.clear();
+}
+
 // Prune expired rate limit entries every 15 minutes
 setInterval(() => {
   const now = Date.now();
@@ -54,6 +104,14 @@ setInterval(() => {
       resetEmailAttempts.delete(key);
     } else {
       resetEmailAttempts.set(key, valid);
+    }
+  }
+  for (const [key, times] of resendVerificationAttempts.entries()) {
+    const valid = times.filter(t => now - t < oneHour);
+    if (valid.length === 0) {
+      resendVerificationAttempts.delete(key);
+    } else {
+      resendVerificationAttempts.set(key, valid);
     }
   }
 }, 15 * 60 * 1000).unref();
@@ -311,21 +369,28 @@ router.post("/signup", authLimiter, async (req, res) => {
     console.log(`New user registered (pending verification): user ID ${newUser._id}`);
 
     // Send verification email with raw token link (raw token exists only in emailed link)
+    let emailSent = false;
     try {
       const emailContent = verifyEmailTemplate({
         name: newUser.name,
-        token: rawToken
+        token: rawToken,
+        email: newUser.email
       });
       await sendMail({
         to: newUser.email,
         ...emailContent
       });
+      emailSent = true;
     } catch (mailErr) {
-      console.error("Failed to send signup verification email:", mailErr.message);
+      console.error(`[Signup] Failed to send verification email for domain=@${getRecipientDomain(newUser.email)}: ${mailErr.message}`);
     }
 
     // Redirect to check-inbox page (do NOT create session or log in automatically)
-    return res.redirect(`/check-inbox?email=${encodeURIComponent(cleanEmail)}`);
+    if (!emailSent) {
+      return res.redirect(`/check-inbox?email=${encodeURIComponent(cleanEmail)}&sendFailed=true`);
+    }
+
+    return res.redirect(`/check-inbox?email=${encodeURIComponent(cleanEmail)}&sent=true`);
   } catch (err) {
     console.error("Signup error:", err);
     res.render("signup", {
@@ -342,63 +407,211 @@ router.post("/signup", authLimiter, async (req, res) => {
 // -------------------------------------------------------------
 router.get("/check-inbox", (req, res) => {
   const email = req.query.email ? req.query.email.trim() : "";
+  const sendFailed = req.query.sendFailed === "true" || req.query.failed === "true";
+  const errorMessage = sendFailed
+    ? "Your account was created but we could not send the email. Please use Resend Verification Email."
+    : (req.query.error || null);
+
   res.render("check-inbox", {
     email,
-    message: null,
-    error: null,
+    sendFailed,
+    message: req.query.message || null,
+    error: errorMessage,
     allowedDomain: getAllowedDomain()
   });
 });
 
 // -------------------------------------------------------------
-// 3. GET /verify-email - Verify email with token
+// 3. GET /verify-email - Verify email confirmation screen (mail scanner safe)
 // -------------------------------------------------------------
 router.get("/verify-email", async (req, res) => {
   try {
-    const { token } = req.query;
+    const { token, email } = req.query;
+    const cleanEmail = typeof email === "string" ? email.toLowerCase().trim() : "";
+
     if (!token || typeof token !== "string" || !token.trim()) {
       return res.render("verify-email", {
-        success: false,
+        showConfirm: false,
+        alreadyVerified: false,
         error: "Verification token is missing or invalid.",
-        email: "",
+        email: cleanEmail,
         allowedDomain: getAllowedDomain()
       });
     }
 
-    // Hash the incoming raw token to match stored SHA-256 hash
-    const hashedToken = hashToken(token);
+    const trimmedToken = token.trim();
+    const hashedToken = hashToken(trimmedToken);
+
+    // Look up user by the hashed verification token
     const user = await User.findOne({
-      emailVerificationToken: hashedToken,
-      emailVerificationExpires: { $gt: new Date() }
+      emailVerificationToken: hashedToken
     });
 
-    if (!user) {
+    if (user) {
+      // Check if user is already verified
+      if (user.isEmailVerified) {
+        return res.render("verify-email", {
+          showConfirm: false,
+          alreadyVerified: true,
+          error: null,
+          email: user.email,
+          allowedDomain: getAllowedDomain()
+        });
+      }
+
+      // Check if verification link has expired
+      if (user.emailVerificationExpires && user.emailVerificationExpires <= new Date()) {
+        return res.render("verify-email", {
+          showConfirm: false,
+          alreadyVerified: false,
+          error: "This email verification link has expired. Please request a new verification link below.",
+          email: user.email,
+          allowedDomain: getAllowedDomain()
+        });
+      }
+
+      // Valid token! Render confirmation prompt so automated mail scanners do not consume the token.
       return res.render("verify-email", {
-        success: false,
-        error: "Email verification link is invalid or has expired.",
-        email: "",
+        showConfirm: true,
+        alreadyVerified: false,
+        error: null,
+        token: trimmedToken,
+        email: user.email,
         allowedDomain: getAllowedDomain()
       });
     }
 
-    user.isEmailVerified = true;
-    user.emailVerificationToken = null;
-    user.emailVerificationExpires = null;
-    await user.save();
+    // Token was not found. If email was passed in URL, check if already verified.
+    if (cleanEmail) {
+      const existingUser = await User.findOne({ email: cleanEmail });
+      if (existingUser && existingUser.isEmailVerified) {
+        return res.render("verify-email", {
+          showConfirm: false,
+          alreadyVerified: true,
+          error: null,
+          email: existingUser.email,
+          allowedDomain: getAllowedDomain()
+        });
+      }
+    }
 
-    console.log(`Email successfully verified for user ID ${user._id}`);
-
+    // Invalid or already used token
     return res.render("verify-email", {
-      success: true,
-      error: null,
-      email: user.email,
+      showConfirm: false,
+      alreadyVerified: false,
+      error: "This verification link is invalid, has expired, or has already been used.",
+      email: cleanEmail,
       allowedDomain: getAllowedDomain()
     });
   } catch (err) {
-    console.error("Email verification error:", err.message);
+    console.error("GET /verify-email error:", err.message);
     return res.render("verify-email", {
-      success: false,
-      error: "An unexpected error occurred during verification.",
+      showConfirm: false,
+      alreadyVerified: false,
+      error: "An unexpected error occurred during email verification.",
+      email: "",
+      allowedDomain: getAllowedDomain()
+    });
+  }
+});
+
+// -------------------------------------------------------------
+// 3A. POST /verify-email - Single-use verify, regenerate session, auto-login
+// -------------------------------------------------------------
+router.post("/verify-email", authLimiter, async (req, res) => {
+  try {
+    const { token, email } = req.body;
+    const cleanEmail = typeof email === "string" ? email.toLowerCase().trim() : "";
+
+    if (!token || typeof token !== "string" || !token.trim()) {
+      return res.render("verify-email", {
+        showConfirm: false,
+        alreadyVerified: false,
+        error: "Verification token is missing.",
+        email: cleanEmail,
+        allowedDomain: getAllowedDomain()
+      });
+    }
+
+    const trimmedToken = token.trim();
+    const hashedToken = hashToken(trimmedToken);
+
+    const user = await User.findOne({
+      emailVerificationToken: hashedToken
+    });
+
+    if (!user) {
+      // Check if user is already verified
+      if (cleanEmail) {
+        const existingUser = await User.findOne({ email: cleanEmail });
+        if (existingUser && existingUser.isEmailVerified) {
+          return res.render("verify-email", {
+            showConfirm: false,
+            alreadyVerified: true,
+            error: null,
+            email: existingUser.email,
+            allowedDomain: getAllowedDomain()
+          });
+        }
+      }
+
+      return res.render("verify-email", {
+        showConfirm: false,
+        alreadyVerified: false,
+        error: "This verification link is invalid, has expired, or has already been used.",
+        email: cleanEmail,
+        allowedDomain: getAllowedDomain()
+      });
+    }
+
+    // Check if expired
+    if (user.emailVerificationExpires && user.emailVerificationExpires <= new Date()) {
+      return res.render("verify-email", {
+        showConfirm: false,
+        alreadyVerified: false,
+        error: "This email verification link has expired. Please request a new verification link below.",
+        email: user.email,
+        allowedDomain: getAllowedDomain()
+      });
+    }
+
+    // Check if already verified
+    if (user.isEmailVerified) {
+      return res.render("verify-email", {
+        showConfirm: false,
+        alreadyVerified: true,
+        error: null,
+        email: user.email,
+        allowedDomain: getAllowedDomain()
+      });
+    }
+
+    // Mark user verified and remove single-use token
+    user.isEmailVerified = true;
+    user.emailVerificationToken = null;
+    user.emailVerificationExpires = null;
+    user.lastActive = new Date();
+    await user.save();
+
+    console.log(`[Verify] Email successfully verified for user ID ${user._id}`);
+
+    // Regenerate session ID to prevent fixation and auto-login user
+    req.session.regenerate((sessErr) => {
+      if (sessErr) {
+        console.error("Session regeneration error after verification:", sessErr);
+        return res.redirect("/login?success=" + encodeURIComponent("Email verified successfully! Please log in."));
+      }
+      req.session.userId = user._id;
+      req.session.createdAt = new Date();
+      req.session.success = "Your email has been verified! Welcome to TeamForge.";
+      return res.redirect("/dashboard");
+    });
+  } catch (err) {
+    console.error("POST /verify-email error:", err.message);
+    return res.render("verify-email", {
+      showConfirm: false,
+      alreadyVerified: false,
+      error: "An unexpected error occurred during email verification.",
       email: "",
       allowedDomain: getAllowedDomain()
     });
@@ -411,20 +624,38 @@ router.get("/verify-email", async (req, res) => {
 router.post("/resend-verification", authLimiter, async (req, res) => {
   try {
     const { email } = req.body;
+    const genericSuccessMessage = "If an account with that college email exists and is not yet verified, a new verification link has been sent to your inbox.";
+
     if (!email || typeof email !== "string") {
       return res.render("check-inbox", {
         email: "",
-        message: genericMessage,
+        sendFailed: false,
+        message: genericSuccessMessage,
         error: null,
         allowedDomain: getAllowedDomain()
       });
     }
+
     const cleanEmail = email.toLowerCase().trim();
-    const genericMessage = "If an account with that college email exists and is not yet verified, a new verification link has been sent to your inbox.";
+
+    // Rate limit resends: 1 per 60 seconds per account, 5 per hour
+    const rateCheck = checkResendRateLimit(cleanEmail);
+    if (!rateCheck.allowed) {
+      return res.status(429).render("check-inbox", {
+        email: cleanEmail,
+        sendFailed: false,
+        message: null,
+        error: rateCheck.reason,
+        allowedDomain: getAllowedDomain()
+      });
+    }
 
     if (cleanEmail && isAllowedCollegeEmail(cleanEmail)) {
       const user = await User.findOne({ email: cleanEmail });
       if (user && !user.isEmailVerified) {
+        // Record rate limit attempt
+        recordResendAttempt(cleanEmail);
+
         const { rawToken, hashedToken } = generateVerificationToken();
         user.emailVerificationToken = hashedToken;
         user.emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
@@ -433,14 +664,15 @@ router.post("/resend-verification", authLimiter, async (req, res) => {
         try {
           const emailContent = verifyEmailTemplate({
             name: user.name,
-            token: rawToken
+            token: rawToken,
+            email: user.email
           });
           await sendMail({
             to: user.email,
             ...emailContent
           });
         } catch (mailErr) {
-          console.error("Failed to send verification email on resend:", mailErr.message);
+          console.error(`[Resend] Failed to send verification email for domain=@${getRecipientDomain(user.email)}: ${mailErr.message}`);
         }
       }
     }
@@ -448,7 +680,8 @@ router.post("/resend-verification", authLimiter, async (req, res) => {
     // Always respond with the same generic message (prevents user enumeration)
     return res.render("check-inbox", {
       email: cleanEmail,
-      message: genericMessage,
+      sendFailed: false,
+      message: genericSuccessMessage,
       error: null,
       allowedDomain: getAllowedDomain()
     });
@@ -456,6 +689,7 @@ router.post("/resend-verification", authLimiter, async (req, res) => {
     console.error("Resend verification error:", err.message);
     return res.render("check-inbox", {
       email: req.body.email || "",
+      sendFailed: false,
       message: "If an account with that college email exists and is not yet verified, a new verification link has been sent to your inbox.",
       error: null,
       allowedDomain: getAllowedDomain()
@@ -1000,4 +1234,7 @@ module.exports.checkEmailResetLimit = checkEmailResetLimit;
 module.exports.isValidPasswordPolicy = isValidPasswordPolicy;
 module.exports.invalidateUserSessions = invalidateUserSessions;
 module.exports.resetEmailAttempts = resetEmailAttempts;
+module.exports.checkResendRateLimit = checkResendRateLimit;
+module.exports._resetResendRateLimits = _resetResendRateLimits;
+module.exports.resendVerificationAttempts = resendVerificationAttempts;
 

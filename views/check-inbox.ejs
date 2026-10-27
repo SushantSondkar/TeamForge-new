@@ -8,27 +8,39 @@
     
     <div class="dashboard-card-new" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 36px 30px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04); text-align: center;">
         
-        <div style="background: #eff6ff; color: #2563eb; width: 56px; height: 56px; border-radius: 16px; display: inline-flex; align-items: center; justify-content: center; font-size: 26px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.12);">
-            ✉️
-        </div>
-        
-        <h2 style="font-size: 22px; font-weight: 700; color: #0f172a; margin: 0 0 8px 0;">Check Your Inbox</h2>
-        <p style="color: #64748b; font-size: 14px; line-height: 1.5; margin: 0 0 20px 0;">
-            We've sent an account verification link to your official college email.
-        </p>
-
-        <% if (typeof message !== 'undefined' && message) { %>
-            <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; padding: 12px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 20px; text-align: left; display: flex; align-items: center; gap: 8px;">
-                <span>✅</span>
-                <span><%= message %></span>
+        <% if (typeof sendFailed !== 'undefined' && sendFailed) { %>
+            <div style="background: #fef2f2; color: #dc2626; width: 56px; height: 56px; border-radius: 16px; display: inline-flex; align-items: center; justify-content: center; font-size: 26px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.12);">
+                ⚠️
             </div>
-        <% } %>
-
-        <% if (typeof error !== 'undefined' && error) { %>
-            <div style="background-color: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; padding: 12px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 20px; text-align: left; display: flex; align-items: center; gap: 8px;">
+            
+            <h2 style="font-size: 22px; font-weight: 700; color: #0f172a; margin: 0 0 8px 0;">Account Created</h2>
+            <div style="background-color: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; padding: 12px 14px; border-radius: 8px; font-size: 13.5px; margin-bottom: 20px; text-align: left; display: flex; align-items: center; gap: 8px;">
                 <span>⚠️</span>
-                <span><%= error %></span>
+                <span>Your account was created but we could not send the email. Please use Resend Verification Email.</span>
             </div>
+        <% } else { %>
+            <div style="background: #eff6ff; color: #2563eb; width: 56px; height: 56px; border-radius: 16px; display: inline-flex; align-items: center; justify-content: center; font-size: 26px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.12);">
+                ✉️
+            </div>
+            
+            <h2 style="font-size: 22px; font-weight: 700; color: #0f172a; margin: 0 0 8px 0;">Check Your Inbox</h2>
+            <p style="color: #64748b; font-size: 14px; line-height: 1.5; margin: 0 0 20px 0;">
+                We've sent an account verification link to your official college email.
+            </p>
+
+            <% if (typeof message !== 'undefined' && message) { %>
+                <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; padding: 12px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 20px; text-align: left; display: flex; align-items: center; gap: 8px;">
+                    <span>✅</span>
+                    <span><%= message %></span>
+                </div>
+            <% } %>
+
+            <% if (typeof error !== 'undefined' && error) { %>
+                <div style="background-color: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; padding: 12px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 20px; text-align: left; display: flex; align-items: center; gap: 8px;">
+                    <span>⚠️</span>
+                    <span><%= error %></span>
+                </div>
+            <% } %>
         <% } %>
 
         <% if (typeof email !== 'undefined' && email) { %>

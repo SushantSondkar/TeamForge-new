@@ -131,12 +131,14 @@ function renderPlainTextLayout({ heading, bodyText, buttonText, actionUrl, discl
  * @param {Object} params
  * @param {string} [params.name] - User's name
  * @param {string} [params.token] - Verification token
+ * @param {string} [params.email] - User's email address
  * @param {string} [params.url] - Direct URL override
  * @returns {{ subject: string, text: string, html: string }}
  */
-function verifyEmail({ name, token, url }) {
+function verifyEmail({ name, token, email, url }) {
   const baseUrl = getBaseUrl();
-  const actionUrl = url || `${baseUrl}/verify-email?token=${encodeURIComponent(token || "")}`;
+  const emailParam = email ? `&email=${encodeURIComponent(email.trim().toLowerCase())}` : "";
+  const actionUrl = url || `${baseUrl}/verify-email?token=${encodeURIComponent(token || "")}${emailParam}`;
   const displayName = name ? name.trim() : "Student";
   const subject = "Verify your TeamForge account";
   const heading = "Verify Your Institutional Email";
