@@ -8,25 +8,51 @@
     
     <div class="dashboard-card-new" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 36px 30px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04); text-align: center;">
         
-        <% if (typeof success !== 'undefined' && success) { %>
-            <!-- Success State -->
+        <% if (typeof showConfirm !== 'undefined' && showConfirm) { %>
+            <!-- Confirmation Prompt State (Mail scanner safe) -->
+            <div style="background: #eff6ff; color: #2563eb; width: 56px; height: 56px; border-radius: 16px; display: inline-flex; align-items: center; justify-content: center; font-size: 26px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.12);">
+                ✉️
+            </div>
+            
+            <h2 style="font-size: 22px; font-weight: 700; color: #0f172a; margin: 0 0 8px 0;">Verify Your Email</h2>
+            
+            <p style="color: #64748b; font-size: 14px; line-height: 1.5; margin: 0 0 24px 0;">
+                Click below to verify your email address <%= typeof email !== 'undefined' && email ? '(' + email + ')' : '' %> and continue to TeamForge.
+            </p>
+
+            <form action="/verify-email" method="POST" style="margin: 0;">
+                <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                <input type="hidden" name="token" value="<%= typeof token !== 'undefined' ? token : '' %>">
+                <input type="hidden" name="email" value="<%= typeof email !== 'undefined' ? email : '' %>">
+                <button type="submit" id="verifyBtn" class="btn-large-primary"
+                        style="width: 100%; box-sizing: border-box; justify-content: center; padding: 12px; font-size: 14.5px; font-weight: 600; border-radius: 8px; background-color: #2563eb; color: #ffffff; border: none; cursor: pointer; transition: background 0.15s ease;">
+                    Verify my email and continue
+                </button>
+            </form>
+
+            <div style="margin-top: 20px; font-size: 13px; color: #94a3b8;">
+                This link was sent to your official college email.
+            </div>
+
+        <% } else if (typeof alreadyVerified !== 'undefined' && alreadyVerified) { %>
+            <!-- Already Verified State -->
             <div style="background: #f0fdf4; color: #16a34a; width: 56px; height: 56px; border-radius: 16px; display: inline-flex; align-items: center; justify-content: center; font-size: 26px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.12);">
                 ✅
             </div>
             
-            <h2 style="font-size: 22px; font-weight: 700; color: #0f172a; margin: 0 0 8px 0;">Email Verified!</h2>
+            <h2 style="font-size: 22px; font-weight: 700; color: #0f172a; margin: 0 0 8px 0;">Email Already Verified</h2>
             
             <p style="color: #64748b; font-size: 14px; line-height: 1.5; margin: 0 0 24px 0;">
-                Your institutional email <%= typeof email !== 'undefined' && email ? '(' + email + ')' : '' %> has been verified successfully. Your account is active and ready for hackathon team matching.
+                Your institutional email <%= typeof email !== 'undefined' && email ? '(' + email + ')' : '' %> is already verified. You can log in directly to access your account.
             </p>
 
             <a href="/login" class="btn-large-primary"
                style="display: inline-flex; width: 100%; box-sizing: border-box; justify-content: center; padding: 12px; font-size: 14.5px; font-weight: 600; border-radius: 8px; background-color: #2563eb; color: #ffffff; text-decoration: none;">
-                Proceed to Log In
+                Go to Log In
             </a>
 
         <% } else { %>
-            <!-- Error / Expired State -->
+            <!-- Error / Expired / Invalid State -->
             <div style="background: #fef2f2; color: #dc2626; width: 56px; height: 56px; border-radius: 16px; display: inline-flex; align-items: center; justify-content: center; font-size: 26px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.12);">
                 ⚠️
             </div>
@@ -34,7 +60,7 @@
             <h2 style="font-size: 22px; font-weight: 700; color: #0f172a; margin: 0 0 8px 0;">Verification Link Expired or Invalid</h2>
             
             <p style="color: #64748b; font-size: 14px; line-height: 1.5; margin: 0 0 20px 0;">
-                <%= typeof error !== 'undefined' && error ? error : "The email verification link you clicked is invalid or has expired." %>
+                <%= typeof error !== 'undefined' && error ? error : "The email verification link you clicked is invalid, has expired, or has already been used." %>
             </p>
 
             <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px 18px; margin-bottom: 20px; text-align: left;">
@@ -43,7 +69,7 @@
                 </p>
                 <form action="/resend-verification" method="POST" style="display: flex; flex-direction: column; gap: 10px;">
                     <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
-                    <input type="email" name="email" required placeholder="Enter your college email (@kkwagh.edu.in)"
+                    <input type="email" name="email" required placeholder="Enter your college email (@<%= typeof allowedDomain !== 'undefined' ? allowedDomain : 'kkwagh.edu.in' %>)"
                            aria-label="College email address for resending verification"
                            value="<%= typeof email !== 'undefined' ? email : '' %>"
                            style="box-sizing: border-box; width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13.5px; outline: none;">
