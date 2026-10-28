@@ -73,7 +73,7 @@ async function renderDashboard(req, res) {
     // 4. Retrieve applications submitted by the logged-in user (direction: APPLY)
     const myApplications = await TeamRequestAction.find({ senderId: currentUser._id, direction: "APPLY" })
       .populate("teamRequirementId")
-      .populate("receiverId", "name email department role github linkedin portfolio skills")
+      .populate("receiverId", "name email phone department role github linkedin portfolio skills")
       .sort({ createdAt: -1 });
 
     // 5. Count applications received for the active team requirement
@@ -84,7 +84,7 @@ async function renderDashboard(req, res) {
 
     // 6. Retrieve invites sent by this user (direction: INVITE)
     const sentInvites = await TeamRequestAction.find({ senderId: currentUser._id, direction: "INVITE" })
-      .populate("receiverId", "name email department role github linkedin portfolio skills")
+      .populate("receiverId", "name email phone department role github linkedin portfolio skills")
       .populate("teamRequirementId")
       .sort({ createdAt: -1 });
 
@@ -94,9 +94,29 @@ async function renderDashboard(req, res) {
       direction: "INVITE",
       status: { $in: ["PENDING", "ACCEPTED", "LOCKED"] }
     })
-      .populate("senderId", "name email department role github linkedin portfolio skills")
+      .populate("senderId", "name email phone department role github linkedin portfolio skills")
       .populate("teamRequirementId")
       .sort({ createdAt: -1 });
+
+    // Strip phone numbers unless the match is LOCKED and BOTH teammates opted in
+    myApplications.forEach(app => {
+      const isLockedMutual = app.status === "LOCKED" && Boolean(app.senderContactOptIn && app.receiverContactOptIn);
+      if (!isLockedMutual && app.receiverId) {
+        app.receiverId.phone = undefined;
+      }
+    });
+    sentInvites.forEach(inv => {
+      const isLockedMutual = inv.status === "LOCKED" && Boolean(inv.senderContactOptIn && inv.receiverContactOptIn);
+      if (!isLockedMutual && inv.receiverId) {
+        inv.receiverId.phone = undefined;
+      }
+    });
+    receivedInvites.forEach(inv => {
+      const isLockedMutual = inv.status === "LOCKED" && Boolean(inv.senderContactOptIn && inv.receiverContactOptIn);
+      if (!isLockedMutual && inv.senderId) {
+        inv.senderId.phone = undefined;
+      }
+    });
 
     // 8. Actions awaiting requester's confirmation (senderId is currentUser, status is ACCEPTED)
     const awaitingConfirmation = await TeamRequestAction.find({
@@ -288,6 +308,98 @@ router.get("/discover", requireLogin, async (req, res) => {
   }
 });
 
+/**
+ * Helper to determine a safe relative link for a notification.
+ * Resolves links at display time if missing/empty or stored as "/",
+ * strictly disallows external URLs, and falls back to /notifications (never "/").
+ */
+function resolveSafeNotificationLink(n, currentUserId) {
+  let link = n.link ? String(n.link).trim() : "";
+
+  function isValidPath(url) {
+    if (!url || typeof url !== "string") return false;
+    if (!url.startsWith("/")) return false;
+    if (url.startsWith("//")) return false; // Block protocol-relative URLs
+    if (url.includes("://") || url.includes("javascript:") || url.includes("data:")) return false;
+    return true;
+  }
+
+  // If a valid non-root relative link was stored, use it
+  if (link && link !== "/" && isValidPath(link)) {
+    return link;
+  }
+
+  // Work out link from notification type / content at display time
+  const type = n.type || "info";
+  const title = (n.title || "").toLowerCase();
+  const action = n.actionId; // populated or raw
+
+  // 1. Invite accepted
+  if (title.includes("accepted your invite") || (title.includes("accepted") && title.includes("invite"))) {
+    const teamId = action?.teamRequirementId?._id || action?.teamRequirementId;
+    if (teamId) {
+      return `/applications/team/${teamId}#tab-sent-invitations`;
+    }
+    return "/actions";
+  }
+
+  // 2. Application accepted
+  if (title.includes("application") && title.includes("accepted")) {
+    return "/dashboard";
+  }
+
+  // 3. Match confirmed & locked
+  if (title.includes("match confirmed") || (title.includes("locked") && !title.includes("contact"))) {
+    return "/actions";
+  }
+
+  // 4. Contact sharing unlocked
+  if (title.includes("contact sharing") || title.includes("contact details")) {
+    if (action) {
+      const teamId = action.teamRequirementId?._id || action.teamRequirementId;
+      const teamCreatedBy = action.teamRequirementId?.createdBy;
+      if (teamId && teamCreatedBy && currentUserId && teamCreatedBy.toString() === currentUserId.toString()) {
+        return `/applications/team/${teamId}`;
+      }
+      if (action.direction === "INVITE" && action.senderId && currentUserId && action.senderId.toString() === currentUserId.toString()) {
+        return teamId ? `/applications/team/${teamId}` : "/dashboard";
+      }
+    }
+    return "/dashboard";
+  }
+
+  // 5. Incoming invite
+  if (type === "invite") {
+    return "/dashboard";
+  }
+
+  // 6. Common platform notification types
+  if (title.includes("organizer")) {
+    return "/organizer/apply";
+  }
+  if (title.includes("success story") || title.includes("story")) {
+    return "/admin/stories";
+  }
+  if (title.includes("review")) {
+    return "/reviews";
+  }
+  if (title.includes("welcome") || title.includes("credibility") || title.includes("profile")) {
+    return "/profile";
+  }
+
+  if (action?.teamRequirementId) {
+    const teamId = action.teamRequirementId._id || action.teamRequirementId;
+    return `/applications/team/${teamId}`;
+  }
+
+  if (action) {
+    return "/dashboard";
+  }
+
+  // If it can't be worked out, go to /notifications, never "/"
+  return "/notifications";
+}
+
 // -------------------------------------------------------------
 // 3. GET /notifications - User Notifications (Protected)
 // -------------------------------------------------------------
@@ -295,8 +407,13 @@ router.get("/notifications", requireLogin, async (req, res) => {
   try {
     const currentUser = req.user;
 
-    // Retrieve persistent notifications
-    const dbNotifs = await Notification.find({ userId: currentUser._id }).sort({ createdAt: -1 });
+    // Retrieve persistent notifications with action details populated
+    const dbNotifs = await Notification.find({ userId: currentUser._id })
+      .populate({
+        path: "actionId",
+        populate: { path: "teamRequirementId" }
+      })
+      .sort({ createdAt: -1 });
 
     const notifications = dbNotifs.map(n => ({
       _id: n._id,
@@ -304,7 +421,7 @@ router.get("/notifications", requireLogin, async (req, res) => {
       subtitle: n.subtitle,
       time: formatDateTime(n.createdAt),
       type: n.type,
-      link: n.link || "/",
+      link: resolveSafeNotificationLink(n, currentUser._id),
       read: n.read
     }));
 
@@ -329,6 +446,59 @@ router.post("/notifications/mark-read", requireLogin, async (req, res) => {
     console.error("Error marking notifications as read:", err.message);
     res.redirect("/notifications");
   }
+});
+
+// -------------------------------------------------------------
+// 3c. POST /notifications/:id/read or mark-read - Mark a single notification as read
+// -------------------------------------------------------------
+router.post(["/notifications/:id/read", "/notifications/:id/mark-read"], requireLogin, async (req, res) => {
+  try {
+    const notif = await Notification.findOneAndUpdate(
+      { _id: req.params.id, userId: req.user._id },
+      { $set: { read: true } },
+      { returnDocument: 'after' }
+    );
+    if (req.xhr || req.headers.accept?.includes("application/json") || req.headers["content-type"]?.includes("application/json")) {
+      return res.json({ success: true, notification: notif });
+    }
+    res.redirect("/notifications");
+  } catch (err) {
+    if (req.xhr || req.headers.accept?.includes("application/json")) {
+      return res.status(500).json({ error: err.message });
+    }
+    res.redirect("/notifications");
+  }
+});
+
+// -------------------------------------------------------------
+// 3d. GET /notifications/:id/view - Mark as read & redirect to relevant link
+// -------------------------------------------------------------
+router.get("/notifications/:id/view", requireLogin, async (req, res) => {
+  try {
+    const notif = await Notification.findOne({ _id: req.params.id, userId: req.user._id })
+      .populate({
+        path: "actionId",
+        populate: { path: "teamRequirementId" }
+      });
+    if (!notif) {
+      return res.redirect("/notifications");
+    }
+    if (!notif.read) {
+      notif.read = true;
+      await notif.save();
+    }
+    const safeLink = resolveSafeNotificationLink(notif, req.user._id);
+    res.redirect(safeLink);
+  } catch (err) {
+    res.redirect("/notifications");
+  }
+});
+
+// -------------------------------------------------------------
+// 3e. GET /actions - User Matches & Actions Dashboard Redirect
+// -------------------------------------------------------------
+router.get("/actions", requireLogin, (req, res) => {
+  res.redirect("/dashboard");
 });
 
 // -------------------------------------------------------------
@@ -495,6 +665,7 @@ router.post("/profile/edit", requireLogin, async (req, res) => {
       department,
       year,
       bio,
+      phone,
       github,
       linkedin,
       portfolio,
@@ -506,6 +677,57 @@ router.post("/profile/edit", requireLogin, async (req, res) => {
       pastHackathonsRaw,
       profilePic
     } = req.body;
+
+    // Validate and normalize Indian mobile phone number (optional)
+    if (phone !== undefined) {
+      const rawPhone = String(phone).trim();
+      if (rawPhone === "") {
+        user.phone = "";
+      } else {
+        if (!/^[+]?[0-9 -]+$/.test(rawPhone)) {
+          const errMsg = "Invalid phone number: only digits, spaces, hyphens, and +91 or 0 prefix are allowed.";
+          req.session.error = errMsg;
+          if (req.xhr || req.headers.accept?.includes("application/json")) {
+            return res.status(400).json({ error: errMsg });
+          }
+          return res.status(400).render("profile-edit", {
+            currentUser: { ...(req.user.toObject ? req.user.toObject() : req.user), ...req.body },
+            error: errMsg
+          });
+        }
+        let digits = rawPhone.replace(/[ -]+/g, "");
+        if (digits.startsWith("+91")) {
+          digits = digits.slice(3);
+        } else if (digits.startsWith("+")) {
+          const errMsg = "Invalid phone number: only Indian mobile numbers (+91 prefix) are supported.";
+          req.session.error = errMsg;
+          if (req.xhr || req.headers.accept?.includes("application/json")) {
+            return res.status(400).json({ error: errMsg });
+          }
+          return res.status(400).render("profile-edit", {
+            currentUser: { ...(req.user.toObject ? req.user.toObject() : req.user), ...req.body },
+            error: errMsg
+          });
+        } else if (digits.startsWith("0")) {
+          digits = digits.slice(1);
+        } else if (digits.startsWith("91") && digits.length === 12) {
+          digits = digits.slice(2);
+        }
+
+        if (!/^[6-9][0-9]{9}$/.test(digits)) {
+          const errMsg = "Invalid phone number: must be a valid 10-digit Indian mobile number.";
+          req.session.error = errMsg;
+          if (req.xhr || req.headers.accept?.includes("application/json")) {
+            return res.status(400).json({ error: errMsg });
+          }
+          return res.status(400).render("profile-edit", {
+            currentUser: { ...(req.user.toObject ? req.user.toObject() : req.user), ...req.body },
+            error: errMsg
+          });
+        }
+        user.phone = digits;
+      }
+    }
 
     if (name && name.trim()) user.name = name.trim();
     if (profilePic !== undefined) {

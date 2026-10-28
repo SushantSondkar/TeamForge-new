@@ -209,7 +209,7 @@ async function createAction({ senderId, receiverId, teamRequirementId, role, dir
       `Invited to join ${team.projectName} as ${role}`,
       "invite",
       action._id,
-      "/"
+      "/dashboard"
     );
   } else {
     await sendNotification(
@@ -264,13 +264,15 @@ async function acceptAction(actionId, userId) {
   // Notify the requester (sender) to CONFIRM
   if (action.direction === "INVITE") {
     // Sender is Team Lead
+    const teamId = action.teamRequirementId ? (action.teamRequirementId._id || action.teamRequirementId) : "";
+    const inviteAcceptedLink = teamId ? `/applications/team/${teamId}#tab-sent-invitations` : "/actions";
     await sendNotification(
       action.senderId._id,
       `${receiverName} accepted your invite!`,
       `Please confirm to lock ${receiverName} into ${teamName} as ${action.role}. (Expires in 24h)`,
       "success",
       action._id,
-      "/"
+      inviteAcceptedLink
     );
   } else {
     // Sender is Candidate
@@ -280,7 +282,7 @@ async function acceptAction(actionId, userId) {
       `The team lead accepted your application. Please confirm your spot in ${teamName}! (Expires in 24h)`,
       "success",
       action._id,
-      "/notifications"
+      "/dashboard"
     );
   }
 
@@ -399,14 +401,16 @@ async function confirmAction(actionId, userId) {
     `Match Confirmed & Locked! 🔒`,
     `You are now officially matched for ${action.role} at ${team.projectName}.`,
     "success",
-    action._id
+    action._id,
+    "/actions"
   );
   await sendNotification(
     action.receiverId._id,
     `Match Confirmed & Locked! 🔒`,
     `You are now officially matched for ${action.role} at ${team.projectName}.`,
     "success",
-    action._id
+    action._id,
+    "/actions"
   );
 
   return action;
@@ -453,7 +457,8 @@ async function declineAction(actionId, userId) {
 async function optInContactSharing(actionId, userId) {
   const action = await TeamRequestAction.findById(actionId)
     .populate("senderId")
-    .populate("receiverId");
+    .populate("receiverId")
+    .populate("teamRequirementId");
 
   if (!action) {
     throw new Error("Action not found.");
@@ -471,19 +476,35 @@ async function optInContactSharing(actionId, userId) {
 
   // If both opted in, notify both that contacts are now visible
   if (action.senderContactOptIn && action.receiverContactOptIn) {
+    const teamId = action.teamRequirementId ? (action.teamRequirementId._id || action.teamRequirementId) : "";
+    let senderLink = "/dashboard";
+    let receiverLink = "/dashboard";
+    if (teamId) {
+      if (action.direction === "INVITE") {
+        // Sender is team lead (owner) -> team management page; receiver is candidate -> dashboard
+        senderLink = `/applications/team/${teamId}`;
+        receiverLink = "/dashboard";
+      } else {
+        // Sender is candidate -> dashboard; receiver is team lead (owner) -> team management page
+        senderLink = "/dashboard";
+        receiverLink = `/applications/team/${teamId}`;
+      }
+    }
     await sendNotification(
       action.senderId._id,
       "Mutual Contact Sharing Unlocked! 📱",
       `You and ${action.receiverId.name} can now view each other's contact details.`,
       "success",
-      action._id
+      action._id,
+      senderLink
     );
     await sendNotification(
       action.receiverId._id,
       "Mutual Contact Sharing Unlocked! 📱",
       `You and ${action.senderId.name} can now view each other's contact details.`,
       "success",
-      action._id
+      action._id,
+      receiverLink
     );
   }
 

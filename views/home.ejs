@@ -252,8 +252,9 @@
                                         </div>
                                         <% if (inv.senderContactOptIn && inv.receiverContactOptIn) { %>
                                             <div style="font-size: 11px; color: #065f46; background: #ecfdf5; padding: 4px 8px; border-radius: 4px; text-align: right;">
-                                                <strong>Email:</strong> <%= inv.receiverId ? inv.receiverId.email : '' %>
-                                                <% if (inv.receiverId && inv.receiverId.github) { %><br><a href="https://github.com/<%= inv.receiverId.github %>" target="_blank" style="color: #0284c7;">github/<%= inv.receiverId.github %></a><% } %>
+                                                <div><strong>Name:</strong> <%= (inv.receiverId && inv.receiverId.name) ? inv.receiverId.name : '' %></div>
+                                                <div><strong>Email:</strong> <%= (inv.receiverId && inv.receiverId.email) ? inv.receiverId.email : '' %> | <strong>Phone:</strong> <%= (inv.receiverId && inv.receiverId.phone && inv.receiverId.phone.trim()) ? inv.receiverId.phone.trim() : 'Phone not provided' %></div>
+                                                <% if (inv.receiverId && inv.receiverId.github) { %><a href="https://github.com/<%= inv.receiverId.github %>" target="_blank" style="color: #0284c7;">github/<%= inv.receiverId.github %></a><% } %>
                                             </div>
                                         <% } else { %>
                                             <form action="/invites/<%= inv._id %>/contact-consent" method="POST" style="margin: 0;">
@@ -326,8 +327,9 @@
                                         </div>
                                         <% if (inv.senderContactOptIn && inv.receiverContactOptIn) { %>
                                             <div style="font-size: 11px; color: #065f46; background: #ecfdf5; padding: 4px 8px; border-radius: 4px; text-align: right;">
-                                                <strong>Lead:</strong> <%= inv.senderId ? inv.senderId.email : '' %>
-                                                <% if (inv.senderId && inv.senderId.github) { %><br><a href="https://github.com/<%= inv.senderId.github %>" target="_blank" style="color: #0284c7;">github/<%= inv.senderId.github %></a><% } %>
+                                                <div><strong>Name:</strong> <%= (inv.senderId && inv.senderId.name) ? inv.senderId.name : '' %></div>
+                                                <div><strong>Lead:</strong> <%= (inv.senderId && inv.senderId.email) ? inv.senderId.email : '' %> | <strong>Phone:</strong> <%= (inv.senderId && inv.senderId.phone && inv.senderId.phone.trim()) ? inv.senderId.phone.trim() : 'Phone not provided' %></div>
+                                                <% if (inv.senderId && inv.senderId.github) { %><a href="https://github.com/<%= inv.senderId.github %>" target="_blank" style="color: #0284c7;">github/<%= inv.senderId.github %></a><% } %>
                                             </div>
                                         <% } else { %>
                                             <form action="/invites/<%= inv._id %>/contact-consent" method="POST" style="margin: 0;">
@@ -386,8 +388,9 @@
                                         </div>
                                         <% if (app.senderContactOptIn && app.receiverContactOptIn) { %>
                                             <div style="font-size: 11px; color: #065f46; background: #ecfdf5; padding: 4px 8px; border-radius: 4px; text-align: right;">
-                                                <strong>Lead:</strong> <%= app.receiverId ? app.receiverId.email : '' %>
-                                                <% if (app.receiverId && app.receiverId.github) { %><br><a href="https://github.com/<%= app.receiverId.github %>" target="_blank" style="color: #0284c7;">github/<%= app.receiverId.github %></a><% } %>
+                                                <div><strong>Name:</strong> <%= (app.receiverId && app.receiverId.name) ? app.receiverId.name : '' %></div>
+                                                <div><strong>Lead:</strong> <%= (app.receiverId && app.receiverId.email) ? app.receiverId.email : '' %> | <strong>Phone:</strong> <%= (app.receiverId && app.receiverId.phone && app.receiverId.phone.trim()) ? app.receiverId.phone.trim() : 'Phone not provided' %></div>
+                                                <% if (app.receiverId && app.receiverId.github) { %><a href="https://github.com/<%= app.receiverId.github %>" target="_blank" style="color: #0284c7;">github/<%= app.receiverId.github %></a><% } %>
                                             </div>
                                         <% } else { %>
                                             <form action="/applications/<%= app._id %>/contact-consent" method="POST" style="margin: 0;">

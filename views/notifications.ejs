@@ -86,7 +86,7 @@
                     <div style="display: flex; align-items: center; gap: 14px; flex-shrink: 0;">
                         <span style="font-size: 12px; color: #64748b;"><%= n.time %></span>
                         <% if (n.link) { %>
-                            <a href="<%= n.link %>" class="btn-small-outline" style="font-size: 12px; padding: 4px 10px; text-decoration: none;">View</a>
+                            <a href="/notifications/<%= n._id %>/view" class="btn-small-outline" style="font-size: 12px; padding: 4px 10px; text-decoration: none;">View</a>
                         <% } %>
                         <% if (!n.read) { %>
                             <div style="width: 8px; height: 8px; background-color: #2563eb; border-radius: 50%;" title="Unread"></div>
