@@ -1,0 +1,87 @@
+<% 
+    locals.hideSidebar = (typeof currentUser === 'undefined' || !currentUser);
+-%>
+<% layout("/layouts/boilerplate") -%>
+
+<div class="page-container" style="max-width: 840px; margin: 40px auto; padding: 0 20px;">
+    
+    <div style="margin-bottom: 32px; border-bottom: 1px solid #e2e8f0; padding-bottom: 24px;">
+        <a href="/" style="color: #64748b; text-decoration: none; font-size: 13.5px; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 12px; font-weight: 500;">
+            ← Back to Home
+        </a>
+        <h1 style="font-size: 30px; font-weight: 800; color: #0f172a; margin: 0 0 8px 0; letter-spacing: -0.5px;">Privacy Policy</h1>
+        <p style="color: #64748b; font-size: 14px; margin: 0;">Last updated: October 28, 2026</p>
+    </div>
+
+    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 36px 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); display: flex; flex-direction: column; gap: 28px; line-height: 1.6; color: #334155; font-size: 14.5px;">
+        
+        <section>
+            <h2 style="font-size: 18px; font-weight: 700; color: #0f172a; margin: 0 0 10px 0;">1. What We Collect</h2>
+            <p style="margin: 0 0 10px 0;">We collect the minimum information necessary to match teammates and run TeamForge safely:</p>
+            <ul style="margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px;">
+                <li><strong>Account Information:</strong> Name, college email (<code>@kkwagh.edu.in</code>), and password (stored only as a secure cryptographic hash; plaintext passwords are never stored or logged).</li>
+                <li><strong>Profile Details:</strong> Department, academic year, skills, short bio, optional photo, and optional phone number.</li>
+                <li><strong>External Profiles:</strong> Optional GitHub and LinkedIn details (only public profile data; we never store GitHub or LinkedIn access tokens).</li>
+                <li><strong>Teaming Activity:</strong> Team invitations, applications, notifications, reviews, and feedback.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2 style="font-size: 18px; font-weight: 700; color: #0f172a; margin: 0 0 10px 0;">2. Why We Collect It</h2>
+            <p style="margin: 0 0 10px 0;">We collect your information for specific, legitimate purposes:</p>
+            <ul style="margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px;">
+                <li>To match students into hackathon and engineering project teams using transparent role requirements.</li>
+                <li>To send transactional emails (verification, password reset, invitations, and deadline reminders).</li>
+                <li>To keep the platform safe, verified, and free of spam.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2 style="font-size: 18px; font-weight: 700; color: #0f172a; margin: 0 0 10px 0;">3. Who Can See It</h2>
+            <p style="margin: 0 0 10px 0;">Your information is shared with strict privacy controls:</p>
+            <ul style="margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px;">
+                <li><strong>Other Students:</strong> Other students see profile details according to your profile privacy settings. Hidden profiles do not appear in search or the leaderboard.</li>
+                <li><strong>Locked Mutual Contact Sharing:</strong> Email and phone number are shared ONLY with the other person in a locked team match after BOTH of you agree to share contacts.</li>
+                <li><strong>Administrators:</strong> Administrators can see data for moderation and to review organizer applications.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2 style="font-size: 18px; font-weight: 700; color: #0f172a; margin: 0 0 10px 0;">4. Email</h2>
+            <p style="margin: 0;">We send emails through a third-party mail provider only to deliver messages. Your email address is never sold, and never used for advertising.</p>
+        </section>
+
+        <section>
+            <h2 style="font-size: 18px; font-weight: 700; color: #0f172a; margin: 0 0 10px 0;">5. Cookies</h2>
+            <p style="margin: 0;">We use only a session cookie and a security (CSRF) cookie. We use no tracking or advertising cookies.</p>
+        </section>
+
+        <section>
+            <h2 style="font-size: 18px; font-weight: 700; color: #0f172a; margin: 0 0 10px 0;">6. How Long We Keep It</h2>
+            <p style="margin: 0;">We keep your data while your account exists. Reviews and match history may be kept in anonymous form.</p>
+        </section>
+
+        <section>
+            <h2 style="font-size: 18px; font-weight: 700; color: #0f172a; margin: 0 0 10px 0;">7. Your Rights</h2>
+            <p style="margin: 0 0 10px 0;">You have the right to:</p>
+            <ul style="margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px;">
+                <li>View and edit your profile at any time.</li>
+                <li>Hide your profile from discovery and search.</li>
+                <li>Turn off email notifications in your profile settings.</li>
+                <li>Ask for your account and data to be deleted by emailing our support email (<a href="mailto:<%= supportEmail %>" style="color: #2563eb; text-decoration: none;"><%= supportEmail %></a>). We do not promise an exact deletion time; we aim to respond within 7 days.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2 style="font-size: 18px; font-weight: 700; color: #0f172a; margin: 0 0 10px 0;">8. Data Is Never Sold</h2>
+            <p style="margin: 0;">Student data is never sold, rented, or traded under any circumstances.</p>
+        </section>
+
+        <section>
+            <h2 style="font-size: 18px; font-weight: 700; color: #0f172a; margin: 0 0 10px 0;">9. Contact</h2>
+            <p style="margin: 0;">If you have any privacy questions or requests, contact us at <a href="mailto:<%= supportEmail %>" style="color: #2563eb; text-decoration: none; font-weight: 600;"><%= supportEmail %></a>.</p>
+        </section>
+
+    </div>
+
+</div>
