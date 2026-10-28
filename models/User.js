@@ -261,7 +261,7 @@ const userSchema = new mongoose.Schema({
   timestamps: true,
   toJSON: {
     virtuals: true,
-    transform: function(doc, ret) {
+    transform: function (doc, ret) {
       delete ret.password;
       delete ret.emailVerificationToken;
       delete ret.emailVerificationExpires;
@@ -272,7 +272,7 @@ const userSchema = new mongoose.Schema({
   },
   toObject: {
     virtuals: true,
-    transform: function(doc, ret) {
+    transform: function (doc, ret) {
       delete ret.password;
       delete ret.emailVerificationToken;
       delete ret.emailVerificationExpires;
@@ -284,7 +284,7 @@ const userSchema = new mongoose.Schema({
 });
 
 // Profile completeness percentage calculator (used as tie-breaker)
-userSchema.virtual("completenessPercentage").get(function() {
+userSchema.virtual("completenessPercentage").get(function () {
   let score = 0;
   if (this.name && this.email) score += 20;
   if (this.department && this.year) score += 15;
@@ -294,7 +294,7 @@ userSchema.virtual("completenessPercentage").get(function() {
   } else if (this.skills && this.skills.length > 0) {
     score += this.skills.length * 6;
   }
-  if (this.isGithubVerified || this.github || this.isLinkedinLinked || this.linkedin || this.portfolio) score += 15;
+  if (this.isGithubVerified || this.github || this.linkedin || this.portfolio) score += 15;
   if ((this.projects && this.projects.length > 0) || (this.pastHackathons && this.pastHackathons.length > 0)) {
     score += 15;
   }
@@ -302,7 +302,7 @@ userSchema.virtual("completenessPercentage").get(function() {
 });
 
 // Missing profile fields needed for 100% completeness
-userSchema.virtual("missingFields").get(function() {
+userSchema.virtual("missingFields").get(function () {
   const missing = [];
   if (!this.department || !this.year) missing.push("Department & Academic Year");
   if (!this.bio || this.bio.trim().length <= 10) missing.push("Bio (at least 10 characters)");
@@ -310,7 +310,7 @@ userSchema.virtual("missingFields").get(function() {
     const count = this.skills ? this.skills.length : 0;
     missing.push(`At least 3 technical skills (currently ${count}/3)`);
   }
-  if (!this.isGithubVerified && !this.github && !this.isLinkedinLinked && !this.linkedin && !this.portfolio) {
+  if (!this.isGithubVerified && !this.github && !this.linkedin && !this.portfolio) {
     missing.push("External developer link (GitHub, LinkedIn, or Portfolio)");
   }
   if ((!this.projects || this.projects.length === 0) && (!this.pastHackathons || this.pastHackathons.length === 0)) {
@@ -320,7 +320,7 @@ userSchema.virtual("missingFields").get(function() {
 });
 
 // Tiered Trust Badges getter: honest trust labels, never fake 100% verified
-userSchema.virtual("trustBadges").get(function() {
+userSchema.virtual("trustBadges").get(function () {
   const badges = [];
   if (this.isGithubVerified && this.githubId) {
     badges.push({
@@ -337,15 +337,6 @@ userSchema.virtual("trustBadges").get(function() {
       sublabel: "Self-Reported Username",
       style: "github-unverified",
       color: "#64748b"
-    });
-  }
-  if (this.isLinkedinLinked) {
-    badges.push({
-      key: "linkedin",
-      label: "LinkedIn Linked",
-      sublabel: "OAuth Identity Linked",
-      style: "linkedin-linked",
-      color: "#0284c7"
     });
   }
   if (this.portfolio && this.portfolio.trim().length > 0) {
@@ -365,7 +356,7 @@ userSchema.index({ isProfileHidden: 1 });
 userSchema.index({ "skills.name": 1, "skills.level": 1 });
 userSchema.index({ lockedEvents: 1 });
 // Synchronize profilePic, avatar, and photo fields so all third-party integrations & database queries find the image
-userSchema.pre("save", function() {
+userSchema.pre("save", function () {
   const pic = (this.profilePic || this.avatar || this.photo || "").trim();
   if (pic) {
     this.profilePic = pic;

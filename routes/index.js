@@ -780,15 +780,102 @@ router.post("/profile/edit", requireLogin, async (req, res) => {
     if (bio !== undefined) user.bio = bio.trim();
     if (github !== undefined) user.github = github.trim();
     if (linkedin !== undefined) {
-      let cleanLi = linkedin.trim();
-      if (cleanLi && !cleanLi.startsWith("http://") && !cleanLi.startsWith("https://")) {
-        if (cleanLi.includes("linkedin.com/in/")) {
-          cleanLi = "https://" + cleanLi.replace(/^\/+/, "");
-        } else if (!cleanLi.includes("linkedin.com")) {
-          cleanLi = `https://www.linkedin.com/in/${cleanLi.replace(/^@/, "")}`;
+      const rawLi = String(linkedin).trim();
+      if (rawLi === "") {
+        user.linkedin = "";
+      } else {
+        if (rawLi.length > 200) {
+          const errMsg = "Invalid LinkedIn profile URL: length must not exceed 200 characters.";
+          req.session.error = errMsg;
+          if (req.xhr || req.headers.accept?.includes("application/json")) {
+            return res.status(400).json({ error: errMsg });
+          }
+          return res.status(400).render("profile-edit", {
+            currentUser: { ...(req.user.toObject ? req.user.toObject() : req.user), ...req.body },
+            error: errMsg
+          });
         }
+
+        if (/^(javascript|data|vbscript):/i.test(rawLi) || rawLi.toLowerCase().includes("javascript:") || rawLi.toLowerCase().includes("data:")) {
+          const errMsg = "Invalid LinkedIn profile URL: unsafe URL protocol.";
+          req.session.error = errMsg;
+          if (req.xhr || req.headers.accept?.includes("application/json")) {
+            return res.status(400).json({ error: errMsg });
+          }
+          return res.status(400).render("profile-edit", {
+            currentUser: { ...(req.user.toObject ? req.user.toObject() : req.user), ...req.body },
+            error: errMsg
+          });
+        }
+
+        let normalizedLi = rawLi;
+        if (!normalizedLi.startsWith("http://") && !normalizedLi.startsWith("https://")) {
+          normalizedLi = "https://" + normalizedLi.replace(/^\/+/, "");
+        }
+
+        let parsedUrl;
+        try {
+          parsedUrl = new URL(normalizedLi);
+        } catch (e) {
+          parsedUrl = null;
+        }
+
+        if (!parsedUrl || parsedUrl.protocol !== "https:") {
+          const errMsg = "Invalid LinkedIn profile URL: must start with https:// (e.g. https://www.linkedin.com/in/username).";
+          req.session.error = errMsg;
+          if (req.xhr || req.headers.accept?.includes("application/json")) {
+            return res.status(400).json({ error: errMsg });
+          }
+          return res.status(400).render("profile-edit", {
+            currentUser: { ...(req.user.toObject ? req.user.toObject() : req.user), ...req.body },
+            error: errMsg
+          });
+        }
+
+        const hostname = parsedUrl.hostname.toLowerCase();
+        const isAllowedHost = hostname === "linkedin.com" || hostname === "www.linkedin.com" || /^[a-z]{2}\.linkedin\.com$/.test(hostname);
+        if (!isAllowedHost) {
+          const errMsg = "Invalid LinkedIn profile URL: host must be linkedin.com (e.g. https://www.linkedin.com/in/username).";
+          req.session.error = errMsg;
+          if (req.xhr || req.headers.accept?.includes("application/json")) {
+            return res.status(400).json({ error: errMsg });
+          }
+          return res.status(400).render("profile-edit", {
+            currentUser: { ...(req.user.toObject ? req.user.toObject() : req.user), ...req.body },
+            error: errMsg
+          });
+        }
+
+        const rawPath = parsedUrl.pathname;
+        if (!rawPath.startsWith("/in/") || rawPath.replace(/^\/in\/?/, "").trim() === "") {
+          const errMsg = "Invalid LinkedIn profile URL: must be a profile URL starting with /in/ (e.g. https://www.linkedin.com/in/username).";
+          req.session.error = errMsg;
+          if (req.xhr || req.headers.accept?.includes("application/json")) {
+            return res.status(400).json({ error: errMsg });
+          }
+          return res.status(400).render("profile-edit", {
+            currentUser: { ...(req.user.toObject ? req.user.toObject() : req.user), ...req.body },
+            error: errMsg
+          });
+        }
+
+        const cleanedPath = rawPath.replace(/\/+$/, "");
+        const cleanedUrl = "https://" + hostname + cleanedPath;
+
+        if (cleanedUrl.length > 200) {
+          const errMsg = "Invalid LinkedIn profile URL: length must not exceed 200 characters.";
+          req.session.error = errMsg;
+          if (req.xhr || req.headers.accept?.includes("application/json")) {
+            return res.status(400).json({ error: errMsg });
+          }
+          return res.status(400).render("profile-edit", {
+            currentUser: { ...(req.user.toObject ? req.user.toObject() : req.user), ...req.body },
+            error: errMsg
+          });
+        }
+
+        user.linkedin = cleanedUrl;
       }
-      user.linkedin = cleanLi;
     }
     if (portfolio !== undefined) user.portfolio = portfolio.trim();
 
