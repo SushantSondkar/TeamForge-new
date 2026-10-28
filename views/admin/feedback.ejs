@@ -7,8 +7,8 @@
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
                 <a href="/admin/stats" style="font-size: 13px; color: #2563eb; text-decoration: none; font-weight: 600;">← Back to Live Stats</a>
             </div>
-            <h1 style="font-size: 26px; font-weight: 800; color: #0f172a; margin: 0;">Student Feedback & Ratings</h1>
-            <p style="color: #64748b; font-size: 14px; margin: 4px 0 0 0;">Anonymized qualitative feedback and platform satisfaction scores from student pilot users.</p>
+            <h1 style="font-size: 26px; font-weight: 800; color: #0f172a; margin: 0;">Student Feedback & Problem Reports</h1>
+            <p style="color: #64748b; font-size: 14px; margin: 4px 0 0 0;">Anonymized qualitative feedback, problem reports, and satisfaction scores from student pilot users.</p>
         </div>
 
         <div style="display: flex; gap: 10px;">
@@ -25,7 +25,7 @@
             <div style="font-size: 36px; line-height: 1;">⭐</div>
             <div>
                 <span style="font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase;">Average Rating</span>
-                <div style="font-size: 24px; font-weight: 800; color: #0f172a;"><%= summary.avgRating %> / 5.0</div>
+                <div style="font-size: 24px; font-weight: 800; color: #0f172a;"><%= (typeof summary.avgRating === 'number' && !isNaN(summary.avgRating)) ? summary.avgRating : 0 %> / 5.0</div>
             </div>
         </div>
         <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; display: flex; align-items: center; gap: 16px;">
@@ -33,6 +33,13 @@
             <div>
                 <span style="font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase;">Total Submissions</span>
                 <div style="font-size: 24px; font-weight: 800; color: #0f172a;"><%= summary.count %> Responses</div>
+            </div>
+        </div>
+        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; display: flex; align-items: center; gap: 16px;">
+            <div style="font-size: 36px; line-height: 1;">🆕</div>
+            <div>
+                <span style="font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase;">New Items</span>
+                <div style="font-size: 24px; font-weight: 800; color: #0f172a;"><%= summary.newCount || 0 %></div>
             </div>
         </div>
     </div>
@@ -43,20 +50,58 @@
         <% feedbacks.forEach(fb => { %>
         <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 18px 20px; box-shadow: 0 1px 2px rgba(0,0,0,0.04);">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
-                <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                    <% if (typeof fb.rating === 'number' && !isNaN(fb.rating)) { %>
                     <div style="color: #f59e0b; font-size: 16px; font-weight: 700;">
                         <% for (let i = 1; i <= 5; i++) { %>
                             <%= i <= fb.rating ? '★' : '☆' %>
                         <% } %>
                         <span style="color: #334155; font-size: 13.5px; margin-left: 4px;">(<%= fb.rating %>/5)</span>
                     </div>
-                    <span class="badge" style="background: #f1f5f9; color: #475569; font-size: 11.5px; text-transform: uppercase;">
-                        <%= fb.category === 'team_locked' ? 'Team Locked' : (fb.category || 'General') %>
+                    <% } else { %>
+                    <span style="color: #64748b; font-size: 13px; font-style: italic;">No rating</span>
+                    <% } %>
+
+                    <span class="badge" style="background: #f1f5f9; color: #475569; font-size: 11.5px; text-transform: uppercase; font-weight: 600;">
+                        <%= fb.category === 'team_locked' ? 'Team Locked' : (fb.category === 'bug' ? 'Bug / Problem' : (fb.category || 'General')) %>
                     </span>
+
+                    <% if (fb.status === 'resolved') { %>
+                    <span class="badge" style="background: #dcfce7; color: #166534; font-size: 11.5px; text-transform: uppercase; font-weight: 700;">
+                        resolved
+                    </span>
+                    <% } else if (fb.status === 'seen') { %>
+                    <span class="badge" style="background: #e0f2fe; color: #0369a1; font-size: 11.5px; text-transform: uppercase; font-weight: 700;">
+                        seen
+                    </span>
+                    <% } else { %>
+                    <span class="badge" style="background: #fef3c7; color: #92400e; font-size: 11.5px; text-transform: uppercase; font-weight: 700;">
+                        <%= fb.status || 'new' %>
+                    </span>
+                    <% } %>
+
+                    <% if (fb.pageUrl) { %>
+                    <span style="font-size: 12px; color: #475569; background: #f8fafc; padding: 2px 8px; border-radius: 4px; border: 1px solid #e2e8f0;">
+                        Page: <code><%= fb.pageUrl %></code>
+                    </span>
+                    <% } %>
                 </div>
-                <span style="font-size: 12.5px; color: #64748b;">
-                    <%= formatDateTime(fb.createdAt) %>
-                </span>
+
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <span style="font-size: 12.5px; color: #64748b;">
+                        <%= formatDateTime(fb.createdAt) %>
+                    </span>
+                    <% if (fb.status !== 'resolved') { %>
+                    <form action="/admin/feedback/<%= fb._id %>/resolve" method="POST" style="margin: 0; display: inline;">
+                        <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                        <button type="submit" class="btn-small-outline" style="padding: 3px 8px; font-size: 12px; color: #059669; border-color: #059669; background: #ecfdf5; cursor: pointer; border-radius: 6px; font-weight: 600;">
+                            Mark resolved
+                        </button>
+                    </form>
+                    <% } else { %>
+                    <span style="font-size: 12px; color: #059669; font-weight: 600;">✓ Resolved</span>
+                    <% } %>
+                </div>
             </div>
 
             <p style="margin: 0; color: #334155; font-size: 14.5px; line-height: 1.5;">
