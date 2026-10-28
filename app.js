@@ -159,6 +159,10 @@ app.use((req, res, next) => {
   next();
 });
 
+// Multipart form parser for event poster uploads (preserves CSRF tokens)
+const { multipartPosterParser } = require("./utils/posterUploadMiddleware");
+app.use(multipartPosterParser);
+
 // CSRF Protection via tiny-csrf (32-character secret)
 // Intermediate wizard steps are excluded from strict token verification so back/forward navigation never drops,
 // while final actions (/team-requirement/submit, /login, /signup, etc.) remain strictly validated.

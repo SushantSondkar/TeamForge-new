@@ -1,77 +1,136 @@
 <% layout("/layouts/boilerplate") -%>
 
-<div class="event-new-page page-container" style="max-width: 680px;">
-    
-    <div style="margin-bottom: 24px;">
-        <a href="/events" style="color: #64748b; text-decoration: none; font-size: 13.5px; display: inline-flex; align-items: center; gap: 6px; font-weight: 500; margin-bottom: 12px;">
-            ← Back to Events
-        </a>
-        <h1 style="font-size: 24px; font-weight: 700; color: #0f172a; margin: 0 0 4px 0;">Post a Campus Event / Hackathon</h1>
-        <p style="color: #64748b; font-size: 14px; margin: 0;">Add an upcoming college hackathon or technical competition for team matching.</p>
-    </div>
+    <div class="event-new-page page-container" style="max-width: 680px;">
 
-    <% if (typeof error !== 'undefined' && error) { %>
-        <div style="background-color: #fee2e2; border: 1px solid #f87171; color: #b91c1c; padding: 12px 16px; border-radius: 8px; margin-bottom: 24px; font-size: 14px;">
-            <%= error %>
+        <div style="margin-bottom: 24px;">
+            <a href="/events"
+                style="color: #64748b; text-decoration: none; font-size: 13.5px; display: inline-flex; align-items: center; gap: 6px; font-weight: 500; margin-bottom: 12px;">
+                ← Back to Events
+            </a>
+            <h1 style="font-size: 24px; font-weight: 700; color: #0f172a; margin: 0 0 4px 0;">Post a Campus Event /
+                Hackathon</h1>
+            <p style="color: #64748b; font-size: 14px; margin: 0;">Add an upcoming college hackathon or technical
+                competition for team matching.</p>
         </div>
-    <% } %>
 
-    <div class="form-card" style="background: white; border: 1px solid #e2e8f0; border-radius: 14px; padding: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
-        <form action="/events/new" method="POST" style="display: flex; flex-direction: column; gap: 18px;">
-            <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
-
-            <div>
-                <label for="eventName" style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Event / Hackathon Name *</label>
-                <input type="text" id="eventName" name="name" required placeholder="e.g. EQUINOX 2026, Smart India Hackathon"
-                       style="width: 100%; box-sizing: border-box; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none;">
+        <% if (typeof error !=='undefined' && error) { %>
+            <div class="flash-alert flash-danger"
+                style="background-color: #fee2e2; border: 1px solid #f87171; color: #b91c1c; padding: 12px 16px; border-radius: 8px; margin-bottom: 24px; font-size: 14px;">
+                <%= error %>
             </div>
+            <% } %>
 
-            <div class="form-grid-2">
-                <div>
-                    <label for="eventOrganizer" style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Organizer *</label>
-                    <input type="text" id="eventOrganizer" name="organizer" required placeholder="e.g. Computer Engineering Dept, CSI"
-                           style="width: 100%; box-sizing: border-box; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none;">
+                <div class="form-card"
+                    style="background: white; border: 1px solid #e2e8f0; border-radius: 14px; padding: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+                    <form action="/events/new" method="POST" enctype="multipart/form-data"
+                        style="display: flex; flex-direction: column; gap: 18px;">
+                        <input type="hidden" name="_csrf"
+                            value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+
+                        <div>
+                            <label for="eventName"
+                                style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Event
+                                / Hackathon Name *</label>
+                            <input type="text" id="eventName" name="name" required
+                                placeholder="e.g. EQUINOX 2026, Smart India Hackathon"
+                                style="width: 100%; box-sizing: border-box; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none;">
+                        </div>
+
+                        <div class="form-grid-2">
+                            <div>
+                                <label for="eventOrganizer"
+                                    style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Organizer
+                                    *</label>
+                                <input type="text" id="eventOrganizer" name="organizer" required
+                                    placeholder="e.g. Computer Engineering Dept, CSI"
+                                    style="width: 100%; box-sizing: border-box; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none;">
+                            </div>
+                            <div>
+                                <label for="eventType"
+                                    style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Event
+                                    Type *</label>
+                                <select id="eventType" name="type"
+                                    style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13.5px; background: white; outline: none;">
+                                    <option value="Hackathon" selected>Hackathon</option>
+                                    <option value="Competition">Competition</option>
+                                    <option value="Workshop">Workshop</option>
+                                    <option value="Meetup">Meetup</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-grid-2">
+                            <div>
+                                <label for="eventMode"
+                                    style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Mode
+                                    *</label>
+                                <select id="eventMode" name="mode"
+                                    style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13.5px; background: white; outline: none;">
+                                    <option value="Offline">Offline (On-Campus)</option>
+                                    <option value="Online">Online / Virtual</option>
+                                    <option value="Hybrid">Hybrid</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="eventDate"
+                                    style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Event
+                                    Date *</label>
+                                <input type="date" id="eventDate" name="date" required
+                                    style="width: 100%; box-sizing: border-box; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none;">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="eventDeadline"
+                                style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Registration
+                                Deadline *</label>
+                            <input type="date" id="eventDeadline" name="deadline" required
+                                style="width: 100%; box-sizing: border-box; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none;">
+                        </div>
+
+                        <div>
+                            <label for="eventLink"
+                                style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Official
+                                Event Link / Problem Statements</label>
+                            <input type="url" id="eventLink" name="link" placeholder="https://..."
+                                style="width: 100%; box-sizing: border-box; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none;">
+                        </div>
+
+                        <div>
+                            <label for="eventDescription"
+                                style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Event
+                                Overview & Details</label>
+                            <textarea id="eventDescription" name="description" rows="3"
+                                placeholder="Themes, eligibility rules, round details..."
+                                style="width: 100%; box-sizing: border-box; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; font-family: inherit; outline: none;"></textarea>
+                        </div>
+
+                        <!-- Optional Event Poster Upload Section -->
+                        <div
+                            style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 18px;">
+                            <label for="eventPoster"
+                                style="display: block; font-size: 13.5px; font-weight: 700; color: #0f172a; margin-bottom: 4px;">
+                                Event Poster (Optional)
+                            </label>
+                            <p style="color: #64748b; font-size: 12.5px; margin: 0 0 12px 0;">
+                                JPG, PNG or WebP, max 1.5 MB. Only upload posters you have the right to use. Admins may
+                                remove inappropriate posters.
+                            </p>
+                            <input type="file" id="eventPoster" name="poster"
+                                accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                                style="font-size: 13px; color: #475569;">
+                        </div>
+
+                        <div
+                            style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 10px; flex-wrap: wrap;">
+                            <a href="/events" class="btn-large-outline"
+                                style="text-decoration: none; padding: 10px 20px; font-size: 14px; border-radius: 8px;">Cancel</a>
+                            <button type="submit" class="btn-large-primary"
+                                style="padding: 10px 24px; font-size: 14px; font-weight: 600; border-radius: 8px; border: none; cursor: pointer; background: #2563eb; color: white;">Publish
+                                Event</button>
+                        </div>
+                    </form>
                 </div>
-                <div>
-                    <label for="eventMode" style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Mode *</label>
-                    <select id="eventMode" name="mode" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13.5px; background: white; outline: none;">
-                        <option value="Offline">Offline (On-Campus)</option>
-                        <option value="Online">Online / Virtual</option>
-                        <option value="Hybrid">Hybrid</option>
-                    </select>
-                </div>
-            </div>
 
-            <div class="form-grid-2">
-                <div>
-                    <label for="eventDate" style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Event Date *</label>
-                    <input type="date" id="eventDate" name="date" required
-                           style="width: 100%; box-sizing: border-box; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none;">
-                </div>
-                <div>
-                    <label for="eventDeadline" style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Registration Deadline *</label>
-                    <input type="date" id="eventDeadline" name="deadline" required
-                           style="width: 100%; box-sizing: border-box; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none;">
-                </div>
-            </div>
-
-            <div>
-                <label for="eventLink" style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Official Event Link / Problem Statements</label>
-                <input type="url" id="eventLink" name="link" placeholder="https://..."
-                       style="width: 100%; box-sizing: border-box; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none;">
-            </div>
-
-            <div>
-                <label for="eventDescription" style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Event Overview & Details</label>
-                <textarea id="eventDescription" name="description" rows="3" placeholder="Themes, eligibility rules, round details..."
-                          style="width: 100%; box-sizing: border-box; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; font-family: inherit; outline: none;"></textarea>
-            </div>
-
-            <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 10px; flex-wrap: wrap;">
-                <a href="/events" class="btn-large-outline" style="text-decoration: none; padding: 10px 20px; font-size: 14px; border-radius: 8px;">Cancel</a>
-                <button type="submit" class="btn-large-primary" style="padding: 10px 24px; font-size: 14px; font-weight: 600; border-radius: 8px; border: none; cursor: pointer; background: #2563eb; color: white;">Publish Event</button>
-            </div>
-        </form>
-    </div>v>
-
-</div>
+    </div>

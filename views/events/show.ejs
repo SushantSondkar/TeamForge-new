@@ -10,9 +10,18 @@
 
     <!-- Event Hero / Header Card -->
     <div class="event-hero-card" style="background: white; border: 1px solid #e2e8f0; border-radius: 14px; padding: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); margin-bottom: 24px;">
+        <% if (typeof hasPoster !== 'undefined' && hasPoster) { %>
+            <div style="width: 100%; max-height: 420px; background: #0f172a; border-radius: 12px; overflow: hidden; display: flex; align-items: center; justify-content: center; margin-bottom: 24px; border: 1px solid #334155;">
+                <img src="/events/<%= event._id %>/poster" alt="<%= event.name %> event poster" style="max-width: 100%; max-height: 420px; object-fit: contain; display: block;" loading="lazy">
+            </div>
+        <% } %>
+
         <div style="display: flex; justify-content: space-between; align-items: start; gap: 20px; flex-wrap: wrap;">
             <div>
-                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
+                    <span style="background: #2563eb; color: #ffffff; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 16px;">
+                        <%= event.type || 'Hackathon' %>
+                    </span>
                     <span style="background: #e0f2fe; color: #0369a1; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 16px;">
                         <%= event.mode || 'Offline' %>
                     </span>
@@ -36,6 +45,22 @@
                     <p style="color: #334155; font-size: 14px; line-height: 1.6; max-width: 700px; margin: 0 0 16px 0;">
                         <%= event.description %>
                     </p>
+                <% } %>
+
+                <% if (currentUser && (currentUser.isAdmin || (event.createdBy && event.createdBy.equals(currentUser._id)))) { %>
+                    <div style="display: flex; gap: 10px; align-items: center; margin-top: 16px; flex-wrap: wrap;">
+                        <a href="/events/<%= event._id %>/edit" class="btn-small-outline" style="text-decoration: none; padding: 6px 14px; font-size: 13px; font-weight: 600; border-radius: 6px;">
+                            ✏️ Edit Event / Poster
+                        </a>
+                        <% if (typeof hasPoster !== 'undefined' && hasPoster && currentUser.isAdmin) { %>
+                            <form action="/events/<%= event._id %>/poster/remove" method="POST" style="margin: 0; display: inline;">
+                                <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                                <button type="submit" class="btn-small-outline" style="color: #dc2626; border-color: #fca5a5; background: #fef2f2; padding: 6px 14px; font-size: 13px; font-weight: 600; border-radius: 6px; cursor: pointer;">
+                                    Remove Poster
+                                </button>
+                            </form>
+                        <% } %>
+                    </div>
                 <% } %>
             </div>
 

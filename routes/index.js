@@ -9,6 +9,8 @@ const TeamRequestAction = require('../models/TeamRequestAction');
 const Notification = require('../models/Notification');
 const Event = require('../models/Event');
 const SuccessStory = require('../models/SuccessStory');
+const EventPoster = require('../models/EventPoster');
+const { getIndiaStartOfToday } = require('../utils/eventService');
 const {
   getRecommendedCandidates,
   getRecommendedOpportunities,
@@ -127,11 +129,31 @@ async function renderDashboard(req, res) {
       .populate("teamRequirementId")
       .sort({ updatedAt: -1 });
 
+    // 8b. Upcoming Events for Dashboard Carousel (Asia/Kolkata today or later, soonest first, max 8)
+    const indiaToday = getIndiaStartOfToday();
+    const upcomingEvents = await Event.find({
+      date: { $gte: indiaToday }
+    })
+      .sort({ date: 1 })
+      .limit(8);
+
+    // Verify which events have posters without loading image bytes
+    const posterDocs = await EventPoster.find({
+      eventId: { $in: upcomingEvents.map(e => e._id) }
+    }).select("eventId");
+    const posterEventIdSet = new Set(posterDocs.map(p => p.eventId.toString()));
+
+    const upcomingEventsWithPoster = upcomingEvents.map(evt => {
+      const obj = evt.toObject();
+      obj.hasPoster = posterEventIdSet.has(evt._id.toString());
+      return obj;
+    });
+
     // 9. Promoted Hackathons & Competitions
     const promotedEvents = await Event.find({ isPromoted: true }).sort({ date: 1 }).limit(3);
 
     // 10. Real upcoming deadlines from database
-    const upcomingDeadlines = await Event.find().sort({ deadline: 1 }).limit(4);
+    const upcomingDeadlines = await Event.find({ deadline: { $gte: indiaToday } }).sort({ deadline: 1 }).limit(4);
 
     // 11. Real active member count (1 creator + locked candidates)
     let activeMemberCount = 1;
@@ -153,6 +175,7 @@ async function renderDashboard(req, res) {
     res.render("home", {
       latestTeam,
       activeMemberCount,
+      upcomingEvents: upcomingEventsWithPoster,
       recommendedCandidates,
       recommendedOpportunities,
       myApplications,
