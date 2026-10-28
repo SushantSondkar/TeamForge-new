@@ -61,7 +61,7 @@
                         <span>✅</span>
                         <span><%= success %></span>
                     </div>
-                    <button type="button" onclick="this.parentElement.remove()" style="background: none; border: none; font-size: 18px; line-height: 1; cursor: pointer; color: #166534;">&times;</button>
+                    <button type="button" class="flash-alert-close" aria-label="Close alert" style="background: none; border: none; font-size: 18px; line-height: 1; cursor: pointer; color: #166534;">&times;</button>
                 </div>
             <% } %>
 
@@ -71,7 +71,7 @@
                         <span>⚠️</span>
                         <span><%= error %></span>
                     </div>
-                    <button type="button" onclick="this.parentElement.remove()" style="background: none; border: none; font-size: 18px; line-height: 1; cursor: pointer; color: #991b1b;">&times;</button>
+                    <button type="button" class="flash-alert-close" aria-label="Close alert" style="background: none; border: none; font-size: 18px; line-height: 1; cursor: pointer; color: #991b1b;">&times;</button>
                 </div>
             <% } %>
 
@@ -110,42 +110,7 @@
 
     <%- include("../includes/footer") %>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const sidebar = document.getElementById('appSidebar');
-            const toggleBtn = document.getElementById('sidebarToggleBtn');
-            const closeBtn = document.getElementById('sidebarCloseBtn');
-            const backdrop = document.getElementById('sidebarBackdrop');
-
-            function openSidebar() {
-                if (sidebar) sidebar.classList.add('drawer-open');
-                if (backdrop) backdrop.classList.add('active');
-                document.body.style.overflow = 'hidden';
-            }
-
-            function closeSidebar() {
-                if (sidebar) sidebar.classList.remove('drawer-open');
-                if (backdrop) backdrop.classList.remove('active');
-                document.body.style.overflow = '';
-            }
-
-            if (toggleBtn) toggleBtn.addEventListener('click', openSidebar);
-            if (closeBtn) closeBtn.addEventListener('click', closeSidebar);
-            if (backdrop) backdrop.addEventListener('click', closeSidebar);
-
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape') closeSidebar();
-            });
-
-            const currentPath = window.location.pathname;
-            document.querySelectorAll('.mobile-nav-item').forEach(link => {
-                const href = link.getAttribute('href');
-                if (href && (href === currentPath || (href !== '/' && currentPath.startsWith(href)))) {
-                    link.classList.add('active');
-                }
-            });
-        });
-    </script>
+    <script src="/js/layout.js"></script>
 
     <% if (typeof extraScripts !== 'undefined') { %>
         <%- extraScripts %>

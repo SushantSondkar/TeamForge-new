@@ -61,9 +61,9 @@
             <div class="form-group-new">
                 <label>Team Size</label>
                 <div class="team-size-control-new">
-                    <button type="button" class="size-btn-new" onclick="const el = document.getElementById('team-size'); if(parseInt(el.value) > 1) el.stepDown();">−</button>
+                    <button type="button" class="size-btn-new" id="team-size-decrement">−</button>
                     <input type="number" id="team-size" name="teamSize" value="<%= teamData.teamSize || 4 %>" min="1" max="20" class="size-input-new" readonly>
-                    <button type="button" class="size-btn-new" onclick="const el = document.getElementById('team-size'); if(parseInt(el.value) < 20) el.stepUp();">+</button>
+                    <button type="button" class="size-btn-new" id="team-size-increment">+</button>
                     <span class="size-helper">1–20 members</span>
                 </div>
             </div>

@@ -34,6 +34,30 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // -------------------------------------------------------------
+    // 1b. STEP 2 (Define Team): Team Size Stepper Controls
+    // -------------------------------------------------------------
+    const decBtn = document.getElementById('team-size-decrement');
+    const incBtn = document.getElementById('team-size-increment');
+    const teamSizeInput = document.getElementById('team-size');
+
+    if (decBtn && teamSizeInput) {
+        decBtn.addEventListener('click', () => {
+            if (parseInt(teamSizeInput.value, 10) > 1) {
+                teamSizeInput.stepDown();
+            }
+        });
+    }
+
+    if (incBtn && teamSizeInput) {
+        incBtn.addEventListener('click', () => {
+            if (parseInt(teamSizeInput.value, 10) < 20) {
+                teamSizeInput.stepUp();
+            }
+        });
+    }
+
+
+    // -------------------------------------------------------------
     // 2. STEP 3 (Open Roles): Add, Remove, and Serialize Roles
     // -------------------------------------------------------------
     const openRolesForm = document.querySelector('.open-roles-form');

@@ -57,22 +57,7 @@
                 }
             </style>
 
-            <script>
-                document.querySelectorAll('input[name="rating"]').forEach(radio => {
-                    radio.addEventListener('change', (e) => {
-                        const val = e.target.value;
-                        const captions = {
-                            "1": "1 Star · Needs Improvement",
-                            "2": "2 Stars · Fair",
-                            "3": "3 Stars · Good",
-                            "4": "4 Stars · Very Good",
-                            "5": "5 Stars · Excellent!"
-                        };
-                        const capEl = document.getElementById('ratingCaption');
-                        if (capEl) capEl.textContent = captions[val] || '';
-                    });
-                });
-            </script>
+            <script src="/js/feedback.js"></script>
 
             <!-- Category -->
             <div style="margin-bottom: 20px;">
