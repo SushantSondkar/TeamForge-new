@@ -124,9 +124,4 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-
-    // 7. Dark Mode Controls (Fallback & Sync)
-    if (window.TeamForgeTheme && typeof window.TeamForgeTheme.initControls === 'function') {
-        window.TeamForgeTheme.initControls();
-    }
 });
