@@ -32,7 +32,7 @@ function getAuthorizationUrl(state, redirectUri) {
   const clientId = process.env.GITHUB_CLIENT_ID || "";
   const params = new URLSearchParams({
     client_id: clientId,
-    scope: "read:user,repo",
+    scope: "read:user",
     state: state || "teamforge_oauth_state"
   });
   if (redirectUri) {

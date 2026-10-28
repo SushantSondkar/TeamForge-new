@@ -30,9 +30,10 @@ async function runTests() {
   console.log("1. Testing GitHub OAuth URL Generation...");
   const ghUrl = getGithubAuthUrl("test_csrf_state_123", "http://localhost:8080/auth/github/callback");
   assert.ok(ghUrl.startsWith("https://github.com/login/oauth/authorize"), "Must point to GitHub authorize endpoint");
-  assert.ok(ghUrl.includes("scope=read%3Auser%2Crepo") || ghUrl.includes("scope=read:user,repo"), "Must request read:user and repo scopes");
+  assert.ok(ghUrl.includes("scope=read%3Auser") || ghUrl.includes("scope=read:user"), "Must request read:user scope only");
+  assert.ok(!ghUrl.includes("repo"), "Must not request access to private repositories (repo scope)");
   assert.ok(ghUrl.includes("state=test_csrf_state_123"), "Must contain state for CSRF defense");
-  console.log("   ✓ GitHub OAuth URL and scopes validated.");
+  console.log("   ✓ GitHub OAuth URL and scope validated.");
 
   // -------------------------------------------------------------
   // Test 2: Repository Language Aggregation
@@ -214,7 +215,7 @@ async function runTests() {
   const fakeGithubResponses = {
     "https://github.com/login/oauth/access_token": {
       status: 200,
-      body: { access_token: "gho_test_live_token_7788", token_type: "bearer", scope: "read:user,repo" }
+      body: { access_token: "gho_test_live_token_7788", token_type: "bearer", scope: "read:user" }
     },
     "https://api.github.com/user": {
       status: 200,
