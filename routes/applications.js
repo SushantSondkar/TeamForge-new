@@ -104,8 +104,8 @@ router.get("/team/:teamId", requireLogin, async (req, res) => {
 
     // Retrieve actions submitted to this team (APPLY or INVITE)
     const actions = await TeamRequestAction.find({ teamRequirementId: team._id })
-      .populate("senderId", "name email department role skills credibility github linkedin portfolio profilePic avatar photo")
-      .populate("receiverId", "name email department role skills credibility github linkedin portfolio profilePic avatar photo")
+      .populate("senderId", "name email phone department role skills credibility github linkedin portfolio profilePic avatar photo")
+      .populate("receiverId", "name email phone department role skills credibility github linkedin portfolio profilePic avatar photo")
       .sort({ createdAt: -1 });
 
     // Map to normalized structure for view compatibility

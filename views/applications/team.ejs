@@ -206,7 +206,8 @@
                             <!-- Mutual Contact Sharing for Locked Spot -->
                             <% if (app.bothOptedIn) { %>
                                 <div style="font-size: 12px; color: #065f46; background: #ecfdf5; padding: 6px 12px; border-radius: 6px; border: 1px solid #bbf7d0; text-align: left;">
-                                    <div><strong>Email:</strong> <%= app.applicantId ? app.applicantId.email : '' %></div>
+                                    <div><strong>Name:</strong> <%= (app.applicantId && app.applicantId.name) ? app.applicantId.name : '' %></div>
+                                    <div><strong>Email:</strong> <%= (app.applicantId && app.applicantId.email) ? app.applicantId.email : '' %> | <strong>Phone:</strong> <%= (app.applicantId && app.applicantId.phone && app.applicantId.phone.trim()) ? app.applicantId.phone.trim() : 'Phone not provided' %></div>
                                     <% if (app.applicantId && app.applicantId.github) { %>
                                         <div><strong>GitHub:</strong> <a href="https://github.com/<%= app.applicantId.github %>" target="_blank" style="color: #0284c7;">github.com/<%= app.applicantId.github %></a></div>
                                     <% } %>
