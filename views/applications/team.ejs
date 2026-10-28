@@ -212,7 +212,7 @@
                                         <div><strong>GitHub:</strong> <a href="https://github.com/<%= app.applicantId.github %>" target="_blank" style="color: #0284c7;">github.com/<%= app.applicantId.github %></a></div>
                                     <% } %>
                                     <% if (app.applicantId && app.applicantId.linkedin) { %>
-                                        <div><strong>LinkedIn:</strong> <a href="<%= app.applicantId.linkedin %>" target="_blank" style="color: #0284c7;">Profile</a></div>
+                                        <div><strong>LinkedIn:</strong> <a href="<%= app.applicantId.linkedin %>" target="_blank" rel="noopener noreferrer nofollow" style="color: #0284c7;">LinkedIn profile</a></div>
                                     <% } %>
                                 </div>
                             <% } else { %>

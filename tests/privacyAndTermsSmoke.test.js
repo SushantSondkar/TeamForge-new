@@ -94,6 +94,14 @@ async function run() {
     assert.ok(/never\s+sold/i.test(privacyRes.body), "Privacy page must state data is never sold");
     assert.ok(privacyRes.body.includes("7 days"), "Privacy page must state 'we aim to respond within 7 days'");
     assert.ok(/cookie/i.test(privacyRes.body), "Privacy page must mention cookies policy");
+    assert.ok(
+      privacyRes.body.includes("You may optionally add a link to your LinkedIn profile. It is only a link you type yourself. We do not sign in with LinkedIn and do not receive any data from LinkedIn."),
+      "Privacy page must state that LinkedIn is an optional typed link with no sign in or data import"
+    );
+    assert.ok(
+      !privacyRes.body.includes("isLinkedinLinked") && !privacyRes.body.includes("Profile picture is imported to your profile photo"),
+      "Privacy page must not mention legacy LinkedIn OAuth import fields"
+    );
     console.log("   ✓ GET /privacy returned 200 OK with support email, 'phone number', and required policies.");
 
     // -------------------------------------------------------------

@@ -54,10 +54,7 @@
             <div style="grid-column: 1 / -1; background: #eff6ff; border: 1px solid #3b82f6; color: #1e40af; padding: 12px 16px; border-radius: 8px; font-size: 13.5px;">
                 Please enter your GitHub username below to verify your repositories and commit metrics.
             </div>
-        <% } else if (q.verified === 'linkedin') { %>
-            <div style="grid-column: 1 / -1; background: #eff6ff; border: 1px solid #3b82f6; color: #1e40af; padding: 12px 16px; border-radius: 8px; font-size: 13.5px; display: flex; align-items: center; gap: 8px;">
-                ✓ LinkedIn identity confirmed via OAuth! Honest trust badge "LinkedIn Linked" is now active.
-            </div>
+
         <% } else if (q.synced === 'github') { %>
             <div style="grid-column: 1 / -1; background: #ecfdf5; border: 1px solid #10b981; color: #065f46; padding: 12px 16px; border-radius: 8px; font-size: 13.5px;">
                 ↻ GitHub activity and statistics refreshed successfully.
@@ -84,7 +81,7 @@
         <div style="color: #2563eb; font-size: 13.5px; font-weight: 600; margin-bottom: 2px;"><%= currentUser && currentUser.role ? currentUser.role : 'Member' %></div>
         <div style="color: #64748b; font-size: 12.5px; margin-bottom: 12px;"><%= currentUser ? currentUser.email : '' %></div>
 
-        <!-- Tiered Trust Badges: GitHub Verified · LinkedIn Linked -->
+        <!-- Tiered Trust Badges: GitHub Verified -->
         <div style="display: flex; justify-content: center; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;">
             <% if (currentUser && currentUser.isGithubVerified && currentUser.githubId) { %>
                 <span class="badge" title="Ownership confirmed via OAuth; repos & commits pulled via REST API" style="background: #0f172a; color: #38bdf8; border: 1px solid #1e293b; font-size: 11.5px; font-weight: 600; padding: 4px 10px; border-radius: 20px; display: inline-flex; align-items: center; gap: 5px;">
@@ -98,12 +95,6 @@
                 </span>
             <% } %>
 
-            <% if (currentUser && currentUser.isLinkedinLinked) { %>
-                <span class="badge" title="OAuth Identity Linked (Honest label: experiences are self-reported)" style="background: #0077b5; color: #ffffff; font-size: 11.5px; font-weight: 600; padding: 4px 10px; border-radius: 20px; display: inline-flex; align-items: center; gap: 5px;">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
-                    LinkedIn Linked
-                </span>
-            <% } %>
 
             <% if (currentUser && currentUser.portfolio) { %>
                 <span class="badge" title="Self-reported personal website" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; font-size: 11.5px; font-weight: 500; padding: 4px 10px; border-radius: 20px;">
@@ -238,33 +229,14 @@
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="#0077b5"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
                         <strong style="font-size: 12.5px; color: #0f172a;">LinkedIn:</strong>
                     </div>
-                    <% if (currentUser && currentUser.isLinkedinLinked) { %>
-                        <div style="display: flex; align-items: center; gap: 6px;">
-                            <span style="font-size: 11px; background: #e0f2fe; color: #0284c7; font-weight: 600; padding: 2px 7px; border-radius: 10px;">Linked ✓</span>
-                            <form action="/auth/linkedin/unlink" method="POST" style="margin: 0; display: inline;">
-                                <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
-                                <button type="submit" style="background: none; border: none; font-size: 11px; color: #ef4444; cursor: pointer; padding: 0;">Unlink</button>
-                            </form>
-                        </div>
-                    <% } else if (currentUser && !currentUser.isLinkedinLinked && typeof isLinkedinOAuthConfigured !== 'undefined' && isLinkedinOAuthConfigured) { %>
-                        <a href="/auth/linkedin" style="font-size: 11px; color: #0077b5; font-weight: 600; text-decoration: none;">Link ↗</a>
-                    <% } %>
                 </div>
                 <div style="width: 100%; min-width: 0; overflow-wrap: anywhere; word-break: break-all; font-size: 12px; line-height: 1.4;">
-                    <% if (currentUser && currentUser.linkedin) { 
-                        const liVal = currentUser.linkedin;
-                        const liUrl = liVal.startsWith('http') ? liVal : 'https://' + liVal;
-                    %>
-                        <a href="<%= liUrl %>" target="_blank" rel="noopener" style="color: #0077b5; text-decoration: none; word-break: break-all; overflow-wrap: anywhere; display: inline-block; max-width: 100%;">
-                            <%= liVal %> ↗
+                    <% if (currentUser && currentUser.linkedin) { %>
+                        <a href="<%= currentUser.linkedin %>" target="_blank" rel="noopener noreferrer nofollow" style="color: #0077b5; text-decoration: none; word-break: break-all; overflow-wrap: anywhere; display: inline-block; max-width: 100%;">
+                            LinkedIn profile
                         </a>
-                        <% if (currentUser.linkedinData && currentUser.linkedinData.name) { %>
-                            <div style="margin-top: 4px; font-size: 11px; color: #64748b;">
-                                Verified Name: <strong style="color: #1e293b;"><%= currentUser.linkedinData.name %></strong>
-                            </div>
-                        <% } %>
                     <% } else { %>
-                        <span style="color: #94a3b8;">Not linked</span>
+                        <span style="color: #94a3b8;">Not provided</span>
                     <% } %>
                 </div>
             </div>

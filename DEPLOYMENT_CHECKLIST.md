@@ -61,11 +61,11 @@ Save each generated 64-character hex string for:
 
 ---
 
-## Step 3: Configure OAuth Applications (GitHub & LinkedIn)
+## Step 3: Configure OAuth Application (GitHub)
 
 Determine your production application URL first. For Render, this is typically `https://<your-app-name>.onrender.com` (or your custom domain).
 
-### A. GitHub OAuth Application:
+### GitHub OAuth Application:
 1. Go to GitHub **Settings > Developer settings > OAuth Apps > New OAuth App** (`https://github.com/settings/applications/new`).
 2. Fill in:
    - **Application name**: `TeamForge Campus Platform`
@@ -75,13 +75,8 @@ Determine your production application URL first. For Render, this is typically `
 4. Note your **Client ID** (`GITHUB_CLIENT_ID`).
 5. Click **Generate a new client secret** and save the value (`GITHUB_CLIENT_SECRET`).
 
-### B. LinkedIn OAuth Application:
-1. Visit the LinkedIn Developer Portal (`https://www.linkedin.com/developers/`) and click **Create App**.
-2. Fill in the app name, associate with your institution/company page, and upload an icon.
-3. In the **Products** tab, request **Sign In with LinkedIn using OpenID Connect**.
-4. In the **Auth** tab, under **Authorized redirect URLs for your app**, add:
-   - `https://<your-app-name>.onrender.com/auth/linkedin/callback`
-5. Note your **Client ID** (`LINKEDIN_CLIENT_ID`) and **Client Secret** (`LINKEDIN_CLIENT_SECRET`).
+> [!NOTE]
+> **LinkedIn Profile Link**: TeamForge does not use LinkedIn OAuth. Students may optionally provide a direct link to their LinkedIn profile on their profile edit page. No LinkedIn developer application or API credentials are required.
 
 ---
 
@@ -147,8 +142,6 @@ TeamForge dispatches student email verifications, password resets, action remind
 | `SEED` | `false` | Must be `false` in production |
 | `GITHUB_CLIENT_ID` | *(From Step 3)* | Optional in dev, needed for OAuth |
 | `GITHUB_CLIENT_SECRET` | *(From Step 3)* | Optional in dev, needed for OAuth |
-| `LINKEDIN_CLIENT_ID` | *(From Step 3)* | Optional in dev, needed for OAuth |
-| `LINKEDIN_CLIENT_SECRET` | *(From Step 3)* | Optional in dev, needed for OAuth |
 
 4. Click **Deploy Web Service**.
 5. Once built, verify Render displays a green checkmark and that `GET /healthz` returns `{"status":"ok", ...}` with HTTP 200.

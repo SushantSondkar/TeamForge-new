@@ -1143,100 +1143,19 @@ router.post("/auth/github/unlink", requireLogin, async (req, res) => {
 // PHASE 6: LINKEDIN OAUTH ROUTES (Honest "Linked" Label Only)
 // =============================================================
 
-// 15. GET /auth/linkedin - Initiate LinkedIn OAuth flow
+// 15. GET /auth/linkedin - Disabled (redirects to profile)
 router.get("/auth/linkedin", requireLogin, (req, res) => {
-  if (!process.env.LINKEDIN_CLIENT_ID || !process.env.LINKEDIN_CLIENT_SECRET) {
-    return res.status(200).render("oauth-unavailable", {
-      serviceName: "LinkedIn",
-      message: "This verification is not available right now."
-    });
-  }
-
-  const state = crypto.randomBytes(16).toString("hex");
-  req.session.linkedinOAuthState = state;
-
-  const protocol = req.protocol;
-  const host = req.get("host");
-  const redirectUri = `${protocol}://${host}/auth/linkedin/callback`;
-
-  const authUrl = linkedinService.getAuthorizationUrl(state, redirectUri);
-  res.redirect(authUrl);
+  return res.redirect("/profile");
 });
 
-// 16. GET /auth/linkedin/callback - LinkedIn OAuth callback
-router.get("/auth/linkedin/callback", requireLogin, async (req, res) => {
-  try {
-    if (!process.env.LINKEDIN_CLIENT_ID || !process.env.LINKEDIN_CLIENT_SECRET) {
-      return res.status(200).render("oauth-unavailable", {
-        serviceName: "LinkedIn",
-        message: "This verification is not available right now."
-      });
-    }
-
-    const { code, state, error, error_description } = req.query;
-
-    if (error) {
-      console.warn("LinkedIn OAuth error:", error, error_description);
-      return res.redirect("/profile?error=" + encodeURIComponent(error_description || error));
-    }
-
-    if (!state || !req.session.linkedinOAuthState || state !== req.session.linkedinOAuthState) {
-      delete req.session.linkedinOAuthState;
-      console.warn("LinkedIn OAuth state mismatch.");
-      return res.redirect("/profile?error=" + encodeURIComponent("Security check failed. State parameter mismatch."));
-    }
-
-    delete req.session.linkedinOAuthState;
-
-    const protocol = req.protocol;
-    const host = req.get("host");
-    const redirectUri = `${protocol}://${host}/auth/linkedin/callback`;
-
-    const tokenData = await linkedinService.exchangeCodeForToken(code, redirectUri);
-    const userInfo = await linkedinService.fetchUserInfo(tokenData.access_token);
-
-    // Assign "LinkedIn Linked" honest trust badge
-    req.user.isLinkedinLinked = true;
-    req.user.linkedinId = String(userInfo.sub || userInfo.id || "");
-    
-    // Automatically import profile photo from LinkedIn if user hasn't uploaded a custom photo
-    if (userInfo.picture && (!req.user.profilePic || req.user.profilePic.startsWith("data:image/svg") || req.user.profilePic.includes("default"))) {
-      req.user.profilePic = userInfo.picture;
-      req.user.photo = userInfo.picture;
-    }
-
-    if (!req.user.linkedin && userInfo.vanityName) {
-      req.user.linkedin = `https://www.linkedin.com/in/${userInfo.vanityName}`;
-    }
-
-    req.user.linkedinData = {
-      name: userInfo.name || `${userInfo.given_name || ""} ${userInfo.family_name || ""}`.trim(),
-      picture: userInfo.picture || "",
-      email: userInfo.email || "",
-      linkedAt: new Date()
-    };
-
-    await req.user.save();
-
-    res.redirect("/profile?verified=linkedin");
-  } catch (err) {
-    console.error("LinkedIn verification callback error:", err.message);
-    res.redirect("/profile?error=" + encodeURIComponent(err.message));
-  }
+// 16. GET /auth/linkedin/callback - Disabled (redirects to profile)
+router.get("/auth/linkedin/callback", requireLogin, (req, res) => {
+  return res.redirect("/profile");
 });
 
-// 17. POST /auth/linkedin/unlink - Unlink LinkedIn
-router.post("/auth/linkedin/unlink", requireLogin, async (req, res) => {
-  try {
-    req.user.isLinkedinLinked = false;
-    req.user.linkedinId = "";
-    await req.user.save();
-
-    res.redirect("/profile?unlinked=linkedin");
-  } catch (err) {
-    console.error("LinkedIn unlink error:", err.message);
-    res.redirect("/profile?error=" + encodeURIComponent(err.message));
-  }
+// 17. POST /auth/linkedin/unlink - Disabled (redirects to profile)
+router.post("/auth/linkedin/unlink", requireLogin, (req, res) => {
+  return res.redirect("/profile");
 });
 
 module.exports = router;
