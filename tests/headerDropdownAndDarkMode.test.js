@@ -199,6 +199,120 @@ async function runTests() {
   assert.ok(layoutJs.includes("focus()"), "layout.js must return focus to button on Escape");
   console.log("   ✓ layout.js handles dropdown toggle, outside click, and Escape focus restoration.");
 
+  // 7. Verify theme.js idempotent controls and toggle logic
+  console.log("\n7. Testing theme.js Idempotent Controls & Single-Click Toggle Logic...");
+  const themeJsPath = path.join(rootDir, "public", "js", "theme.js");
+  const themeJs = fs.readFileSync(themeJsPath, "utf8");
+
+  assert.ok(themeJs.includes("controlsInitialized"), "theme.js must track controlsInitialized to prevent duplicate event bindings");
+  assert.ok(themeJs.includes("e.preventDefault()"), "theme.js must call e.preventDefault() on toggle click");
+  assert.ok(themeJs.includes("e.stopPropagation()"), "theme.js must call e.stopPropagation() on switch click");
+
+  // Functional simulation of DOM elements and click handling
+  let fakeDataTheme = "light";
+  let fakeColorScheme = "light";
+  let fakeAriaChecked = "false";
+  let fakeIconText = "🌙";
+  let fakeStorage = {};
+
+  const fakeDocElement = {
+    getAttribute: (attr) => (attr === "data-theme" ? fakeDataTheme : null),
+    setAttribute: (attr, val) => {
+      if (attr === "data-theme") fakeDataTheme = val;
+    },
+    style: {
+      set colorScheme(val) {
+        fakeColorScheme = val;
+      },
+      get colorScheme() {
+        return fakeColorScheme;
+      }
+    }
+  };
+
+  const fakeToggleBtn = {
+    listeners: [],
+    addEventListener(event, fn) {
+      this.listeners.push(fn);
+    },
+    setAttribute(attr, val) {
+      if (attr === "aria-checked") fakeAriaChecked = val;
+    },
+    getAttribute(attr) {
+      return attr === "aria-checked" ? fakeAriaChecked : null;
+    },
+    click() {
+      let stopped = false;
+      const ev = {
+        target: fakeToggleBtn,
+        preventDefault: () => {},
+        stopPropagation: () => {
+          stopped = true;
+        }
+      };
+      this.listeners.forEach((fn) => fn(ev));
+      return stopped;
+    }
+  };
+
+  const fakeIcon = { textContent: "🌙" };
+
+  // Evaluate theme.js logic in sandbox context
+  const vm = require("vm");
+  const sandbox = {
+    document: {
+      documentElement: fakeDocElement,
+      getElementById: (id) => {
+        if (id === "themeToggleBtn") return fakeToggleBtn;
+        if (id === "themeIconIndicator") return fakeIcon;
+        return null;
+      },
+      querySelector: (sel) => {
+        if (sel === ".profile-dropdown-theme-row") return null;
+        return null;
+      },
+      readyState: "complete",
+      addEventListener: () => {}
+    },
+    localStorage: {
+      getItem: (k) => fakeStorage[k] || null,
+      setItem: (k, v) => {
+        fakeStorage[k] = String(v);
+      }
+    },
+    window: {
+      matchMedia: () => ({ matches: false, addEventListener: () => {} })
+    },
+    console
+  };
+  vm.createContext(sandbox);
+  vm.runInContext(themeJs, sandbox);
+
+  // Calling initControls multiple times should NOT attach duplicate listeners
+  const themeApi = sandbox.window.TeamForgeTheme;
+  assert.ok(themeApi, "window.TeamForgeTheme must be defined");
+  themeApi.initControls();
+  themeApi.initControls();
+  assert.strictEqual(
+    fakeToggleBtn.listeners.length,
+    1,
+    "initControls() must bind the toggle listener exactly once regardless of how many times it is called"
+  );
+
+  // First click toggles light -> dark
+  fakeToggleBtn.click();
+  assert.strictEqual(fakeDataTheme, "dark", "Single click on toggle switch must switch theme to dark");
+  assert.strictEqual(fakeAriaChecked, "true", "Toggle switch aria-checked must become 'true'");
+  assert.strictEqual(fakeStorage["tf-theme"], "dark", "localStorage tf-theme must be 'dark'");
+
+  // Second click toggles dark -> light
+  fakeToggleBtn.click();
+  assert.strictEqual(fakeDataTheme, "light", "Second click on toggle switch must switch theme to light");
+  assert.strictEqual(fakeAriaChecked, "false", "Toggle switch aria-checked must become 'false'");
+  assert.strictEqual(fakeStorage["tf-theme"], "light", "localStorage tf-theme must be 'light'");
+
+  console.log("   ✓ Verified initControls() is idempotent and single clicks toggle between dark and light smoothly.");
+
   console.log("\n=================================================");
   console.log("ALL HEADER DROPDOWN & DARK MODE TESTS PASSED (100%)");
   console.log("=================================================\n");

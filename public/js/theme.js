@@ -78,14 +78,22 @@ window.TeamForgeTheme = (function () {
     return next;
   }
 
+  var controlsInitialized = false;
+
   function initControls() {
     // Sync UI with active theme
     var active = document.documentElement.getAttribute('data-theme') || getEffectiveTheme();
     applyTheme(active);
 
+    if (controlsInitialized) {
+      return;
+    }
+    controlsInitialized = true;
+
     var toggleBtn = document.getElementById('themeToggleBtn');
     if (toggleBtn) {
       toggleBtn.addEventListener('click', function (e) {
+        e.preventDefault();
         e.stopPropagation();
         toggleTheme();
       });
@@ -94,9 +102,11 @@ window.TeamForgeTheme = (function () {
     var themeRow = document.querySelector('.profile-dropdown-theme-row');
     if (themeRow) {
       themeRow.addEventListener('click', function (e) {
-        if (toggleBtn && e.target !== toggleBtn && !toggleBtn.contains(e.target)) {
-          toggleTheme();
+        if (toggleBtn && (e.target === toggleBtn || toggleBtn.contains(e.target))) {
+          return;
         }
+        e.preventDefault();
+        toggleTheme();
       });
     }
 
