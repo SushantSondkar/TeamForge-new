@@ -6,15 +6,16 @@ console.log("=================================================");
 console.log("RUNNING INLINE HANDLER & CSP AUDIT TEST");
 console.log("=================================================\n");
 
-function getAllViewFiles(dir) {
+function getFilesByExt(dir, ext) {
   let results = [];
+  if (!fs.existsSync(dir)) return results;
   const list = fs.readdirSync(dir);
   for (const file of list) {
     const fullPath = path.join(dir, file);
     const stat = fs.statSync(fullPath);
     if (stat && stat.isDirectory()) {
-      results = results.concat(getAllViewFiles(fullPath));
-    } else if (file.endsWith(".ejs")) {
+      results = results.concat(getFilesByExt(fullPath, ext));
+    } else if (file.endsWith(ext)) {
       results.push(fullPath);
     }
   }
@@ -24,9 +25,12 @@ function getAllViewFiles(dir) {
 function runAudit() {
   const rootDir = path.join(__dirname, "..");
   const viewsDir = path.join(rootDir, "views");
-  const viewFiles = getAllViewFiles(viewsDir);
+  const publicDir = path.join(rootDir, "public");
+  const viewFiles = getFilesByExt(viewsDir, ".ejs");
+  const publicHtmlFiles = getFilesByExt(publicDir, ".html");
+  const filesToAudit = viewFiles.concat(publicHtmlFiles);
 
-  console.log(`Auditing ${viewFiles.length} EJS view files for inline handlers...\n`);
+  console.log(`Auditing ${viewFiles.length} EJS view files and ${publicHtmlFiles.length} public HTML files for inline handlers...\n`);
 
   const handlerRegex = /\bon[a-zA-Z]+\s*=/g;
   const jsHrefRegex = /href\s*=\s*['"]\s*javascript:/gi;
@@ -34,7 +38,7 @@ function runAudit() {
 
   const violations = [];
 
-  for (const file of viewFiles) {
+  for (const file of filesToAudit) {
     const content = fs.readFileSync(file, "utf8");
     const relPath = path.relative(rootDir, file).replace(/\\/g, "/");
 
