@@ -177,9 +177,9 @@ async function runTests() {
     console.log("   ✓ Hidden profile strictly excluded from leaderboard and candidate search.");
 
     // -------------------------------------------------------------
-    // Test 6: In-App How TeamForge Works Page & Problem Report Mailto
+    // Test 6: In-App How TeamForge Works Page & Problem Report In-App Form Link
     // -------------------------------------------------------------
-    console.log("6. Testing 'How TeamForge Works' Page & Footer Mailto Link...");
+    console.log("6. Testing 'How TeamForge Works' Page & Footer Problem Report Link...");
     const ejs = require("ejs");
     const howItWorks = fs.readFileSync(path.join(rootDir, "views", "how-it-works.ejs"), "utf8");
     assert.ok(howItWorks.includes("Sign Up & Build Profile"), "Step 1 present");
@@ -191,21 +191,12 @@ async function runTests() {
     assert.ok(footerTemplate.includes('href="/how-it-works"'), "Footer links to /how-it-works");
     assert.strictEqual(footerTemplate.includes("support@teamforge.kkwagh.edu.in"), false, "No hardcoded email address in footer template");
 
-    // Test footer rendering with NO support email (link hidden)
-    const origEnvSupport = process.env.SUPPORT_EMAIL;
-    delete process.env.SUPPORT_EMAIL;
-    const renderedHidden = ejs.render(footerTemplate, { supportEmail: null });
-    assert.strictEqual(renderedHidden.includes("Report a problem"), false, "Report a problem link is hidden when SUPPORT_EMAIL is missing");
-    assert.strictEqual(renderedHidden.includes("mailto:"), false, "No mailto link rendered when SUPPORT_EMAIL is missing");
+    // Test footer rendering with in-app problem report link
+    const renderedFooter = ejs.render(footerTemplate, { supportEmail: "custom-support@example.edu.in" });
+    assert.ok(renderedFooter.includes('href="/feedback?type=problem"'), "Report link points to /feedback?type=problem");
+    assert.strictEqual(renderedFooter.includes("mailto:"), false, "No mailto link rendered in footer");
 
-    // Test footer rendering WITH support email (link visible with dynamic target)
-    const testEmail = "custom-support@example.edu.in";
-    const renderedVisible = ejs.render(footerTemplate, { supportEmail: testEmail });
-    assert.ok(renderedVisible.includes("Report a problem"), "Report a problem link is visible when SUPPORT_EMAIL is provided");
-    assert.ok(renderedVisible.includes(`mailto:${testEmail}?subject=TeamForge%20Issue%20Report`), "Report link points to configured SUPPORT_EMAIL");
-
-    if (origEnvSupport) process.env.SUPPORT_EMAIL = origEnvSupport;
-    console.log("   ✓ In-app 4-step workflow page and dynamic problem report link verified.");
+    console.log("   ✓ In-app 4-step workflow page and in-app problem report link verified.");
 
     console.log("\n=================================================");
     console.log("ALL PHASE 10E TESTS PASSED (100%)");
