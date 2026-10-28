@@ -227,6 +227,34 @@ router.get("/how-it-works", (req, res) => {
 });
 
 // -------------------------------------------------------------
+// 1e. GET /privacy - Public Privacy Policy
+// -------------------------------------------------------------
+router.get("/privacy", (req, res) => {
+  const supportEmail = (process.env.SUPPORT_EMAIL && process.env.SUPPORT_EMAIL.trim())
+    ? process.env.SUPPORT_EMAIL.trim()
+    : "teamforge.kkwagh@gmail.com";
+  return res.render("privacy", {
+    currentUser: req.user || null,
+    supportEmail,
+    pageTitle: "Privacy Policy · TeamForge"
+  });
+});
+
+// -------------------------------------------------------------
+// 1f. GET /terms - Public Terms of Service
+// -------------------------------------------------------------
+router.get("/terms", (req, res) => {
+  const supportEmail = (process.env.SUPPORT_EMAIL && process.env.SUPPORT_EMAIL.trim())
+    ? process.env.SUPPORT_EMAIL.trim()
+    : "teamforge.kkwagh@gmail.com";
+  return res.render("terms", {
+    currentUser: req.user || null,
+    supportEmail,
+    pageTitle: "Terms of Service · TeamForge"
+  });
+});
+
+// -------------------------------------------------------------
 // 2. GET /discover - Explore Opportunities with Server-Side Search & Filters
 // -------------------------------------------------------------
 router.get("/discover", requireLogin, async (req, res) => {

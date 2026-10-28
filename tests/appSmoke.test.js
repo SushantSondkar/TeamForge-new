@@ -111,7 +111,7 @@ async function runSmokeTests() {
     // -------------------------------------------------------------
     // Step 4: GET /, /login, /signup, /how-it-works, /forgot-password return 200
     // -------------------------------------------------------------
-    const publicEndpoints = ["/", "/login", "/signup", "/how-it-works", "/forgot-password"];
+    const publicEndpoints = ["/", "/login", "/signup", "/how-it-works", "/forgot-password", "/privacy", "/terms"];
     console.log(`\n4. Testing public endpoints (${publicEndpoints.join(", ")})...`);
     for (const ep of publicEndpoints) {
       const res = await makeRequest(ep);
