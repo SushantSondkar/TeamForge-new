@@ -138,6 +138,9 @@ async function teardown() {
   }
   setMockTransporter(null);
   await mongoose.disconnect();
+  if (typeof connectDB.stopMemoryServer === "function") {
+    await connectDB.stopMemoryServer();
+  }
 }
 
 async function runTests() {

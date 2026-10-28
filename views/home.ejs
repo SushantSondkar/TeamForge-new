@@ -473,7 +473,12 @@
                 </div>
                 <p style="color: #64748b; font-size: 13.5px; margin: 4px 0 0 0;">Sponsored competitions and verified hackathons seeking KKWIEER student teams.</p>
             </div>
-            <a href="/events" class="btn-small-outline" style="text-decoration: none; font-size: 13px; padding: 6px 14px; border-radius: 6px; background: white;">All Events &rarr;</a>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <% if (currentUser && (currentUser.isAdmin || (currentUser.isOrganizer && currentUser.organizerStatus === 'APPROVED'))) { %>
+                    <a href="/events/new" class="btn-small-primary" style="text-decoration: none; font-size: 13px; padding: 6px 14px; border-radius: 6px;">+ Post New Hackathon</a>
+                <% } %>
+                <a href="/events" class="btn-small-outline" style="text-decoration: none; font-size: 13px; padding: 6px 14px; border-radius: 6px; background: white;">All Events &rarr;</a>
+            </div>
         </div>
 
         <% if (typeof promotedEvents !== 'undefined' && promotedEvents && promotedEvents.length > 0) { %>
@@ -514,10 +519,17 @@
             </div>
         <% } else { %>
             <div style="background: white; border: 1px dashed #cbd5e1; border-radius: 12px; padding: 24px; text-align: center;">
-                <p style="color: #64748b; font-size: 13.5px; margin: 0 0 10px 0;">Organizing a departmental or club hackathon? Get verified organizer status to promote your competition here.</p>
-                <a href="/organizer/apply" class="btn-small-primary" style="text-decoration: none; font-size: 13px; padding: 8px 16px; border-radius: 6px;">
-                    Apply for Organizer Status
-                </a>
+                <% if (currentUser && (currentUser.isAdmin || (currentUser.isOrganizer && currentUser.organizerStatus === 'APPROVED'))) { %>
+                    <p style="color: #64748b; font-size: 13.5px; margin: 0 0 10px 0;">Host a departmental or club hackathon for KKWIEER students.</p>
+                    <a href="/events/new" class="btn-small-primary" style="text-decoration: none; font-size: 13px; padding: 8px 16px; border-radius: 6px;">
+                        + Post New Hackathon
+                    </a>
+                <% } else { %>
+                    <p style="color: #64748b; font-size: 13.5px; margin: 0 0 10px 0;">Organizing a departmental or club hackathon? Get verified organizer status to promote your competition here.</p>
+                    <a href="/organizer/apply" class="btn-small-primary" style="text-decoration: none; font-size: 13px; padding: 8px 16px; border-radius: 6px;">
+                        Apply for Organizer Status
+                    </a>
+                <% } %>
             </div>
         <% } %>
     </div>

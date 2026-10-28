@@ -92,4 +92,14 @@ const connectDB = async () => {
   return connectionPromise;
 };
 
+connectDB.stopMemoryServer = async () => {
+  if (memoryServerInstance) {
+    try {
+      await memoryServerInstance.stop();
+    } catch (_) {}
+    memoryServerInstance = null;
+  }
+  connectionPromise = null;
+};
+
 module.exports = connectDB;
