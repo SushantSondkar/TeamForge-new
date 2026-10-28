@@ -36,6 +36,7 @@
     <meta name="twitter:image" content="<%= metaImage %>">
 
     <meta name="csrf-token" content="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+    <script src="/js/theme-init.js"></script>
     <link rel="stylesheet" href="/css/style.css">
     <% if (typeof extraStyles !== 'undefined') { %>
         <%- extraStyles %>
@@ -110,6 +111,7 @@
 
     <%- include("../includes/footer") %>
 
+    <script src="/js/theme.js"></script>
     <script src="/js/layout.js"></script>
 
     <% if (typeof extraScripts !== 'undefined') { %>
