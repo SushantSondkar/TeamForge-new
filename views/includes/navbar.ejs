@@ -47,20 +47,54 @@
                 <% } %>
             </a>
 
-            <a href="/profile" style="text-decoration: none; color: inherit; display: flex; align-items: center; padding: 4px 8px; border-radius: 8px; transition: background 0.15s ease;" title="Profile & Settings">
-                <div class="user-info" style="display: flex; align-items: center; gap: 8px;">
-                    <img src="<%= (currentUser && currentUser.profilePic) ? currentUser.profilePic : 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\'%3E%3Ccircle cx=\'12\' cy=\'12\' r=\'12\' fill=\'%23e2e8f0\'/%3E%3Cpath d=\'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z\' fill=\'%239ca3af\'/%3E%3C/svg%3E' %>" alt="Avatar" class="user-avatar" style="border-radius: 50%; object-fit: cover; width: 34px; height: 34px; background: #f1f5f9; border: 1.5px solid #e2e8f0;">
-                    <div class="user-details" style="text-align: left; line-height: 1.2;">
-                        <strong style="color: #0f172a; font-size: 13px; display: block;"><%= currentUser.name %></strong>
-                        <span style="color: #64748b; font-size: 11px;"><%= currentUser.role || 'Student' %></span>
+            <div class="profile-dropdown-container" style="position: relative;">
+                <button type="button" class="profile-dropdown-btn" id="profileDropdownBtn" aria-haspopup="true" aria-expanded="false" aria-controls="profileDropdownMenu" aria-label="Profile and account menu">
+                    <div class="user-info" style="display: flex; align-items: center; gap: 8px;">
+                        <img src="<%= (currentUser && currentUser.profilePic) ? currentUser.profilePic : 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\'%3E%3Ccircle cx=\'12\' cy=\'12\' r=\'12\' fill=\'%23e2e8f0\'/%3E%3Cpath d=\'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z\' fill=\'%239ca3af\'/%3E%3C/svg%3E' %>" alt="Avatar" class="user-avatar" style="border-radius: 50%; object-fit: cover; width: 34px; height: 34px; background: #f1f5f9; border: 1.5px solid #e2e8f0;">
+                        <div class="user-details" style="text-align: left; line-height: 1.2;">
+                            <strong style="color: #0f172a; font-size: 13px; display: block;"><%= currentUser.name %></strong>
+                            <span style="color: #64748b; font-size: 11px;"><%= currentUser.role || 'Student' %></span>
+                        </div>
+                        <svg class="profile-caret" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
                     </div>
-                </div>
-            </a>
+                </button>
 
-            <form action="/logout" method="POST" style="margin: 0;">
-                <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
-                <button type="submit" class="btn-small-outline" style="border-radius: 6px; padding: 6px 12px; font-size: 13px; cursor: pointer; border: 1px solid #cbd5e1; background: white; color: #475569;">Logout</button>
-            </form>
+                <div class="profile-dropdown-menu" id="profileDropdownMenu" role="menu" aria-labelledby="profileDropdownBtn" hidden>
+                    <div class="profile-dropdown-header">
+                        <strong class="profile-dropdown-name"><%= currentUser.name %></strong>
+                        <span class="profile-dropdown-email"><%= currentUser.email %></span>
+                    </div>
+                    <div class="dropdown-divider" role="separator"></div>
+                    <a href="/profile" class="profile-dropdown-item" role="menuitem">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                        <span>My Profile</span>
+                    </a>
+                    <a href="/profile/edit" class="profile-dropdown-item" role="menuitem">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        <span>Profile & Settings</span>
+                    </a>
+                    <div class="dropdown-divider" role="separator"></div>
+                    <div class="profile-dropdown-item profile-dropdown-theme-row" role="menuitem">
+                        <div class="theme-row-content">
+                            <span class="theme-icon-indicator" id="themeIconIndicator" aria-hidden="true">🌙</span>
+                            <span>Dark mode</span>
+                        </div>
+                        <button type="button" class="theme-toggle-switch" id="themeToggleBtn" role="switch" aria-checked="false" aria-label="Toggle dark mode">
+                            <span class="theme-toggle-slider" aria-hidden="true"></span>
+                        </button>
+                    </div>
+                    <div class="dropdown-divider" role="separator"></div>
+                    <form action="/logout" method="POST" class="profile-dropdown-logout-form" style="margin: 0; width: 100%;">
+                        <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                        <button type="submit" class="profile-dropdown-item profile-dropdown-logout-btn" role="menuitem">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                            <span>Logout</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
         <% } else { %>
             <a href="/login" class="btn-small-outline" style="text-decoration: none; font-size: 13px; padding: 7px 16px; border: 1px solid #cbd5e1; border-radius: 6px; color: #334155; font-weight: 500;">Log In</a>
             <a href="/signup" class="btn-small-primary" style="text-decoration: none; font-size: 13px; padding: 7px 16px; background: #2563eb; color: white; border-radius: 6px; font-weight: 600; box-shadow: 0 1px 3px rgba(37, 99, 235, 0.3);">Sign Up</a>
@@ -68,4 +102,3 @@
     </div>
     <% } %>
 </nav>
-

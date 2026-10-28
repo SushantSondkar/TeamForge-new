@@ -1,6 +1,7 @@
 /**
  * Global layout & navigation script (CSP-safe, external script)
- * Handles mobile drawer, navbar toggles, flash dismissals, and active navigation links.
+ * Handles mobile drawer, navbar toggles, flash dismissals, active navigation links,
+ * header profile dropdown, and dark mode theme switching.
  */
 document.addEventListener('DOMContentLoaded', () => {
     const currentPath = window.location.pathname;
@@ -52,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             link.classList.remove('active');
             link.style.backgroundColor = 'transparent';
-            link.style.color = '#475569';
+            link.style.color = '';
             link.style.fontWeight = '500';
             link.style.boxShadow = 'none';
         }
@@ -73,5 +74,59 @@ document.addEventListener('DOMContentLoaded', () => {
         navToggleBtn.addEventListener('click', () => {
             navMenu.classList.toggle('navbar-menu-open');
         });
+    }
+
+    // 6. Header Profile Dropdown
+    const profileBtn = document.getElementById('profileDropdownBtn');
+    const profileMenu = document.getElementById('profileDropdownMenu');
+
+    function openProfileDropdown() {
+        if (!profileBtn || !profileMenu) return;
+        profileMenu.classList.add('is-open');
+        profileMenu.removeAttribute('hidden');
+        profileBtn.setAttribute('aria-expanded', 'true');
+        profileBtn.classList.add('is-active');
+    }
+
+    function closeProfileDropdown() {
+        if (!profileBtn || !profileMenu) return;
+        profileMenu.classList.remove('is-open');
+        profileMenu.setAttribute('hidden', '');
+        profileBtn.setAttribute('aria-expanded', 'false');
+        profileBtn.classList.remove('is-active');
+    }
+
+    if (profileBtn && profileMenu) {
+        profileBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isExpanded = profileBtn.getAttribute('aria-expanded') === 'true';
+            if (isExpanded) {
+                closeProfileDropdown();
+            } else {
+                openProfileDropdown();
+            }
+        });
+
+        // Close on click outside
+        document.addEventListener('click', (e) => {
+            if (profileBtn.getAttribute('aria-expanded') === 'true') {
+                if (!profileMenu.contains(e.target) && !profileBtn.contains(e.target)) {
+                    closeProfileDropdown();
+                }
+            }
+        });
+
+        // Close on Escape and return focus to button
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && profileBtn.getAttribute('aria-expanded') === 'true') {
+                closeProfileDropdown();
+                profileBtn.focus();
+            }
+        });
+    }
+
+    // 7. Dark Mode Controls (Fallback & Sync)
+    if (window.TeamForgeTheme && typeof window.TeamForgeTheme.initControls === 'function') {
+        window.TeamForgeTheme.initControls();
     }
 });
