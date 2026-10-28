@@ -95,6 +95,12 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: ""
   },
+  linkedinData: {
+    name: { type: String, default: "" },
+    picture: { type: String, default: "" },
+    email: { type: String, default: "" },
+    linkedAt: { type: Date, default: null }
+  },
   portfolio: {
     type: String,
     default: ""

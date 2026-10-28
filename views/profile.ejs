@@ -258,6 +258,11 @@
                         <a href="<%= liUrl %>" target="_blank" rel="noopener" style="color: #0077b5; text-decoration: none; word-break: break-all; overflow-wrap: anywhere; display: inline-block; max-width: 100%;">
                             <%= liVal %> ↗
                         </a>
+                        <% if (currentUser.linkedinData && currentUser.linkedinData.name) { %>
+                            <div style="margin-top: 4px; font-size: 11px; color: #64748b;">
+                                Verified Name: <strong style="color: #1e293b;"><%= currentUser.linkedinData.name %></strong>
+                            </div>
+                        <% } %>
                     <% } else { %>
                         <span style="color: #94a3b8;">Not linked</span>
                     <% } %>

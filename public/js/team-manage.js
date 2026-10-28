@@ -121,12 +121,15 @@ document.addEventListener('DOMContentLoaded', () => {
     syncWithHash();
     window.addEventListener('hashchange', syncWithHash);
 
-    // Cancel Invite buttons attached via addEventListener
-    const cancelButtons = document.querySelectorAll('.btn-cancel-invite');
-    cancelButtons.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            alert('Per TeamForge competition rules, pending invitations cannot be cancelled unilaterally once sent. If the candidate does not respond, the invitation will automatically expire after 7 days.');
-        });
+    // Form confirmation listener for forms with data-confirm (CSP-compliant)
+    document.addEventListener('submit', (e) => {
+        const form = e.target;
+        if (!form || typeof form.getAttribute !== 'function') return;
+        const confirmMsg = form.getAttribute('data-confirm');
+        if (confirmMsg) {
+            if (!window.confirm(confirmMsg)) {
+                e.preventDefault();
+            }
+        }
     });
 });

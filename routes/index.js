@@ -529,7 +529,17 @@ router.post("/profile/edit", requireLogin, async (req, res) => {
     }
     if (bio !== undefined) user.bio = bio.trim();
     if (github !== undefined) user.github = github.trim();
-    if (linkedin !== undefined) user.linkedin = linkedin.trim();
+    if (linkedin !== undefined) {
+      let cleanLi = linkedin.trim();
+      if (cleanLi && !cleanLi.startsWith("http://") && !cleanLi.startsWith("https://")) {
+        if (cleanLi.includes("linkedin.com/in/")) {
+          cleanLi = "https://" + cleanLi.replace(/^\/+/, "");
+        } else if (!cleanLi.includes("linkedin.com")) {
+          cleanLi = `https://www.linkedin.com/in/${cleanLi.replace(/^@/, "")}`;
+        }
+      }
+      user.linkedin = cleanLi;
+    }
     if (portfolio !== undefined) user.portfolio = portfolio.trim();
 
     // Availability parsing (1.0 = Free, 0.5 = Partly free, 0.0 = Busy)
