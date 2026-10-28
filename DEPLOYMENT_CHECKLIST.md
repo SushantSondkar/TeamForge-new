@@ -190,7 +190,8 @@ Execute these 9 sequential user scenarios against your live production URL:
 - [ ] **6. Accept Invitation**: Log in as student B, navigate to `/actions`, and accept the invitation. Verify flash message and status transition to `ACCEPTED`.
 - [ ] **7. Confirm Match**: Confirm the accepted action to trigger mutual locking (`LOCKED`). Verify candidate availability lock is event-scoped.
 - [ ] **8. Notifications & Badges**: Check unread notification counter badge on desktop and mobile, click "Mark all as read", and verify badge resets to 0. Verify batched email delivery.
-- [ ] **9. Logout**: Click logout (POST-only) and verify session is invalidated server-side.
+- [ ] **9. Organizer Application & Review**: Submit organizer application with faculty coordinator details and proof document (`/organizer/apply`). Verify pending state prevents unauthorized posting (`/events/new`). Log in as campus administrator (`/admin/organizers`), approve application, and verify organizer role is granted with event creation rights.
+- [ ] **10. Logout**: Click logout (POST-only) and verify session is invalidated server-side.
 
 ---
 

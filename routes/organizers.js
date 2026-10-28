@@ -4,7 +4,10 @@ const User = require("../models/User");
 const Event = require("../models/Event");
 const Notification = require("../models/Notification");
 const SuccessStory = require("../models/SuccessStory");
+const OrganizerApplication = require("../models/OrganizerApplication");
 const requireLogin = require("../middleware/auth");
+const { organizerApplyLimiter } = require("../middleware/rateLimiters");
+const { sendMail } = require("../utils/mailer");
 
 /**
  * Middleware ensuring user is an admin
@@ -16,43 +19,398 @@ function requireAdmin(req, res, next) {
   next();
 }
 
+/**
+ * Helper to escape HTML characters for safe email rendering
+ */
+function escapeHtml(str) {
+  if (!str) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+/**
+ * Helper to validate http/https URLs up to 500 characters
+ */
+function isValidHttpUrl(string) {
+  if (!string || typeof string !== "string" || string.trim().length > 500) return false;
+  try {
+    const url = new URL(string.trim());
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch (_) {
+    return false;
+  }
+}
+
+/**
+ * Helper to validate email format
+ */
+function isValidEmail(email) {
+  if (!email || typeof email !== "string" || email.trim().length > 200) return false;
+  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return re.test(email.trim());
+}
+
 // -------------------------------------------------------------
 // 1. GET /organizer/apply - Apply for Organizer status
 // -------------------------------------------------------------
-router.get("/organizer/apply", requireLogin, (req, res) => {
-  res.render("organizers/apply", {
-    currentUser: req.user,
-    error: null,
-    success: req.query.success === "true"
-  });
+router.get("/organizer/apply", requireLogin, async (req, res) => {
+  try {
+    // 1. Admins should not see the apply form; show "Admin access"
+    if (req.user.isAdmin) {
+      return res.render("organizers/apply", {
+        currentUser: req.user,
+        state: "ADMIN",
+        latestApp: null,
+        reapplyDate: null,
+        cooldownRemainingDays: 0,
+        formData: {},
+        error: null,
+        success: false
+      });
+    }
+
+    // 2. Approved organizers
+    if (req.user.isOrganizer && req.user.organizerStatus === "APPROVED") {
+      const approvedApp = await OrganizerApplication.findOne({ applicantId: req.user._id, status: "APPROVED" }).sort({ updatedAt: -1 });
+      return res.render("organizers/apply", {
+        currentUser: req.user,
+        state: "APPROVED",
+        latestApp: approvedApp,
+        reapplyDate: null,
+        cooldownRemainingDays: 0,
+        formData: {},
+        error: null,
+        success: false
+      });
+    }
+
+    // 3. Check latest application record
+    const latestApp = await OrganizerApplication.findOne({ applicantId: req.user._id }).sort({ createdAt: -1 });
+
+    if (latestApp && latestApp.status === "PENDING") {
+      return res.render("organizers/apply", {
+        currentUser: req.user,
+        state: "PENDING",
+        latestApp,
+        reapplyDate: null,
+        cooldownRemainingDays: 0,
+        formData: {},
+        error: null,
+        success: req.query.success === "true"
+      });
+    }
+
+    // 4. Handle legacy pending users with no application record: ask them to reapply
+    if (req.user.organizerStatus === "PENDING" && !latestApp) {
+      req.user.organizerStatus = "NONE";
+      await req.user.save();
+      return res.render("organizers/apply", {
+        currentUser: req.user,
+        state: "FORM",
+        latestApp: null,
+        reapplyDate: null,
+        cooldownRemainingDays: 0,
+        formData: { organizationName: req.user.organizationName || "", reason: req.user.organizerReason || "" },
+        error: "We have upgraded our organizer verification process. Please complete the verified application form below to request organizer status.",
+        success: false
+      });
+    }
+
+    // 5. Check 7-day cooldown on rejected applications
+    if (latestApp && latestApp.status === "REJECTED") {
+      const reviewedAt = latestApp.reviewedAt || latestApp.updatedAt || latestApp.createdAt;
+      const cooldownMs = 7 * 24 * 60 * 60 * 1000;
+      const reapplyDate = new Date(reviewedAt.getTime() + cooldownMs);
+      const now = new Date();
+      const cooldownActive = now < reapplyDate;
+      const cooldownRemainingDays = cooldownActive ? Math.ceil((reapplyDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000)) : 0;
+
+      return res.render("organizers/apply", {
+        currentUser: req.user,
+        state: cooldownActive ? "REJECTED_COOLDOWN" : "FORM",
+        latestApp,
+        reapplyDate,
+        cooldownRemainingDays,
+        formData: cooldownActive ? {} : {
+          organizationName: latestApp.organizationName,
+          department: latestApp.department,
+          applicantRole: latestApp.applicantRole,
+          facultyCoordinatorName: latestApp.facultyCoordinatorName
+        },
+        error: null,
+        success: false
+      });
+    }
+
+    // 6. Default: regular application form
+    res.render("organizers/apply", {
+      currentUser: req.user,
+      state: "FORM",
+      latestApp: null,
+      reapplyDate: null,
+      cooldownRemainingDays: 0,
+      formData: {},
+      error: null,
+      success: req.query.success === "true"
+    });
+  } catch (err) {
+    console.error("Error loading organizer apply page:", err.message);
+    res.status(500).send("Error loading organizer application page.");
+  }
 });
 
 // -------------------------------------------------------------
 // 2. POST /organizer/apply - Submit organizer request
 // -------------------------------------------------------------
-router.post("/organizer/apply", requireLogin, async (req, res) => {
+router.post("/organizer/apply", requireLogin, organizerApplyLimiter, async (req, res) => {
   try {
-    const { organizationName, organizerReason } = req.body;
-
-    if (!organizationName || !organizationName.trim()) {
-      return res.render("organizers/apply", {
+    // Admins do not need to apply
+    if (req.user.isAdmin) {
+      return res.status(400).render("organizers/apply", {
         currentUser: req.user,
-        error: "Organization/Club name is required.",
+        state: "ADMIN",
+        latestApp: null,
+        reapplyDate: null,
+        cooldownRemainingDays: 0,
+        formData: {},
+        error: "Administrators already have full organizer privileges without applying.",
         success: false
       });
     }
 
-    req.user.organizationName = organizationName.trim();
-    req.user.organizerReason = (organizerReason || "").trim();
+    // Enforce 1 pending application per applicant (code check before DB partial unique index)
+    const existingPending = await OrganizerApplication.findOne({
+      applicantId: req.user._id,
+      status: "PENDING"
+    });
+    if (existingPending) {
+      return res.status(400).render("organizers/apply", {
+        currentUser: req.user,
+        state: "PENDING",
+        latestApp: existingPending,
+        reapplyDate: null,
+        cooldownRemainingDays: 0,
+        formData: {},
+        error: "You already have an organizer application pending review. Multiple pending submissions are not permitted.",
+        success: false
+      });
+    }
+
+    // Enforce 7-day reapplication cooldown if previously rejected
+    const latestApp = await OrganizerApplication.findOne({ applicantId: req.user._id }).sort({ createdAt: -1 });
+    if (latestApp && latestApp.status === "REJECTED") {
+      const reviewedAt = latestApp.reviewedAt || latestApp.updatedAt || latestApp.createdAt;
+      const cooldownMs = 7 * 24 * 60 * 60 * 1000;
+      const reapplyDate = new Date(reviewedAt.getTime() + cooldownMs);
+      const now = new Date();
+      if (now < reapplyDate) {
+        const daysRemaining = Math.ceil((reapplyDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000));
+        return res.status(400).render("organizers/apply", {
+          currentUser: req.user,
+          state: "REJECTED_COOLDOWN",
+          latestApp,
+          reapplyDate,
+          cooldownRemainingDays: daysRemaining,
+          formData: {},
+          error: `A 7-day waiting period is required after rejection before reapplying. You can reapply on ${reapplyDate.toLocaleDateString()}.`,
+          success: false
+        });
+      }
+    }
+
+    const {
+      organizationName,
+      department,
+      applicantRole,
+      facultyCoordinatorName,
+      facultyCoordinatorEmail,
+      plannedEventDetails,
+      proofLink,
+      reason
+    } = req.body;
+
+    const trimmedOrg = (organizationName || "").trim();
+    const trimmedDept = (department || "").trim();
+    const trimmedRole = (applicantRole || "").trim();
+    const trimmedFacName = (facultyCoordinatorName || "").trim();
+    const trimmedFacEmail = (facultyCoordinatorEmail || "").trim().toLowerCase();
+    const trimmedDetails = (plannedEventDetails || "").trim();
+    const trimmedProof = (proofLink || "").trim();
+    const trimmedReason = (reason || "").trim();
+
+    // Field-by-field length and format validations
+    if (!trimmedOrg || trimmedOrg.length < 2 || trimmedOrg.length > 150) {
+      return res.status(400).render("organizers/apply", {
+        currentUser: req.user,
+        state: "FORM",
+        latestApp: null,
+        reapplyDate: null,
+        cooldownRemainingDays: 0,
+        formData: req.body,
+        error: "Organization or club name is required (between 2 and 150 characters).",
+        success: false
+      });
+    }
+
+    if (!trimmedDept || trimmedDept.length < 2 || trimmedDept.length > 100) {
+      return res.status(400).render("organizers/apply", {
+        currentUser: req.user,
+        state: "FORM",
+        latestApp: null,
+        reapplyDate: null,
+        cooldownRemainingDays: 0,
+        formData: req.body,
+        error: "Department name is required (between 2 and 100 characters).",
+        success: false
+      });
+    }
+
+    if (!trimmedRole || trimmedRole.length < 2 || trimmedRole.length > 100) {
+      return res.status(400).render("organizers/apply", {
+        currentUser: req.user,
+        state: "FORM",
+        latestApp: null,
+        reapplyDate: null,
+        cooldownRemainingDays: 0,
+        formData: req.body,
+        error: "Your role in the organization is required (between 2 and 100 characters).",
+        success: false
+      });
+    }
+
+    if (!trimmedFacName || trimmedFacName.length < 2 || trimmedFacName.length > 100) {
+      return res.status(400).render("organizers/apply", {
+        currentUser: req.user,
+        state: "FORM",
+        latestApp: null,
+        reapplyDate: null,
+        cooldownRemainingDays: 0,
+        formData: req.body,
+        error: "Faculty coordinator name is required (between 2 and 100 characters).",
+        success: false
+      });
+    }
+
+    if (!trimmedFacEmail || !isValidEmail(trimmedFacEmail)) {
+      return res.status(400).render("organizers/apply", {
+        currentUser: req.user,
+        state: "FORM",
+        latestApp: null,
+        reapplyDate: null,
+        cooldownRemainingDays: 0,
+        formData: req.body,
+        error: "A valid faculty coordinator email address is required.",
+        success: false
+      });
+    }
+
+    // Faculty coordinator email must be different from applicant's own email
+    if (trimmedFacEmail === (req.user.email || "").trim().toLowerCase()) {
+      return res.status(400).render("organizers/apply", {
+        currentUser: req.user,
+        state: "FORM",
+        latestApp: null,
+        reapplyDate: null,
+        cooldownRemainingDays: 0,
+        formData: req.body,
+        error: "Faculty coordinator email must be different from your own account email.",
+        success: false
+      });
+    }
+
+    if (!trimmedDetails || trimmedDetails.length < 10 || trimmedDetails.length > 2000) {
+      return res.status(400).render("organizers/apply", {
+        currentUser: req.user,
+        state: "FORM",
+        latestApp: null,
+        reapplyDate: null,
+        cooldownRemainingDays: 0,
+        formData: req.body,
+        error: "Planned event details and approximate dates are required (between 10 and 2000 characters).",
+        success: false
+      });
+    }
+
+    if (!trimmedProof || !isValidHttpUrl(trimmedProof)) {
+      return res.status(400).render("organizers/apply", {
+        currentUser: req.user,
+        state: "FORM",
+        latestApp: null,
+        reapplyDate: null,
+        cooldownRemainingDays: 0,
+        formData: req.body,
+        error: "A valid HTTP or HTTPS proof link is required (max 500 characters).",
+        success: false
+      });
+    }
+
+    if (!trimmedReason || trimmedReason.length < 10 || trimmedReason.length > 2000) {
+      return res.status(400).render("organizers/apply", {
+        currentUser: req.user,
+        state: "FORM",
+        latestApp: null,
+        reapplyDate: null,
+        cooldownRemainingDays: 0,
+        formData: req.body,
+        error: "A short reason for applying is required (between 10 and 2000 characters).",
+        success: false
+      });
+    }
+
+    // Persist application
+    const application = new OrganizerApplication({
+      applicantId: req.user._id,
+      organizationName: trimmedOrg,
+      department: trimmedDept,
+      applicantRole: trimmedRole,
+      facultyCoordinatorName: trimmedFacName,
+      facultyCoordinatorEmail: trimmedFacEmail,
+      plannedEventDetails: trimmedDetails,
+      proofLink: trimmedProof,
+      reason: trimmedReason,
+      status: "PENDING"
+    });
+
+    try {
+      await application.save();
+    } catch (saveErr) {
+      // If MongoDB partial unique index is violated (e.g. concurrent race)
+      if (saveErr.code === 11000) {
+        return res.status(400).render("organizers/apply", {
+          currentUser: req.user,
+          state: "PENDING",
+          latestApp: await OrganizerApplication.findOne({ applicantId: req.user._id, status: "PENDING" }),
+          reapplyDate: null,
+          cooldownRemainingDays: 0,
+          formData: {},
+          error: "You already have a pending organizer application under review.",
+          success: false
+        });
+      }
+      throw saveErr;
+    }
+
+    // Synchronize User model
+    req.user.organizationName = trimmedOrg;
+    req.user.organizerReason = trimmedReason;
     req.user.organizerStatus = "PENDING";
     await req.user.save();
 
     res.redirect("/organizer/apply?success=true");
   } catch (err) {
     console.error("Error submitting organizer application:", err.message);
-    res.render("organizers/apply", {
+    res.status(500).render("organizers/apply", {
       currentUser: req.user,
-      error: err.message,
+      state: "FORM",
+      latestApp: null,
+      reapplyDate: null,
+      cooldownRemainingDays: 0,
+      formData: req.body,
+      error: "An unexpected error occurred while submitting your application: " + err.message,
       success: false
     });
   }
@@ -63,14 +421,37 @@ router.post("/organizer/apply", requireLogin, async (req, res) => {
 // -------------------------------------------------------------
 router.get("/admin/organizers", requireLogin, requireAdmin, async (req, res) => {
   try {
-    const pendingOrganizers = await User.find({ organizerStatus: "PENDING" }).select("-profilePic").sort({ updatedAt: -1 });
-    const approvedOrganizers = await User.find({ organizerStatus: "APPROVED" }).select("-profilePic").sort({ updatedAt: -1 });
-    const rejectedOrganizers = await User.find({ organizerStatus: "REJECTED" }).select("-profilePic").sort({ updatedAt: -1 });
+    const pendingApplications = await OrganizerApplication.find({ status: "PENDING" })
+      .populate("applicantId", "name email department year role profilePic")
+      .sort({ createdAt: -1 });
+
+    const approvedApplications = await OrganizerApplication.find({ status: "APPROVED" })
+      .populate("applicantId", "name email department year role profilePic")
+      .populate("reviewedBy", "name email")
+      .sort({ reviewedAt: -1, updatedAt: -1 });
+
+    const rejectedApplications = await OrganizerApplication.find({ status: "REJECTED" })
+      .populate("applicantId", "name email department year role profilePic")
+      .populate("reviewedBy", "name email")
+      .sort({ reviewedAt: -1, updatedAt: -1 });
+
+    // Include existing users approved before the standalone application model
+    const approvedApplicantIds = approvedApplications.map(a => a.applicantId?._id).filter(Boolean);
+    const legacyApprovedOrganizers = await User.find({
+      isOrganizer: true,
+      organizerStatus: "APPROVED",
+      _id: { $nin: approvedApplicantIds }
+    }).select("-profilePic").sort({ updatedAt: -1 });
 
     res.render("admin/organizers", {
-      pendingOrganizers,
-      approvedOrganizers,
-      rejectedOrganizers,
+      pendingApplications,
+      approvedApplications,
+      rejectedApplications,
+      legacyApprovedOrganizers,
+      // Provide backwards-compatible aliases
+      pendingOrganizers: pendingApplications,
+      approvedOrganizers: approvedApplications,
+      rejectedOrganizers: rejectedApplications,
       currentUser: req.user
     });
   } catch (err) {
@@ -84,23 +465,65 @@ router.get("/admin/organizers", requireLogin, requireAdmin, async (req, res) => 
 // -------------------------------------------------------------
 router.post("/admin/organizers/:id/approve", requireLogin, requireAdmin, async (req, res) => {
   try {
-    const applicant = await User.findById(req.params.id);
-    if (!applicant) {
-      return res.status(404).send("Applicant not found.");
+    // 1. Locate application by application ID or applicant ID
+    let application = await OrganizerApplication.findById(req.params.id);
+    if (!application) {
+      application = await OrganizerApplication.findOne({ applicantId: req.params.id, status: "PENDING" });
     }
 
-    applicant.isOrganizer = true;
-    applicant.organizerStatus = "APPROVED";
-    await applicant.save();
+    if (!application) {
+      return res.status(404).send("Application not found.");
+    }
 
-    // Notify student
-    await Notification.create({
-      userId: applicant._id,
-      title: "Organizer Account Approved! 🎖️",
-      subtitle: `Your organizer account for ${applicant.organizationName || 'your club'} has been approved by admin. You can now publish and promote hackathon events.`,
-      type: "success",
-      link: "/events"
-    });
+    // 2. Block self-approval: admins cannot approve their own application
+    if (application.applicantId.toString() === req.user._id.toString()) {
+      return res.status(403).send("Forbidden: Administrators cannot approve their own organizer application.");
+    }
+
+    // 3. Atomic transition: update only if status is still PENDING
+    const updatedApplication = await OrganizerApplication.findOneAndUpdate(
+      { _id: application._id, status: "PENDING" },
+      {
+        status: "APPROVED",
+        reviewedBy: req.user._id,
+        reviewedAt: new Date()
+      },
+      { returnDocument: "after" }
+    );
+
+    if (!updatedApplication) {
+      return res.status(409).send("Application has already been reviewed or decided.");
+    }
+
+    // 4. Synchronize User record
+    const applicant = await User.findById(updatedApplication.applicantId);
+    if (applicant) {
+      applicant.isOrganizer = true;
+      applicant.organizerStatus = "APPROVED";
+      applicant.organizationName = updatedApplication.organizationName;
+      await applicant.save();
+
+      // 5. Create in-app Notification
+      await Notification.create({
+        userId: applicant._id,
+        title: "Organizer Account Approved! 🎖️",
+        subtitle: `Your organizer account for ${updatedApplication.organizationName} has been approved by campus administration. You can now post and manage campus hackathons.`,
+        type: "success",
+        link: "/events"
+      });
+
+      // 6. Send transactional email (wrapped so mail errors never fail the action)
+      try {
+        await sendMail({
+          to: applicant.email,
+          subject: "TeamForge: Organizer Account Approved! 🎖️",
+          text: `Hello ${applicant.name},\n\nGreat news! Your organizer application for "${updatedApplication.organizationName}" has been approved by campus administration.\n\nYou can now post campus competitions and promote hackathons on TeamForge.\n\nVisit: /events/new\n\n- The TeamForge Team`,
+          html: `<p>Hello <strong>${escapeHtml(applicant.name)}</strong>,</p><p>Great news! Your organizer application for <strong>${escapeHtml(updatedApplication.organizationName)}</strong> has been approved by campus administration.</p><p>You can now post campus competitions and promote hackathons on TeamForge.</p><p><a href="/events/new">Post a New Hackathon</a></p>`
+        });
+      } catch (emailErr) {
+        console.error(`[Email] Failed to dispatch organizer approval email to ${applicant.email}:`, emailErr.message);
+      }
+    }
 
     res.redirect("/admin/organizers");
   } catch (err) {
@@ -114,22 +537,77 @@ router.post("/admin/organizers/:id/approve", requireLogin, requireAdmin, async (
 // -------------------------------------------------------------
 router.post("/admin/organizers/:id/reject", requireLogin, requireAdmin, async (req, res) => {
   try {
-    const applicant = await User.findById(req.params.id);
-    if (!applicant) {
-      return res.status(404).send("Applicant not found.");
+    const { rejectionReason } = req.body;
+
+    if (!rejectionReason || !rejectionReason.trim()) {
+      return res.status(400).send("Rejection reason is required.");
     }
 
-    applicant.isOrganizer = false;
-    applicant.organizerStatus = "REJECTED";
-    await applicant.save();
+    const trimmedReason = rejectionReason.trim();
+    if (trimmedReason.length > 500) {
+      return res.status(400).send("Rejection reason cannot exceed 500 characters.");
+    }
 
-    await Notification.create({
-      userId: applicant._id,
-      title: "Organizer Application Update",
-      subtitle: `Your application for organizer status could not be approved at this time.`,
-      type: "danger",
-      link: "/organizer/apply"
-    });
+    // 1. Locate application by application ID or applicant ID
+    let application = await OrganizerApplication.findById(req.params.id);
+    if (!application) {
+      application = await OrganizerApplication.findOne({ applicantId: req.params.id, status: "PENDING" });
+    }
+
+    if (!application) {
+      return res.status(404).send("Application not found.");
+    }
+
+    // 2. Block self-rejection: admins cannot decide their own application
+    if (application.applicantId.toString() === req.user._id.toString()) {
+      return res.status(403).send("Forbidden: Administrators cannot reject their own organizer application.");
+    }
+
+    // 3. Atomic transition: update only if status is still PENDING
+    const updatedApplication = await OrganizerApplication.findOneAndUpdate(
+      { _id: application._id, status: "PENDING" },
+      {
+        status: "REJECTED",
+        rejectionReason: trimmedReason,
+        reviewedBy: req.user._id,
+        reviewedAt: new Date()
+      },
+      { returnDocument: "after" }
+    );
+
+    if (!updatedApplication) {
+      return res.status(409).send("Application has already been reviewed or decided.");
+    }
+
+    // 4. Synchronize User record
+    const applicant = await User.findById(updatedApplication.applicantId);
+    if (applicant) {
+      applicant.isOrganizer = false;
+      applicant.organizerStatus = "REJECTED";
+      await applicant.save();
+
+      // 5. In-app Notification
+      await Notification.create({
+        userId: applicant._id,
+        title: "Organizer Application Update",
+        subtitle: `Your application for ${updatedApplication.organizationName} was not approved. Reason: ${trimmedReason}`,
+        type: "danger",
+        link: "/organizer/apply"
+      });
+
+      // 6. Send transactional email (wrapped so mail errors never fail the action)
+      try {
+        const safeReason = escapeHtml(trimmedReason);
+        await sendMail({
+          to: applicant.email,
+          subject: "TeamForge: Organizer Application Decision",
+          text: `Hello ${applicant.name},\n\nThank you for your interest in organizing campus hackathons on TeamForge. After review, your application for "${updatedApplication.organizationName}" could not be approved at this time.\n\nReason: ${trimmedReason}\n\nYou may reapply 7 days after this decision.\n\n- The TeamForge Team`,
+          html: `<p>Hello <strong>${escapeHtml(applicant.name)}</strong>,</p><p>Thank you for your interest in organizing campus hackathons on TeamForge. After review, your application for <strong>${escapeHtml(updatedApplication.organizationName)}</strong> could not be approved at this time.</p><p><strong>Reason provided by administrator:</strong><br>${safeReason}</p><p>You are eligible to reapply 7 days after this decision.</p>`
+        });
+      } catch (emailErr) {
+        console.error(`[Email] Failed to dispatch organizer rejection email to ${applicant.email}:`, emailErr.message);
+      }
+    }
 
     res.redirect("/admin/organizers");
   } catch (err) {
