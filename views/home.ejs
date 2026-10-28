@@ -29,6 +29,96 @@
     </div>
     <% } %>
 
+    <!-- Upcoming Events & Hackathons Carousel Section -->
+    <% if (typeof upcomingEvents !== 'undefined' && upcomingEvents && upcomingEvents.length > 0) { %>
+    <div class="dashboard-card-new full-width event-carousel-card" style="padding: 24px; margin-bottom: 24px;">
+        <div class="carousel-section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 12px;">
+            <div>
+                <span class="label-text" style="font-size: 11px; font-weight: 700; color: #2563eb; text-transform: uppercase; letter-spacing: 0.5px;">CAMPUS SPOTLIGHT</span>
+                <h2 style="font-size: 20px; font-weight: 800; color: var(--text-heading, #0f172a); margin: 2px 0 0 0;">Upcoming Hackathons & Competitions</h2>
+            </div>
+            <div class="carousel-nav-controls" style="display: flex; align-items: center; gap: 8px;">
+                <button type="button" class="carousel-btn carousel-btn-prev" aria-label="Previous event" title="Previous event">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </button>
+                <button type="button" class="carousel-btn carousel-btn-next" aria-label="Next event" title="Next event">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="event-carousel-container" role="region" aria-roledescription="carousel" aria-label="Upcoming Events Carousel" tabindex="0">
+            <div class="event-carousel-track">
+                <% upcomingEvents.forEach((evt, idx) => { %>
+                <div class="event-carousel-slide <%= idx === 0 ? 'is-active' : '' %>" role="group" aria-roledescription="slide" aria-label="<%= idx + 1 %> of <%= upcomingEvents.length %>" aria-hidden="<%= idx === 0 ? 'false' : 'true' %>">
+                    <div class="carousel-slide-inner">
+                        <div class="carousel-poster-frame">
+                            <% if (evt.hasPoster) { %>
+                                <img src="/events/<%= evt._id %>/poster" alt="<%= evt.name %> event poster" class="carousel-poster-img" loading="lazy" width="480" height="280">
+                            <% } else { %>
+                                <div class="carousel-poster-placeholder placeholder-type-<%= (evt.type || 'hackathon').toLowerCase() %>">
+                                    <div class="placeholder-icon" aria-hidden="true">🏆</div>
+                                    <span class="placeholder-badge"><%= evt.type || 'Hackathon' %></span>
+                                    <span class="placeholder-title"><%= evt.name %></span>
+                                </div>
+                            <% } %>
+                        </div>
+
+                        <div class="carousel-slide-content">
+                            <div class="carousel-badges-row">
+                                <span class="badge badge-primary"><%= evt.type || 'Hackathon' %></span>
+                                <span class="badge badge-secondary"><%= evt.mode || 'Offline' %></span>
+                            </div>
+
+                            <h3 class="carousel-event-title">
+                                <a href="/events/<%= evt._id %>"><%= evt.name %></a>
+                            </h3>
+
+                            <div class="carousel-meta-row">
+                                <span class="carousel-meta-item">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect><line x1="16" x2="16" y1="2" y2="6"></line><line x1="8" x2="8" y1="2" y2="6"></line><line x1="3" x2="21" y1="10" y2="10"></line></svg>
+                                    <span><%= formatDate(evt.date, { weekday: 'short' }) %></span>
+                                </span>
+                                <span class="carousel-meta-item">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                                    <span><%= evt.organizer %></span>
+                                </span>
+                            </div>
+
+                            <% if (evt.description) { %>
+                                <p class="carousel-event-desc"><%= evt.description.length > 130 ? evt.description.substring(0, 130) + '...' : evt.description %></p>
+                            <% } %>
+
+                            <div class="carousel-actions-row">
+                                <a href="/events/<%= evt._id %>" class="btn-small-outline">Details</a>
+                                <a href="/team-requirement/new?eventId=<%= evt._id %>" class="btn-small-primary">Build Team</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <% }); %>
+            </div>
+
+            <!-- Dots Indicator -->
+            <% if (upcomingEvents.length > 1) { %>
+            <div class="carousel-dots-nav" role="tablist" aria-label="Event slide controls">
+                <% upcomingEvents.forEach((evt, idx) => { %>
+                <button type="button" class="carousel-dot <%= idx === 0 ? 'is-active' : '' %>" role="tab" aria-selected="<%= idx === 0 ? 'true' : 'false' %>" aria-label="Go to slide <%= idx + 1 %>" data-slide-index="<%= idx %>"></button>
+                <% }); %>
+            </div>
+            <% } %>
+        </div>
+    </div>
+    <% } else { %>
+    <!-- Small Empty State when No Upcoming Events Exist -->
+    <div class="dashboard-card-new full-width empty-carousel-card" style="text-align: center; padding: 28px 20px; margin-bottom: 24px; border: 1px dashed #cbd5e1; border-radius: 12px; background: var(--bg-card, #ffffff);">
+        <div style="font-size: 32px; margin-bottom: 6px;">🚀</div>
+        <h3 style="font-size: 16px; font-weight: 700; color: var(--text-heading, #0f172a); margin: 0 0 4px 0;">No Upcoming Hackathons Yet</h3>
+        <p style="color: var(--text-muted, #64748b); font-size: 13.5px; margin: 0 0 14px 0;">Be the first to post a campus competition or hackathon for KKWIEER students.</p>
+        <a href="/events/new" class="btn-small-primary" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px; padding: 7px 16px; font-size: 13px; font-weight: 600;">+ Post New Hackathon</a>
+    </div>
+    <% } %>
+
     <!-- Active Team Status -->
     <% if (latestTeam) { %>
     <div class="dashboard-card-new full-width">

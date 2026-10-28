@@ -24,6 +24,16 @@ const eventSchema = new mongoose.Schema({
     enum: ["Online", "Offline", "Hybrid"],
     default: "Offline"
   },
+  type: {
+    type: String,
+    enum: ["Hackathon", "Competition", "Workshop", "Meetup", "Other"],
+    default: "Hackathon",
+    trim: true
+  },
+  hasPoster: {
+    type: Boolean,
+    default: false
+  },
   link: {
     type: String,
     trim: true,

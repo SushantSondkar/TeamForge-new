@@ -7,6 +7,8 @@ const TeamRequestAction = require("../models/TeamRequestAction");
 const TeamReview = require("../models/TeamReview");
 const Feedback = require("../models/Feedback");
 const Announcement = require("../models/Announcement");
+const Notification = require("../models/Notification");
+const { removeEventPoster, deleteEventAndPoster } = require("../utils/eventService");
 const requireLogin = require("../middleware/auth");
 
 /**
@@ -397,6 +399,61 @@ router.post("/admin/banner/clear", requireLogin, requireAdmin, async (req, res) 
     console.error("Error clearing banner:", err);
     req.session.error = "Failed to clear banner: " + err.message;
     res.redirect("/admin/banner");
+  }
+});
+
+// -------------------------------------------------------------
+// 8. POST /admin/events/:id/poster/remove - Admin remove event poster
+// -------------------------------------------------------------
+router.post("/admin/events/:id/poster/remove", requireLogin, requireAdmin, async (req, res) => {
+  try {
+    const event = await Event.findById(req.params.id);
+    if (!event) {
+      if (req.session) req.session.error = "Event not found.";
+      return res.redirect("/events");
+    }
+
+    await removeEventPoster(event._id);
+
+    if (event.createdBy && !event.createdBy.equals(req.user._id)) {
+      await Notification.create({
+        userId: event.createdBy,
+        type: "warning",
+        title: "Event poster removed by administrator",
+        subtitle: `The poster for your event "${event.name}" was removed by an administrator for moderation.`,
+        link: `/events/${event._id}`,
+        read: false
+      });
+    }
+
+    if (req.session) req.session.success = "Event poster successfully removed.";
+    const referer = req.headers.referer || `/events/${event._id}`;
+    res.redirect(referer);
+  } catch (err) {
+    console.error("Error removing event poster by admin:", err);
+    if (req.session) req.session.error = "Failed to remove poster: " + err.message;
+    res.redirect("/events");
+  }
+});
+
+// -------------------------------------------------------------
+// 9. POST /admin/events/:id/delete - Admin delete event cascade
+// -------------------------------------------------------------
+router.post("/admin/events/:id/delete", requireLogin, requireAdmin, async (req, res) => {
+  try {
+    const event = await Event.findById(req.params.id);
+    if (!event) {
+      if (req.session) req.session.error = "Event not found.";
+      return res.redirect("/events");
+    }
+
+    await deleteEventAndPoster(event._id);
+    if (req.session) req.session.success = `Event "${event.name}" and associated poster deleted.`;
+    res.redirect("/events");
+  } catch (err) {
+    console.error("Error deleting event by admin:", err);
+    if (req.session) req.session.error = "Failed to delete event: " + err.message;
+    res.redirect("/events");
   }
 });
 
