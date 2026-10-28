@@ -14,14 +14,8 @@
             <a href="/privacy" class="footer-link" style="color: #64748b; text-decoration: none; font-weight: 500; transition: color 0.15s ease;">Privacy</a>
             <span style="color: #e2e8f0;">·</span>
             <a href="/feedback" class="footer-link" style="color: #64748b; text-decoration: none; font-weight: 500; transition: color 0.15s ease;" title="Share your feedback or suggestions">Give Feedback</a>
-            <% 
-              const activeSupportEmail = (typeof supportEmail !== "undefined" && supportEmail) 
-                || (typeof process !== "undefined" && process.env && process.env.SUPPORT_EMAIL ? process.env.SUPPORT_EMAIL.trim() : null); 
-            %>
-            <% if (activeSupportEmail) { %>
             <span style="color: #e2e8f0;">·</span>
-            <a href="mailto:<%= activeSupportEmail %>?subject=TeamForge%20Issue%20Report" class="footer-link" style="color: #64748b; text-decoration: none; font-weight: 500; transition: color 0.15s ease;">Report a problem</a>
-            <% } %>
+            <a href="/feedback?type=problem" class="footer-link" style="color: #64748b; text-decoration: none; font-weight: 500; transition: color 0.15s ease;">Report a problem</a>
             <span style="color: #e2e8f0;">·</span>
             <span style="color: #94a3b8; font-size: 11.5px;">© 2026 TeamForge</span>
         </div>

@@ -76,7 +76,8 @@ app.use(
         upgradeInsecureRequests: isProduction ? [] : null
       }
     },
-    crossOriginEmbedderPolicy: false
+    crossOriginEmbedderPolicy: false,
+    referrerPolicy: { policy: "same-origin" }
   })
 );
 

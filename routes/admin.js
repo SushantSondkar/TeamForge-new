@@ -207,17 +207,28 @@ router.get("/admin/stats/export", requireLogin, requireAdmin, async (req, res) =
 router.get("/admin/feedback", requireLogin, requireAdmin, async (req, res) => {
   try {
     const feedbacks = await Feedback.find().sort({ createdAt: -1 }).limit(200);
-    const avgData = await Feedback.aggregate([
-      { $group: { _id: null, avgRating: { $avg: "$rating" }, count: { $sum: 1 } } }
+    const [avgData, totalCount, newCount] = await Promise.all([
+      Feedback.aggregate([
+        { $match: { rating: { $type: "number", $gte: 1, $lte: 5 } } },
+        { $group: { _id: null, avgRating: { $avg: "$rating" }, ratedCount: { $sum: 1 } } }
+      ]),
+      Feedback.countDocuments({}),
+      Feedback.countDocuments({ status: "new" })
     ]);
-    const summary = avgData[0] || { avgRating: 0, count: 0 };
+
+    const summary = avgData[0] || { avgRating: 0, ratedCount: 0 };
+    const avgRatingVal = (summary && typeof summary.avgRating === "number" && !isNaN(summary.avgRating))
+      ? Number(summary.avgRating.toFixed(2))
+      : 0;
 
     res.render("admin/feedback", {
       currentUser: req.user,
       feedbacks,
       summary: {
-        count: summary.count,
-        avgRating: summary.avgRating ? Number(summary.avgRating.toFixed(2)) : 0
+        count: totalCount,
+        ratedCount: summary.ratedCount || 0,
+        avgRating: avgRatingVal,
+        newCount
       },
       pageTitle: "Student Feedback · Admin"
     });
@@ -232,6 +243,41 @@ router.get("/admin/feedback", requireLogin, requireAdmin, async (req, res) => {
 });
 
 // -------------------------------------------------------------
+// 3b. POST /admin/feedback/:id/resolve - Mark Feedback Resolved
+// -------------------------------------------------------------
+router.post("/admin/feedback/:id/resolve", requireLogin, requireAdmin, async (req, res) => {
+  try {
+    const feedback = await Feedback.findById(req.params.id);
+    if (!feedback) {
+      if (req.session) req.session.error = "Feedback entry not found.";
+      if (req.xhr || req.headers.accept?.includes("application/json") || req.is("json")) {
+        return res.status(404).json({ error: "Feedback entry not found." });
+      }
+      return res.redirect("/admin/feedback");
+    }
+
+    feedback.status = "resolved";
+    await feedback.save();
+
+    if (req.session) {
+      req.session.success = "Feedback item marked as resolved.";
+    }
+
+    if (req.xhr || req.headers.accept?.includes("application/json") || req.is("json")) {
+      return res.json({ success: true, status: feedback.status });
+    }
+    res.redirect("/admin/feedback");
+  } catch (err) {
+    console.error("Error resolving feedback:", err);
+    if (req.session) req.session.error = "Failed to update feedback status.";
+    if (req.xhr || req.headers.accept?.includes("application/json") || req.is("json")) {
+      return res.status(500).json({ error: "Failed to update feedback status." });
+    }
+    res.redirect("/admin/feedback");
+  }
+});
+
+// -------------------------------------------------------------
 // 4. GET /admin/feedback/export - Anonymous CSV Feedback Export
 // -------------------------------------------------------------
 router.get("/admin/feedback/export", requireLogin, requireAdmin, async (req, res) => {
@@ -239,15 +285,18 @@ router.get("/admin/feedback/export", requireLogin, requireAdmin, async (req, res
     const feedbacks = await Feedback.find().sort({ createdAt: -1 });
 
     const rows = [
-      ["Feedback ID", "Submission Date", "Rating (1-5)", "Category", "Student Comment"]
+      ["Feedback ID", "Submission Date", "Rating (1-5)", "Category", "Page URL", "Status", "Student Comment"]
     ];
 
     feedbacks.forEach((fb, idx) => {
+      const hasNumericRating = typeof fb.rating === "number" && !isNaN(fb.rating);
       rows.push([
         idx + 1,
         fb.createdAt.toISOString(),
-        fb.rating,
+        hasNumericRating ? fb.rating : "",
         fb.category || "general",
+        fb.pageUrl || "",
+        fb.status || "new",
         (fb.comment || "").replace(/[\r\n]+/g, " ")
       ]);
     });
