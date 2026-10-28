@@ -2078,6 +2078,7 @@ h1 {
 .gradient-text {
     background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
@@ -3295,3 +3296,70 @@ h1 {
 .tab-pane.active {
     display: block;
 }
+
+/* Team Management Tabs & Controls */
+.team-manage-tabs {
+    display: flex;
+    gap: 8px;
+    border-bottom: 2px solid #e2e8f0;
+    margin-bottom: 24px;
+    overflow-x: auto;
+}
+
+.team-manage-tab {
+    padding: 10px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #64748b;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.team-manage-tab:hover {
+    color: #1e293b;
+}
+
+.team-manage-tab:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+.team-manage-tab.active {
+    color: #2563eb;
+    border-bottom-color: #2563eb;
+}
+
+.team-manage-tab-pane {
+    display: none;
+}
+
+.team-manage-tab-pane.active {
+    display: block;
+}
+
+.leaderboard-row:hover {
+    background-color: #f8fafc !important;
+}
+
+.badge-direction-apply {
+    font-size: 10px;
+    padding: 2px 7px;
+    background: #e0f2fe;
+    color: #0369a1;
+    font-weight: 700;
+}
+
+.badge-direction-invite {
+    font-size: 10px;
+    padding: 2px 7px;
+    background: #fef3c7;
+    color: #b45309;
+    font-weight: 700;
+}
+

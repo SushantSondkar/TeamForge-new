@@ -59,27 +59,4 @@
 
     </nav>
 
-</aside>
-
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const currentPath = window.location.pathname;
-        const links = document.querySelectorAll('.sidebar-link');
-        links.forEach(link => {
-            const href = link.getAttribute('href');
-            if (href === currentPath || (href !== '/' && currentPath.startsWith(href))) {
-                link.classList.add('active');
-                link.style.backgroundColor = '#2563eb';
-                link.style.color = '#ffffff';
-                link.style.fontWeight = '600';
-                link.style.boxShadow = '0 2px 6px rgba(37, 99, 235, 0.25)';
-            } else {
-                link.classList.remove('active');
-                link.style.backgroundColor = 'transparent';
-                link.style.color = '#475569';
-                link.style.fontWeight = '500';
-                link.style.boxShadow = 'none';
-            }
-        });
-    });
-</script>
+</aside>

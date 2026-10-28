@@ -53,11 +53,11 @@
     </div>
 
     <!-- Filter Tabs -->
-    <div class="notif-tabs" style="display: flex; gap: 10px; margin-bottom: 20px;">
-        <button id="tab-all" onclick="filterNotifs('all')" style="background-color: #2563eb; color: white; border: none; border-radius: 8px; padding: 8px 20px; font-weight: 500; font-size: 13px; cursor: pointer;">
+    <div class="notif-tabs" role="tablist" aria-label="Notification Filters" style="display: flex; gap: 10px; margin-bottom: 20px;">
+        <button type="button" role="tab" id="tab-all" aria-selected="true" tabindex="0" data-tab="all" style="background-color: #2563eb; color: white; border: none; border-radius: 8px; padding: 8px 20px; font-weight: 500; font-size: 13px; cursor: pointer;">
             All (<%= notifications ? notifications.length : 0 %>)
         </button>
-        <button id="tab-unread" onclick="filterNotifs('unread')" style="background-color: white; color: #64748b; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 20px; font-weight: 500; font-size: 13px; cursor: pointer;">
+        <button type="button" role="tab" id="tab-unread" aria-selected="false" tabindex="-1" data-tab="unread" style="background-color: white; color: #64748b; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 20px; font-weight: 500; font-size: 13px; cursor: pointer;">
             Unread (<%= unreadCount %>)
         </button>
     </div>
@@ -104,38 +104,5 @@
     </div>
 </div>
 
-<script>
-function filterNotifs(type) {
-    const tabAll = document.getElementById('tab-all');
-    const tabUnread = document.getElementById('tab-unread');
-    const cards = document.querySelectorAll('.notif-card');
+<script src="/js/notifications.js"></script>
 
-    if (type === 'all') {
-        tabAll.style.backgroundColor = '#2563eb';
-        tabAll.style.color = 'white';
-        tabAll.style.border = 'none';
-
-        tabUnread.style.backgroundColor = 'white';
-        tabUnread.style.color = '#64748b';
-        tabUnread.style.border = '1px solid #e2e8f0';
-
-        cards.forEach(c => c.style.display = 'flex');
-    } else {
-        tabUnread.style.backgroundColor = '#2563eb';
-        tabUnread.style.color = 'white';
-        tabUnread.style.border = 'none';
-
-        tabAll.style.backgroundColor = 'white';
-        tabAll.style.color = '#64748b';
-        tabAll.style.border = '1px solid #e2e8f0';
-
-        cards.forEach(c => {
-            if (c.getAttribute('data-read') === 'false') {
-                c.style.display = 'flex';
-            } else {
-                c.style.display = 'none';
-            }
-        });
-    }
-}
-</script>

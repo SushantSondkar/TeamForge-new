@@ -69,14 +69,3 @@
     <% } %>
 </nav>
 
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const toggleBtn = document.getElementById('navbarMobileToggle');
-        const menu = document.getElementById('navbarMenu');
-        if (toggleBtn && menu) {
-            toggleBtn.addEventListener('click', () => {
-                menu.classList.toggle('navbar-menu-open');
-            });
-        }
-    });
-</script>

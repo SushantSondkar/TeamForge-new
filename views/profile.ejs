@@ -178,7 +178,7 @@
                 <span style="font-size: 13px; font-weight: 700; color: #2563eb;"><%= compPct %>%</span>
             </div>
             <div style="background: #e2e8f0; height: 8px; border-radius: 4px; overflow: hidden;">
-                <div class="comp-progress-fill" style="width: <%= compPct %>%;"></div>
+                <div class="comp-progress-fill" data-progress="<%= compPct %>" <%- 'style="width: ' + compPct + '%;"' %>></div>
             </div>
             <div style="font-size: 11px; color: #64748b; margin-top: 6px;">Used as a tie-breaker in candidate recommendations and leaderboard ranking</div>
 
@@ -342,9 +342,9 @@
                                 ↻ Re-sync Stats
                             </button>
                         </form>
-                        <form action="/auth/github/unlink" method="POST" style="margin: 0;">
+                        <form id="form-unlink-github" action="/auth/github/unlink" method="POST" style="margin: 0;">
                             <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
-                            <button type="submit" class="btn-small-outline" style="font-size: 12px; padding: 5px 12px; color: #ef4444; border-color: #ef4444;" onclick="return confirm('Disconnect your GitHub account?')">
+                            <button type="submit" class="btn-small-outline" style="font-size: 12px; padding: 5px 12px; color: #ef4444; border-color: #ef4444;">
                                 Unlink
                             </button>
                         </form>
@@ -559,3 +559,5 @@
 
     </div>
 </div>
+
+<script src="/js/profile.js"></script>

@@ -60,14 +60,14 @@
                             const ghUser = (currentUser && (currentUser.githubUsername || currentUser.github)) ? (currentUser.githubUsername || currentUser.github).replace(/https?:\/\/github\.com\//, '').replace(/\/$/, '') : '';
                         %>
                         <% if (ghUser) { %>
-                            <button type="button" onclick="setGithubAvatar('<%= ghUser %>')"
+                            <button type="button" id="btn-set-github-avatar" data-github-user="<%= ghUser %>"
                                     style="background: #0f172a; color: #38bdf8; border: 1px solid #1e293b; padding: 8px 14px; border-radius: 6px; font-size: 12.5px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
                                 <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
                                 Use GitHub Avatar
                             </button>
                         <% } %>
 
-                        <button type="button" id="removePhotoBtn" onclick="removePhoto()"
+                        <button type="button" id="removePhotoBtn"
                                 class="<%= (currentUser && currentUser.profilePic) ? '' : 'is-hidden' %>"
                                 style="background: white; color: #ef4444; border: 1px solid #fca5a5; padding: 8px 14px; border-radius: 6px; font-size: 12.5px; font-weight: 500; cursor: pointer; align-items: center; gap: 5px;">
                             ✕ Remove
@@ -77,8 +77,7 @@
                     <div style="margin-top: 10px;">
                         <input type="text" id="avatarUrlInput" placeholder="Or paste an image URL (https://...)"
                                value="<%= (currentUser && currentUser.profilePic && !currentUser.profilePic.startsWith('data:')) ? currentUser.profilePic : '' %>"
-                               style="width: 100%; box-sizing: border-box; padding: 7px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 12.5px; color: #334155;"
-                               onchange="handleUrlInput(this.value)">
+                               style="width: 100%; box-sizing: border-box; padding: 7px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 12.5px; color: #334155;">
                     </div>
 
                     <input type="hidden" name="profilePic" id="profilePicInput" value="<%= currentUser ? (currentUser.profilePic || '') : '' %>">
@@ -273,7 +272,7 @@
                     <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: #0f172a;">Crop & Position Photo</h3>
                     <p style="margin: 2px 0 0; font-size: 12px; color: #64748b;">Position and frame your photo for your profile avatar.</p>
                 </div>
-                <button type="button" id="cropCloseXBtn" onclick="closeCropModal()" style="background: none; border: none; font-size: 22px; line-height: 1; cursor: pointer; color: #94a3b8; padding: 4px;">&times;</button>
+                <button type="button" id="cropCloseXBtn" style="background: none; border: none; font-size: 22px; line-height: 1; cursor: pointer; color: #94a3b8; padding: 4px;">&times;</button>
             </div>
 
             <!-- Canvas Viewport -->
@@ -291,428 +290,20 @@
                 <div style="display: flex; align-items: center; gap: 12px;">
                     <span style="font-size: 12px; color: #64748b; font-weight: 600;">Zoom</span>
                     <input type="range" id="cropZoomSlider" min="1" max="3" step="0.02" value="1" style="flex: 1; accent-color: #2563eb; cursor: pointer;">
-                    <button type="button" id="cropResetBtn" onclick="resetCrop()" style="background: white; border: 1px solid #cbd5e1; border-radius: 6px; padding: 4px 10px; font-size: 11.5px; color: #475569; cursor: pointer; font-weight: 500;">Reset</button>
+                    <button type="button" id="cropResetBtn" style="background: white; border: 1px solid #cbd5e1; border-radius: 6px; padding: 4px 10px; font-size: 11.5px; color: #475569; cursor: pointer; font-weight: 500;">Reset</button>
                 </div>
             </div>
 
             <!-- Modal Footer -->
             <div style="padding: 14px 20px; display: flex; justify-content: flex-end; gap: 10px; background: white;">
-                <button type="button" id="cropCancelBtn" onclick="closeCropModal()" style="background: white; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 500; color: #475569; cursor: pointer;">Cancel</button>
-                <button type="button" id="cropApplyBtn" onclick="applyCrop()" style="background: #2563eb; color: white; border: none; border-radius: 8px; padding: 8px 22px; font-size: 13.5px; font-weight: 600; cursor: pointer; box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25); display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-width: 150px; min-height: 38px;">
+                <button type="button" id="cropCancelBtn" style="background: white; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 500; color: #475569; cursor: pointer;">Cancel</button>
+                <button type="button" id="cropApplyBtn" style="background: #2563eb; color: white; border: none; border-radius: 8px; padding: 8px 22px; font-size: 13.5px; font-weight: 600; cursor: pointer; box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25); display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-width: 150px; min-height: 38px;">
                     <span id="cropApplyBtnText">Crop & Set Photo</span>
                 </button>
             </div>
         </div>
     </div>
 
-    <script>
-        (function() {
-            const defaultAvatar = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='12' fill='%23e2e8f0'/%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z' fill='%239ca3af'/%3E%3C/svg%3E";
-            const avatarDropzone = document.getElementById('avatarDropzone');
-            const dropzoneOverlay = document.getElementById('dropzoneOverlay');
-            const avatarFileInput = document.getElementById('avatarFileInput');
-            const avatarPreview = document.getElementById('avatarPreview');
-            const profilePicInput = document.getElementById('profilePicInput');
-            const avatarUrlInput = document.getElementById('avatarUrlInput');
-            const removePhotoBtn = document.getElementById('removePhotoBtn');
-            const avatarSizeError = document.getElementById('avatarSizeError');
-
-            // Crop Modal Elements
-            const cropModal = document.getElementById('cropModal');
-            const cropCanvas = document.getElementById('cropCanvas');
-            const cropZoomSlider = document.getElementById('cropZoomSlider');
-            const ctx = cropCanvas ? cropCanvas.getContext('2d') : null;
-
-            let currentImg = null;
-            let baseScale = 1;
-            let currentZoom = 1;
-            let panX = 0;
-            let panY = 0;
-            let isDragging = false;
-            let dragStartX = 0;
-            let dragStartY = 0;
-
-            // Load file into Cropper
-            function loadFileForCrop(file) {
-                if (!file) return;
-                if (!file.type.startsWith('image/')) {
-                    alert('Please select an image file (PNG, JPG, WEBP, GIF).');
-                    return;
-                }
-                if (file.size > 8 * 1024 * 1024) {
-                    if (avatarSizeError) avatarSizeError.style.display = 'block';
-                    return;
-                }
-                if (avatarSizeError) avatarSizeError.style.display = 'none';
-
-                const reader = new FileReader();
-                reader.onload = function(evt) {
-                    openCropModalWithSource(evt.target.result);
-                };
-                reader.readAsDataURL(file);
-            }
-
-            // Open Crop Modal with image source
-            function openCropModalWithSource(src) {
-                const img = new Image();
-                if (src && !src.startsWith('data:')) {
-                    img.crossOrigin = 'anonymous';
-                }
-                img.onload = function() {
-                    currentImg = img;
-                    // 240px is circle crop diameter on 320x320 canvas
-                    baseScale = Math.max(240 / (img.naturalWidth || img.width), 240 / (img.naturalHeight || img.height));
-                    currentZoom = 1;
-                    panX = 0;
-                    panY = 0;
-                    if (cropZoomSlider) cropZoomSlider.value = 1;
-                    if (cropModal) cropModal.style.display = 'flex';
-                    drawCrop();
-                };
-                img.onerror = function() {
-                    // If cross-origin anonymous failed (e.g. strict CORS), try loading without crossOrigin
-                    if (img.crossOrigin) {
-                        const fallbackImg = new Image();
-                        fallbackImg.onload = function() {
-                            currentImg = fallbackImg;
-                            baseScale = Math.max(240 / (fallbackImg.naturalWidth || fallbackImg.width), 240 / (fallbackImg.naturalHeight || fallbackImg.height));
-                            currentZoom = 1;
-                            panX = 0;
-                            panY = 0;
-                            if (cropZoomSlider) cropZoomSlider.value = 1;
-                            if (cropModal) cropModal.style.display = 'flex';
-                            drawCrop();
-                        };
-                        fallbackImg.onerror = function() {
-                            alert('Could not load image for cropping. Please check the file or link.');
-                        };
-                        fallbackImg.src = src;
-                    } else {
-                        alert('Could not load image for cropping. Please check the file or link.');
-                    }
-                };
-                img.src = src;
-            }
-
-            // Render Canvas Viewport with circular mask
-            function drawCrop() {
-                if (!ctx || !currentImg) return;
-                const width = cropCanvas.width;
-                const height = cropCanvas.height;
-                const centerX = width / 2;
-                const centerY = height / 2;
-                const radius = 120; // 240px diameter
-
-                ctx.clearRect(0, 0, width, height);
-
-                // Draw transformed image
-                const effectiveScale = baseScale * currentZoom;
-                ctx.save();
-                ctx.translate(centerX + panX, centerY + panY);
-                ctx.scale(effectiveScale, effectiveScale);
-                ctx.drawImage(currentImg, -currentImg.width / 2, -currentImg.height / 2);
-                ctx.restore();
-
-                // Draw translucent mask outside crop circle
-                ctx.save();
-                ctx.fillStyle = 'rgba(15, 23, 42, 0.65)';
-                ctx.beginPath();
-                ctx.rect(0, 0, width, height);
-                ctx.arc(centerX, centerY, radius, 0, Math.PI * 2, true);
-                ctx.fill();
-
-                // Draw circular guide ring
-                ctx.beginPath();
-                ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-                ctx.lineWidth = 2.5;
-                ctx.strokeStyle = '#ffffff';
-                ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
-                ctx.shadowBlur = 6;
-                ctx.stroke();
-                ctx.restore();
-            }
-
-            // Native File Input change
-            if (avatarFileInput) {
-                avatarFileInput.addEventListener('change', function(e) {
-                    if (e.target.files && e.target.files[0]) {
-                        loadFileForCrop(e.target.files[0]);
-                    }
-                });
-            }
-
-            // Drag and Drop on dropzone
-            if (avatarDropzone) {
-                ['dragenter', 'dragover'].forEach(eventName => {
-                    avatarDropzone.addEventListener(eventName, function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        avatarDropzone.style.borderColor = '#2563eb';
-                        avatarDropzone.style.background = '#eff6ff';
-                        if (dropzoneOverlay) dropzoneOverlay.style.display = 'flex';
-                    }, false);
-                });
-
-                ['dragleave', 'drop'].forEach(eventName => {
-                    avatarDropzone.addEventListener(eventName, function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        avatarDropzone.style.borderColor = '#cbd5e1';
-                        avatarDropzone.style.background = '#f8fafc';
-                        if (dropzoneOverlay) dropzoneOverlay.style.display = 'none';
-                    }, false);
-                });
-
-                avatarDropzone.addEventListener('drop', function(e) {
-                    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-                        loadFileForCrop(e.dataTransfer.files[0]);
-                    }
-                }, false);
-            }
-
-            // Canvas Mouse & Touch Dragging
-            if (cropCanvas) {
-                cropCanvas.addEventListener('mousedown', function(e) {
-                    isDragging = true;
-                    cropCanvas.style.cursor = 'grabbing';
-                    dragStartX = e.clientX - panX;
-                    dragStartY = e.clientY - panY;
-                });
-
-                window.addEventListener('mousemove', function(e) {
-                    if (!isDragging) return;
-                    panX = e.clientX - dragStartX;
-                    panY = e.clientY - dragStartY;
-                    drawCrop();
-                });
-
-                window.addEventListener('mouseup', function() {
-                    if (isDragging) {
-                        isDragging = false;
-                        if (cropCanvas) cropCanvas.style.cursor = 'grab';
-                    }
-                });
-
-                // Touch support
-                cropCanvas.addEventListener('touchstart', function(e) {
-                    if (e.touches.length === 1) {
-                        isDragging = true;
-                        dragStartX = e.touches[0].clientX - panX;
-                        dragStartY = e.touches[0].clientY - panY;
-                    }
-                }, { passive: true });
-
-                window.addEventListener('touchmove', function(e) {
-                    if (!isDragging || e.touches.length !== 1) return;
-                    panX = e.touches[0].clientX - dragStartX;
-                    panY = e.touches[0].clientY - dragStartY;
-                    drawCrop();
-                }, { passive: true });
-
-                window.addEventListener('touchend', function() {
-                    isDragging = false;
-                });
-
-                // Wheel zoom
-                cropCanvas.addEventListener('wheel', function(e) {
-                    e.preventDefault();
-                    const delta = e.deltaY * -0.002;
-                    currentZoom = Math.min(3, Math.max(1, currentZoom + delta));
-                    if (cropZoomSlider) cropZoomSlider.value = currentZoom;
-                    drawCrop();
-                }, { passive: false });
-            }
-
-            // Slider Zoom
-            if (cropZoomSlider) {
-                cropZoomSlider.addEventListener('input', function() {
-                    currentZoom = parseFloat(this.value);
-                    drawCrop();
-                });
-            }
-
-            window.resetCrop = function() {
-                currentZoom = 1;
-                panX = 0;
-                panY = 0;
-                if (cropZoomSlider) cropZoomSlider.value = 1;
-                drawCrop();
-            };
-
-            window.closeCropModal = function() {
-                if (cropModal) {
-                    cropModal.style.display = 'none';
-                }
-                if (avatarFileInput) {
-                    avatarFileInput.value = '';
-                }
-            };
-
-            // Backdrop click & Escape key close
-            if (cropModal) {
-                cropModal.addEventListener('click', function(e) {
-                    if (e.target === cropModal) {
-                        closeCropModal();
-                    }
-                });
-            }
-
-            window.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape' && cropModal && cropModal.style.display !== 'none') {
-                    closeCropModal();
-                }
-            });
-
-            // Explicit DOM button click listeners
-            const btnCancel = document.getElementById('cropCancelBtn');
-            const btnCloseX = document.getElementById('cropCloseXBtn');
-            const btnApply = document.getElementById('cropApplyBtn');
-            const btnReset = document.getElementById('cropResetBtn');
-
-            if (btnCancel) btnCancel.addEventListener('click', closeCropModal);
-            if (btnCloseX) btnCloseX.addEventListener('click', closeCropModal);
-            if (btnReset) btnReset.addEventListener('click', resetCrop);
-            if (btnApply) btnApply.addEventListener('click', function() { applyCrop(); });
-
-            window.applyCrop = async function() {
-                if (!currentImg) {
-                    closeCropModal();
-                    return;
-                }
-
-                let croppedDataUrl = null;
-                try {
-                    // High-resolution 300x300 export
-                    const outCanvas = document.createElement('canvas');
-                    outCanvas.width = 300;
-                    outCanvas.height = 300;
-                    const outCtx = outCanvas.getContext('2d');
-
-                    const ratio = 300 / 240;
-                    const effectiveScale = baseScale * currentZoom * ratio;
-
-                    outCtx.save();
-                    outCtx.translate(150 + panX * ratio, 150 + panY * ratio);
-                    outCtx.scale(effectiveScale, effectiveScale);
-                    outCtx.drawImage(currentImg, -currentImg.width / 2, -currentImg.height / 2);
-                    outCtx.restore();
-
-                    try {
-                        croppedDataUrl = outCanvas.toDataURL('image/jpeg', 0.90);
-                    } catch (jpegErr) {
-                        croppedDataUrl = outCanvas.toDataURL('image/png');
-                    }
-                } catch (canvasErr) {
-                    console.error('Canvas export error:', canvasErr);
-                    try {
-                        if (cropCanvas) {
-                            croppedDataUrl = cropCanvas.toDataURL('image/png');
-                        }
-                    } catch (e2) {
-                        croppedDataUrl = currentImg.src;
-                    }
-                }
-
-                if (!croppedDataUrl) {
-                    croppedDataUrl = currentImg.src;
-                }
-
-                // 1. Immediately update UI preview and hidden form field
-                if (avatarPreview) avatarPreview.src = croppedDataUrl;
-                if (profilePicInput) profilePicInput.value = croppedDataUrl;
-                if (avatarUrlInput) avatarUrlInput.value = '';
-                if (removePhotoBtn) {
-                    removePhotoBtn.classList.remove('is-hidden');
-                    removePhotoBtn.style.display = 'inline-flex';
-                }
-
-                // Update navbar avatar if present
-                const navAvatar = document.querySelector('.navbar .user-avatar');
-                if (navAvatar) navAvatar.src = croppedDataUrl;
-
-                // 2. Immediately close modal so user is never stuck
-                closeCropModal();
-
-                // 3. Show live confirmation banner on page
-                let alertBox = document.getElementById('photoSaveSuccessAlert');
-                if (!alertBox) {
-                    alertBox = document.createElement('div');
-                    alertBox.id = 'photoSaveSuccessAlert';
-                    alertBox.style.cssText = 'background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 13.5px; font-weight: 500; display: flex; align-items: center; justify-content: space-between; gap: 10px; transition: all 0.3s ease;';
-                    const editCard = document.querySelector('.edit-card');
-                    if (editCard && editCard.parentNode) {
-                        editCard.parentNode.insertBefore(alertBox, editCard);
-                    }
-                }
-                alertBox.innerHTML = `<span>⏳ Saving cropped photo directly to database...</span>`;
-                alertBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-
-                // 4. Background persist to MongoDB via /profile/photo with CSRF token
-                try {
-                    const csrfInput = document.querySelector('input[name="_csrf"]');
-                    const csrfToken = csrfInput ? csrfInput.value : '';
-
-                    const response = await fetch('/profile/photo', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json',
-                            'X-CSRF-Token': csrfToken
-                        },
-                        body: JSON.stringify({
-                            _csrf: csrfToken,
-                            profilePic: croppedDataUrl,
-                            avatar: croppedDataUrl,
-                            photo: croppedDataUrl
-                        })
-                    });
-
-                    if (response.ok) {
-                        alertBox.style.background = '#f0fdf4';
-                        alertBox.style.borderColor = '#bbf7d0';
-                        alertBox.style.color = '#166534';
-                        alertBox.innerHTML = `<span>✅ Profile photo cropped and saved directly to the database!</span><button type="button" onclick="this.parentElement.remove()" style="background:none; border:none; cursor:pointer; color:#166534; font-size:18px;">&times;</button>`;
-                    } else {
-                        const errData = await response.json().catch(() => ({}));
-                        alertBox.style.background = '#fef2f2';
-                        alertBox.style.borderColor = '#fecaca';
-                        alertBox.style.color = '#991b1b';
-                        alertBox.innerHTML = `<span>⚠️ ${errData.error || 'Failed to save photo directly'}. Click "Save Changes" below to retry.</span><button type="button" onclick="this.parentElement.remove()" style="background:none; border:none; cursor:pointer; color:#991b1b; font-size:18px;">&times;</button>`;
-                    }
-                } catch (saveErr) {
-                    console.warn('Background save notice:', saveErr);
-                    alertBox.style.background = '#f0fdf4';
-                    alertBox.style.borderColor = '#bbf7d0';
-                    alertBox.style.color = '#166534';
-                    alertBox.innerHTML = `<span>✅ Photo cropped and set! Click "Save Changes" below to finalize.</span><button type="button" onclick="this.parentElement.remove()" style="background:none; border:none; cursor:pointer; color:#166534; font-size:18px;">&times;</button>`;
-                }
-            };
-
-            // GitHub & URL helpers
-            window.setGithubAvatar = function(username) {
-                const url = "https://github.com/" + username + ".png?size=400";
-                openCropModalWithSource(url);
-            };
-
-            window.handleUrlInput = function(url) {
-                const clean = (url || '').trim();
-                if (clean && (clean.startsWith('http://') || clean.startsWith('https://'))) {
-                    openCropModalWithSource(clean);
-                } else if (!clean) {
-                    window.removePhoto();
-                }
-            };
-
-            window.removePhoto = function() {
-                if (avatarPreview) avatarPreview.src = defaultAvatar;
-                if (profilePicInput) profilePicInput.value = '';
-                if (avatarUrlInput) avatarUrlInput.value = '';
-                if (avatarFileInput) avatarFileInput.value = '';
-                if (removePhotoBtn) {
-                    removePhotoBtn.classList.add('is-hidden');
-                    removePhotoBtn.style.display = 'none';
-                }
-            };
-        })();
-    </script>
+    <script src="/js/profile-edit.js"></script>
 </div>
+

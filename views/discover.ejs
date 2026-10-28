@@ -53,21 +53,39 @@
         </style>
 
         <!-- Tabs Navigation -->
-        <div class="discover-tabs">
+        <div class="discover-tabs" role="tablist" aria-label="Discover Tabs">
             <button type="button"
+                role="tab"
+                id="tab-smart-recs"
+                aria-selected="<%= (typeof activeTab === 'undefined' || activeTab === 'smart-recs') ? 'true' : 'false' %>"
+                aria-controls="smart-recs"
+                tabindex="<%= (typeof activeTab === 'undefined' || activeTab === 'smart-recs') ? '0' : '-1' %>"
                 class="discover-tab <%= (typeof activeTab === 'undefined' || activeTab === 'smart-recs') ? 'active' : '' %>"
-                data-target="smart-recs">
+                data-target="smart-recs"
+                data-hash="smart-recs">
                 Smart Recommendations
             </button>
             <button type="button"
+                role="tab"
+                id="tab-search-teams"
+                aria-selected="<%= (typeof activeTab !== 'undefined' && activeTab === 'search') ? 'true' : 'false' %>"
+                aria-controls="search-teams"
+                tabindex="<%= (typeof activeTab !== 'undefined' && activeTab === 'search') ? '0' : '-1' %>"
                 class="discover-tab <%= (typeof activeTab !== 'undefined' && activeTab === 'search') ? 'active' : '' %>"
-                data-target="search-teams">
+                data-target="search-teams"
+                data-hash="search">
                 Search Teams (<%= (typeof searchResults !=='undefined' && searchResults.totalCount !==undefined) ?
                     searchResults.totalCount : 0 %>)
             </button>
             <button type="button"
+                role="tab"
+                id="tab-browse-events"
+                aria-selected="<%= (typeof activeTab !== 'undefined' && activeTab === 'browse-events') ? 'true' : 'false' %>"
+                aria-controls="browse-events"
+                tabindex="<%= (typeof activeTab !== 'undefined' && activeTab === 'browse-events') ? '0' : '-1' %>"
                 class="discover-tab <%= (typeof activeTab !== 'undefined' && activeTab === 'browse-events') ? 'active' : '' %>"
-                data-target="browse-events">
+                data-target="browse-events"
+                data-hash="browse-events">
                 Browse by Event
             </button>
         </div>
@@ -572,46 +590,4 @@
                 </div>
             </div>
 
-            <script>
-                document.addEventListener('DOMContentLoaded', () => {
-                    const tabs = document.querySelectorAll('.discover-tab');
-                    const panes = document.querySelectorAll('.tab-pane');
-
-                    // Tab Switching
-                    tabs.forEach(tab => {
-                        tab.addEventListener('click', () => {
-                            tabs.forEach(t => t.classList.remove('active'));
-                            panes.forEach(p => p.classList.remove('active'));
-
-                            tab.classList.add('active');
-                            const target = document.getElementById(tab.dataset.target);
-                            if (target) {
-                                target.classList.add('active');
-                            }
-                        });
-                    });
-
-                    // Progressive Enhancement for Search Form: Auto-submit dropdowns & debounced text search
-                    const searchForm = document.getElementById('discoverSearchForm');
-                    const searchInput = document.getElementById('searchQ');
-                    const filterDropdowns = document.querySelectorAll('.filter-select-dropdown');
-
-                    if (searchForm) {
-                        filterDropdowns.forEach(dropdown => {
-                            dropdown.addEventListener('change', () => {
-                                searchForm.submit();
-                            });
-                        });
-
-                        if (searchInput) {
-                            let debounceTimeout = null;
-                            searchInput.addEventListener('input', () => {
-                                clearTimeout(debounceTimeout);
-                                debounceTimeout = setTimeout(() => {
-                                    searchForm.submit();
-                                }, 400);
-                            });
-                        }
-                    }
-                });
-            </script>
+            <script src="/js/discover.js"></script>
