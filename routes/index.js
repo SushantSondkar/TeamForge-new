@@ -724,7 +724,9 @@ router.post("/profile/edit", requireLogin, async (req, res) => {
       isProfileHidden,
       emailNotifications,
       skills,
+      projects,
       projectsRaw,
+      pastHackathons,
       pastHackathonsRaw,
       profilePic
     } = req.body;
@@ -800,7 +802,22 @@ router.post("/profile/edit", requireLogin, async (req, res) => {
         user.year = cleanYear;
       }
     }
-    if (bio !== undefined) user.bio = bio.trim();
+    // Validate bio (if provided and non-empty, must be at least 10 characters)
+    if (bio !== undefined && bio !== null) {
+      const trimmedBio = String(bio).trim();
+      if (trimmedBio !== "" && trimmedBio.length < 10) {
+        const errMsg = "Bio must be at least 10 characters.";
+        req.session.error = errMsg;
+        if (req.xhr || req.headers.accept?.includes("application/json")) {
+          return res.status(400).json({ error: errMsg });
+        }
+        return res.status(400).render("profile-edit", {
+          currentUser: { ...(req.user.toObject ? req.user.toObject() : req.user), ...req.body },
+          error: errMsg
+        });
+      }
+      user.bio = trimmedBio;
+    }
     if (github !== undefined) user.github = github.trim();
     if (linkedin !== undefined) {
       const rawLi = String(linkedin).trim();
@@ -926,69 +943,197 @@ router.post("/profile/edit", requireLogin, async (req, res) => {
     // Email notifications toggle (default true; when unchecked in form, undefined -> false)
     user.emailNotifications = (emailNotifications === "true" || emailNotifications === "on" || emailNotifications === true);
 
-    // Parse skills
-    if (skills) {
-      if (typeof skills === 'string') {
-        const skillItems = skills.split(',').map(s => s.trim()).filter(Boolean);
-        user.skills = skillItems.map(item => {
-          if (item.includes(':')) {
-            const parts = item.split(':');
+    // Parse skills (supports string, array of strings, array of objects, or object)
+    const rawSkills = skills !== undefined ? skills : req.body.technicalSkills;
+    if (rawSkills !== undefined && rawSkills !== null) {
+      let parsedSkills = [];
+      if (typeof rawSkills === "string") {
+        const skillItems = rawSkills.split(",").map(s => s.trim()).filter(Boolean);
+        parsedSkills = skillItems.map(item => {
+          if (item.includes(":")) {
+            const parts = item.split(":");
+            const sName = parts[0].trim();
+            if (!sName) return null;
             return {
-              name: parts[0].trim(),
+              name: sName,
               level: Math.min(5, Math.max(1, parseInt(parts[1], 10) || 3))
             };
           }
-          return {
-            name: item,
-            level: 3
-          };
-        });
+          const sName = item.trim();
+          return sName ? { name: sName, level: 3 } : null;
+        }).filter(Boolean);
+      } else if (Array.isArray(rawSkills)) {
+        parsedSkills = rawSkills.map(item => {
+          if (typeof item === "string") {
+            if (item.includes(":")) {
+              const parts = item.split(":");
+              const sName = parts[0].trim();
+              if (!sName) return null;
+              return {
+                name: sName,
+                level: Math.min(5, Math.max(1, parseInt(parts[1], 10) || 3))
+              };
+            }
+            const sName = item.trim();
+            return sName ? { name: sName, level: 3 } : null;
+          } else if (item && typeof item === "object") {
+            const sName = (item.name || item.title || "").trim();
+            if (!sName) return null;
+            const sLevel = Math.min(5, Math.max(1, parseInt(item.level, 10) || 3));
+            return { name: sName, level: sLevel };
+          }
+          return null;
+        }).filter(Boolean);
+      } else if (typeof rawSkills === "object") {
+        parsedSkills = Object.values(rawSkills).map(item => {
+          if (typeof item === "string") {
+            const parts = item.split(":");
+            const sName = parts[0].trim();
+            if (!sName) return null;
+            return { name: sName, level: Math.min(5, Math.max(1, parseInt(parts[1], 10) || 3)) };
+          } else if (item && typeof item === "object") {
+            const sName = (item.name || item.title || "").trim();
+            if (!sName) return null;
+            return { name: sName, level: Math.min(5, Math.max(1, parseInt(item.level, 10) || 3)) };
+          }
+          return null;
+        }).filter(Boolean);
       }
+      user.skills = parsedSkills;
     }
 
-    // Parse Projects
-    if (projectsRaw) {
-      try {
-        if (typeof projectsRaw === "string" && projectsRaw.trim().startsWith("[")) {
-          user.projects = JSON.parse(projectsRaw);
-        } else if (typeof projectsRaw === "string") {
-          const lines = projectsRaw.split("\n").filter(l => l.trim());
-          user.projects = lines.map(line => {
-            const [title, desc, link, tech] = line.split("|").map(s => s?.trim());
+    // Parse Projects (supports projectsRaw or projects as string, array, or objects)
+    const rawProjects = projectsRaw !== undefined ? projectsRaw : projects;
+    if (rawProjects !== undefined && rawProjects !== null) {
+      let parsedProjects = [];
+      if (typeof rawProjects === "string") {
+        const trimmed = rawProjects.trim();
+        if (trimmed.startsWith("[") || trimmed.startsWith("{")) {
+          try {
+            const parsed = JSON.parse(trimmed);
+            parsedProjects = Array.isArray(parsed) ? parsed : [parsed];
+          } catch (e) {
+            parsedProjects = [];
+          }
+        } else {
+          const lines = trimmed.split("\n").filter(l => l.trim());
+          parsedProjects = lines.map(line => {
+            const [pTitle, desc, link, tech] = line.split("|").map(s => s?.trim());
+            if (!pTitle) return null;
             return {
-              title: title || "Project",
+              title: pTitle,
               description: desc || "",
               link: link || "",
               techStack: tech || ""
             };
-          });
+          }).filter(Boolean);
         }
-      } catch (e) {
-        console.warn("Failed to parse projects:", e.message);
+      } else if (Array.isArray(rawProjects)) {
+        parsedProjects = rawProjects.map(p => {
+          if (typeof p === "string") {
+            const [pTitle, desc, link, tech] = p.split("|").map(s => s?.trim());
+            if (!pTitle) return null;
+            return {
+              title: pTitle,
+              description: desc || "",
+              link: link || "",
+              techStack: tech || ""
+            };
+          } else if (p && typeof p === "object") {
+            const pTitle = (p.title || p.name || "").trim();
+            if (!pTitle) return null;
+            return {
+              title: pTitle,
+              description: (p.description || p.desc || "").trim(),
+              link: (p.link || p.url || "").trim(),
+              techStack: (p.techStack || p.tech || "").trim()
+            };
+          }
+          return null;
+        }).filter(Boolean);
+      } else if (typeof rawProjects === "object") {
+        parsedProjects = Object.values(rawProjects).map(p => {
+          if (!p || typeof p !== "object") return null;
+          const pTitle = (p.title || p.name || "").trim();
+          if (!pTitle) return null;
+          return {
+            title: pTitle,
+            description: (p.description || p.desc || "").trim(),
+            link: (p.link || p.url || "").trim(),
+            techStack: (p.techStack || p.tech || "").trim()
+          };
+        }).filter(Boolean);
       }
+      user.projects = parsedProjects;
     }
 
-    // Parse Past Hackathons
-    if (pastHackathonsRaw) {
-      try {
-        if (typeof pastHackathonsRaw === "string" && pastHackathonsRaw.trim().startsWith("[")) {
-          user.pastHackathons = JSON.parse(pastHackathonsRaw);
-        } else if (typeof pastHackathonsRaw === "string") {
-          const lines = pastHackathonsRaw.split("\n").filter(l => l.trim());
-          user.pastHackathons = lines.map(line => {
-            const [name, yearVal, proj, roleVal, place] = line.split("|").map(s => s?.trim());
+    // Parse Past Hackathons (supports pastHackathonsRaw or pastHackathons as string, array, or objects)
+    const rawHackathons = pastHackathonsRaw !== undefined ? pastHackathonsRaw : pastHackathons;
+    if (rawHackathons !== undefined && rawHackathons !== null) {
+      let parsedHackathons = [];
+      if (typeof rawHackathons === "string") {
+        const trimmed = rawHackathons.trim();
+        if (trimmed.startsWith("[") || trimmed.startsWith("{")) {
+          try {
+            const parsed = JSON.parse(trimmed);
+            parsedHackathons = Array.isArray(parsed) ? parsed : [parsed];
+          } catch (e) {
+            parsedHackathons = [];
+          }
+        } else {
+          const lines = trimmed.split("\n").filter(l => l.trim());
+          parsedHackathons = lines.map(line => {
+            const [hName, yearVal, proj, roleVal, place] = line.split("|").map(s => s?.trim());
+            if (!hName) return null;
             return {
-              name: name || "Hackathon",
+              name: hName,
               year: yearVal || "",
               projectTitle: proj || "",
               role: roleVal || "",
               placement: place || ""
             };
-          });
+          }).filter(Boolean);
         }
-      } catch (e) {
-        console.warn("Failed to parse past hackathons:", e.message);
+      } else if (Array.isArray(rawHackathons)) {
+        parsedHackathons = rawHackathons.map(h => {
+          if (typeof h === "string") {
+            const [hName, yearVal, proj, roleVal, place] = h.split("|").map(s => s?.trim());
+            if (!hName) return null;
+            return {
+              name: hName,
+              year: yearVal || "",
+              projectTitle: proj || "",
+              role: roleVal || "",
+              placement: place || ""
+            };
+          } else if (h && typeof h === "object") {
+            const hName = (h.name || h.title || "").trim();
+            if (!hName) return null;
+            return {
+              name: hName,
+              year: (h.year || "").trim(),
+              projectTitle: (h.projectTitle || h.project || "").trim(),
+              role: (h.role || "").trim(),
+              placement: (h.placement || h.place || "").trim()
+            };
+          }
+          return null;
+        }).filter(Boolean);
+      } else if (typeof rawHackathons === "object") {
+        parsedHackathons = Object.values(rawHackathons).map(h => {
+          if (!h || typeof h !== "object") return null;
+          const hName = (h.name || h.title || "").trim();
+          if (!hName) return null;
+          return {
+            name: hName,
+            year: (h.year || "").trim(),
+            projectTitle: (h.projectTitle || h.project || "").trim(),
+            role: (h.role || "").trim(),
+            placement: (h.placement || h.place || "").trim()
+          };
+        }).filter(Boolean);
       }
+      user.pastHackathons = parsedHackathons;
     }
 
     user.lastActive = new Date();
@@ -999,8 +1144,12 @@ router.post("/profile/edit", requireLogin, async (req, res) => {
   } catch (err) {
     console.error("Error updating profile:", err.message);
     req.session.error = `Failed to update profile: ${err.message}`;
-    res.render("profile-edit", {
-      currentUser: req.user,
+    const safeCurrentUser = {
+      ...(req.user.toObject ? req.user.toObject() : req.user),
+      ...req.body
+    };
+    return res.status(400).render("profile-edit", {
+      currentUser: safeCurrentUser,
       error: `Failed to update profile: ${err.message}`
     });
   }
