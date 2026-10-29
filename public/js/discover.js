@@ -43,6 +43,19 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // Switch-to-tab buttons (e.g. empty-state "Search all teams")
+    document.querySelectorAll('[data-switch-tab]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const targetId = btn.dataset.switchTab;
+            const targetTab = tabs.find(t => t.dataset.target === targetId);
+            if (targetTab) {
+                targetTab.focus();
+                switchTab(targetTab, true);
+            }
+        });
+    });
+
     // Keyboard navigation
     if (tabList) {
         tabList.addEventListener('keydown', (e) => {

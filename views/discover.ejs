@@ -1,41 +1,101 @@
 <% layout("/layouts/boilerplate") -%>
+<%
+function getMatchBadgeClass(score) {
+    const num = Number(score) || 0;
+    if (num >= 75) return 'badge-match-high';
+    if (num >= 50) return 'badge-match-medium';
+    return 'badge-match-low';
+}
+%>
 
     <div class="discover-page page-container">
 
         <div class="discover-header" style="margin-bottom: 24px;">
-            <h1 class="page-title-new" style="font-size: 26px; font-weight: 800; color: #0f172a; margin: 0 0 6px 0;">
-                Explore Active Requirements</h1>
-            <p class="page-subtitle" style="color: #64748b; font-size: 14.5px; margin: 0;">Find teams and open roles
-                matching your skills. Server-side filtering with real MatchScore calculation.</p>
+            <h1 class="page-title-new" style="font-size: 26px; font-weight: 800; color: var(--text-heading, #0f172a); margin: 0 0 6px 0;">
+                Explore Active Requirements
+            </h1>
+            <p class="page-subtitle" style="color: var(--text-muted, #64748b); font-size: 14.5px; margin: 0;">
+                Find teams and open roles matching your skills.
+            </p>
         </div>
 
         <style>
             .discover-tabs {
                 display: flex;
                 gap: 8px;
-                border-bottom: 1px solid #e2e8f0;
+                border-bottom: 1px solid var(--border-color, #e2e8f0);
                 margin-bottom: 24px;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                padding-bottom: 4px;
+                scrollbar-width: none;
+                flex-wrap: nowrap;
+            }
+
+            .discover-tabs::-webkit-scrollbar {
+                display: none;
             }
 
             .discover-tab {
+                min-height: 44px;
                 padding: 10px 18px;
                 font-size: 14px;
                 font-weight: 600;
-                background: none;
-                border: none;
+                background: var(--bg-card, #ffffff);
+                border: 1px solid var(--border-color, #cbd5e1);
+                border-radius: 8px;
                 cursor: pointer;
-                border-bottom: 2px solid transparent;
-                color: #64748b;
-                transition: color 0.15s ease, border-color 0.15s ease;
-            }
-
-            .discover-tab.active {
-                border-bottom-color: #2563eb;
-                color: #2563eb;
+                color: var(--text-secondary, #475569);
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                white-space: nowrap;
+                flex-shrink: 0;
+                text-decoration: none;
+                transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
             }
 
             .discover-tab:hover:not(.active) {
-                color: #1e293b;
+                background: var(--bg-hover, #f1f5f9);
+                color: var(--text-heading, #0f172a);
+                border-color: #94a3b8;
+            }
+
+            .discover-tab:focus-visible {
+                outline: 2px solid #2563eb;
+                outline-offset: 2px;
+            }
+
+            .discover-tab.active {
+                background: #1d4ed8;
+                color: #ffffff;
+                border-color: #1d4ed8;
+                box-shadow: 0 1px 3px rgba(29, 78, 216, 0.3);
+            }
+
+            .discover-tab.active .tab-count-badge {
+                background: rgba(255, 255, 255, 0.25);
+                color: #ffffff;
+            }
+
+            [data-theme="dark"] .discover-tab {
+                background: var(--bg-card, #1e293b);
+                border-color: var(--border-color, #334155);
+                color: var(--text-secondary, #cbd5e1);
+            }
+
+            [data-theme="dark"] .discover-tab:hover:not(.active) {
+                background: #334155;
+                color: var(--text-heading, #ffffff);
+                border-color: #475569;
+            }
+
+            [data-theme="dark"] .discover-tab.active {
+                background: #2563eb;
+                color: #ffffff;
+                border-color: #2563eb;
+                box-shadow: 0 1px 3px rgba(37, 99, 235, 0.4);
             }
 
             .tab-pane {
@@ -63,7 +123,8 @@
                 class="discover-tab <%= (typeof activeTab === 'undefined' || activeTab === 'smart-recs') ? 'active' : '' %>"
                 data-target="smart-recs"
                 data-hash="smart-recs">
-                Smart Recommendations
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0;"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3L12 3z"/></svg>
+                <span>Smart Recommendations</span>
             </button>
             <button type="button"
                 role="tab"
@@ -74,8 +135,11 @@
                 class="discover-tab <%= (typeof activeTab !== 'undefined' && activeTab === 'search') ? 'active' : '' %>"
                 data-target="search-teams"
                 data-hash="search">
-                Search Teams (<%= (typeof searchResults !=='undefined' && searchResults.totalCount !==undefined) ?
-                    searchResults.totalCount : 0 %>)
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                <span>Search Teams</span>
+                <span class="tab-count-badge" style="background: rgba(0,0,0,0.06); padding: 2px 7px; border-radius: 10px; font-size: 11.5px; font-weight: 700; margin-left: 2px;">
+                    <%= (typeof searchResults !== 'undefined' && searchResults.totalCount !== undefined) ? searchResults.totalCount : 0 %>
+                </span>
             </button>
             <button type="button"
                 role="tab"
@@ -86,7 +150,8 @@
                 class="discover-tab <%= (typeof activeTab !== 'undefined' && activeTab === 'browse-events') ? 'active' : '' %>"
                 data-target="browse-events"
                 data-hash="browse-events">
-                Browse by Event
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0;"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                <span>Browse by Event</span>
             </button>
         </div>
 
@@ -96,16 +161,15 @@
             <div id="smart-recs"
                 class="tab-pane <%= (typeof activeTab === 'undefined' || activeTab === 'smart-recs') ? 'active' : '' %>">
                 <div class="teams-list" style="flex: 1; display: flex; flex-direction: column; gap: 16px;">
-                    <% if (typeof recommendedOpportunities !=='undefined' && recommendedOpportunities &&
-                        recommendedOpportunities.length> 0) { %>
-                        <% recommendedOpportunities.forEach(opp=> { %>
+                    <% if (typeof recommendedOpportunities !== 'undefined' && recommendedOpportunities && recommendedOpportunities.length > 0) { %>
+                        <% recommendedOpportunities.forEach(opp => { %>
                             <div class="team-card-advanced"
-                                style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+                                style="background: var(--bg-card, #ffffff); border: 1px solid var(--border-color, #e2e8f0); border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
                                 <div class="team-card-header"
                                     style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
                                     <div class="team-card-title">
                                         <h3
-                                            style="margin: 0 0 4px 0; font-size: 18px; font-weight: 700; color: #0f172a;">
+                                            style="margin: 0 0 4px 0; font-size: 18px; font-weight: 700; color: var(--text-heading, #0f172a);">
                                             <%= opp.team.projectName %>
                                         </h3>
                                         <span class="badge badge-hackathon"
@@ -115,479 +179,467 @@
                                     </div>
                                     <div class="team-card-match" style="display: flex; align-items: center; gap: 8px;">
                                         <span class="brief-badge"
-                                            style="background: #f1f5f9; color: #475569; font-size: 12px; padding: 2px 8px; border-radius: 4px;">
+                                            style="background: var(--badge-bg, #f1f5f9); color: var(--badge-text, #475569); font-size: 12px; padding: 2px 8px; border-radius: 4px;">
                                             <%= opp.role.openings %> Openings
                                         </span>
-                                        <span class="match-score"
-                                            style="background: #dcfce7; color: #15803d; font-size: 13px; font-weight: 700; padding: 3px 8px; border-radius: 6px;">
+                                        <span class="match-score <%= getMatchBadgeClass(opp.score) %>"
+                                            style="font-size: 13px; font-weight: 700; padding: 3px 8px; border-radius: 6px;">
                                             <%= opp.score %>% Match
                                         </span>
                                     </div>
                                 </div>
 
                                 <div class="team-card-role"
-                                    style="font-size: 14.5px; font-weight: 600; color: #1e293b; margin-bottom: 12px;">
+                                    style="font-size: 14.5px; font-weight: 600; color: var(--text-heading, #1e293b); margin-bottom: 12px;">
                                     Role: <%= opp.role.title %>
                                 </div>
 
                                 <div class="team-card-meta"
-                                    style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 14px; font-size: 13px; color: #475569;">
+                                    style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 14px; font-size: 13px; color: var(--text-muted, #475569);">
                                     <div class="meta-col">
                                         <span class="meta-label"
-                                            style="font-size: 11px; text-transform: uppercase; color: #64748b; display: block;">Required
+                                            style="font-size: 11px; text-transform: uppercase; color: var(--text-muted, #64748b); display: block; margin-bottom: 4px;">Required
                                             Skills</span>
-                                        <div class="meta-value" style="font-weight: 500; color: #334155;">
-                                            <%= (opp.role.requiredSkills || []).join(', ') %>
-                                    </div>
-                                </div>
-                                <div class="meta-col">
-                                    <span class="meta-label" style="font-size: 11px; text-transform: uppercase; color: #64748b; display: block;">Team Capacity</span>
-                                    <div class="meta-value" style="font-weight: 500; color: #334155;">
-                                        <%= opp.team.teamSize %> Members
-                                    </div>
-                                </div>
-                                <div class="meta-col">
-                                    <span class="meta-label" style="font-size: 11px; text-transform: uppercase; color: #64748b; display: block;">Deadline</span>
-                                    <div class="meta-value" style="font-weight: 500; color: #334155;">
-                                        <%= formatDate(opp.team.deadline) %>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="team-card-actions" style="display: flex; justify-content: flex-end; align-items: center; gap: 10px;">
-                                <% if (opp.isApplied) { %>
-                                    <button class="btn-small-outline" disabled style="background-color: #10b981; color: white; border-color: #10b981; padding: 6px 14px; font-size: 12.5px;">✓ Applied</button>
-                                <% } else { %>
-                                    <form action="/applications/apply" method="POST" style="margin: 0; display: inline;">
-                                        <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== ' undefined'
-                                                ? csrfToken : '' %>">
-                                                <input type="hidden" name="teamRequirementId"
-                                                    value="<%= opp.team._id %>">
-                                                <input type="hidden" name="role" value="<%= opp.role.title %>">
-                                                <button type="submit" class="btn-small-primary"
-                                                    style="padding: 6px 16px; font-size: 13px;">Apply Now</button>
-                                                </form>
-                                                <% } %>
+                                        <div class="meta-value" style="font-weight: 500; color: var(--text-secondary, #334155); display: flex; gap: 4px; flex-wrap: wrap;">
+                                            <% (opp.role.requiredSkills || []).forEach(sk => { %>
+                                                <span style="background: var(--badge-bg, #f1f5f9); color: var(--badge-text, #334155); border: 1px solid var(--border-color, #e2e8f0); padding: 1px 6px; border-radius: 4px; font-size: 11.5px;">
+                                                    <%= sk %>
+                                                </span>
+                                            <% }); %>
                                         </div>
                                     </div>
-                                    <% }); %>
-                                        <% } else { %>
-                                            <div
-                                                style="text-align: center; padding: 48px 24px; background: white; border-radius: 12px; border: 1px solid #e2e8f0;">
-                                                <p style="color: #64748b; font-size: 15px; margin: 0 0 12px 0;">No
-                                                    matching recommendations found for your current skills.</p>
-                                                <p style="color: #64748b; font-size: 13px; margin: 0 0 18px 0;">Try
-                                                    updating your profile skills, or use the Search Teams tab to explore
-                                                    all open requirements.</p>
-                                                <a href="/profile/edit" class="btn-small-outline"
-                                                    style="text-decoration: none;">Update My Skills</a>
-                                            </div>
-                                            <% } %>
+                                    <div class="meta-col">
+                                        <span class="meta-label" style="font-size: 11px; text-transform: uppercase; color: var(--text-muted, #64748b); display: block;">Team Capacity</span>
+                                        <div class="meta-value" style="font-weight: 500; color: var(--text-secondary, #334155);">
+                                            <%= opp.team.teamSize %> Members
+                                        </div>
+                                    </div>
+                                    <div class="meta-col">
+                                        <span class="meta-label" style="font-size: 11px; text-transform: uppercase; color: var(--text-muted, #64748b); display: block;">Deadline</span>
+                                        <div class="meta-value" style="font-weight: 500; color: var(--text-secondary, #334155);">
+                                            <%= formatDate(opp.team.deadline) %>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <!-- Tab 2: Search Teams (Server-Side Filtered & Paginated) -->
-                            <div id="search-teams"
-                                class="tab-pane <%= (typeof activeTab !== 'undefined' && activeTab === 'search') ? 'active' : '' %>">
-
-                                <!-- Server-Side GET Form (Works with JS disabled) -->
-                                <form action="/discover" method="GET" class="search-filters-form"
-                                    id="discoverSearchForm" style="margin-bottom: 24px;">
-                                    <input type="hidden" name="tab" value="search">
-
-                                    <div class="search-filters-bar"
-                                        style="display: flex; gap: 12px; flex-wrap: wrap; background: white; padding: 18px 20px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.04); align-items: center;">
-
-                                        <!-- Search Input (projectName, theme, role title, required/preferred skills) -->
-                                        <div class="search-input-wrapper"
-                                            style="flex: 2; min-width: 240px; position: relative;">
-                                            <input type="text" name="q" id="searchQ"
-                                                value="<%= (typeof q !== 'undefined') ? q : '' %>"
-                                                class="form-control-new"
-                                                placeholder="Search by project name, theme, skill, or role..."
-                                                aria-label="Search by project name, theme, skill, or role"
-                                                style="width: 100%; padding: 10px 14px; font-size: 14px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box;">
-                                        </div>
-
-                                        <!-- Dynamic Skill Filter Dropdown -->
-                                        <div style="flex: 1; min-width: 160px;">
-                                            <select name="skill" id="filterSkill"
-                                                class="form-control-new filter-select-dropdown"
-                                                aria-label="Filter by required skill"
-                                                style="width: 100%; padding: 10px 12px; font-size: 13.5px; border: 1px solid #cbd5e1; border-radius: 8px; background: white; box-sizing: border-box;">
-                                                <option value="">Skill: All Skills</option>
-                                                <% if (typeof availableSkills !=='undefined' && availableSkills) { %>
-                                                    <% availableSkills.forEach(s=> { %>
-                                                        <option value="<%= s %>" <%=(typeof selectedSkill !=='undefined'
-                                                            && selectedSkill===s) ? 'selected' : '' %>><%= s %>
-                                                        </option>
-                                                        <% }); %>
-                                                            <% } %>
-                                            </select>
-                                        </div>
-
-                                        <!-- Dynamic Role Filter Dropdown -->
-                                        <div style="flex: 1; min-width: 160px;">
-                                            <select name="role" id="filterRole"
-                                                class="form-control-new filter-select-dropdown"
-                                                aria-label="Filter by role title"
-                                                style="width: 100%; padding: 10px 12px; font-size: 13.5px; border: 1px solid #cbd5e1; border-radius: 8px; background: white; box-sizing: border-box;">
-                                                <option value="">Role: All Roles</option>
-                                                <% if (typeof availableRoles !=='undefined' && availableRoles) { %>
-                                                    <% availableRoles.forEach(r=> { %>
-                                                        <option value="<%= r %>" <%=(typeof selectedRole !=='undefined'
-                                                            && selectedRole===r) ? 'selected' : '' %>><%= r %>
-                                                        </option>
-                                                        <% }); %>
-                                                            <% } %>
-                                            </select>
-                                        </div>
-
-                                        <!-- Dynamic Events Filter Dropdown -->
-                                        <div style="flex: 1; min-width: 160px;">
-                                            <select name="event" id="filterEvent"
-                                                class="form-control-new filter-select-dropdown"
-                                                aria-label="Filter by event"
-                                                style="width: 100%; padding: 10px 12px; font-size: 13.5px; border: 1px solid #cbd5e1; border-radius: 8px; background: white; box-sizing: border-box;">
-                                                <option value="">Event: All Events</option>
-                                                <% if (typeof availableEvents !=='undefined' && availableEvents) { %>
-                                                    <% availableEvents.forEach(evt=> { %>
-                                                        <option value="<%= evt._id %>" <%=(typeof selectedEvent
-                                                            !=='undefined' && selectedEvent===evt._id.toString())
-                                                            ? 'selected' : '' %>><%= evt.name %>
-                                                        </option>
-                                                        <% }); %>
-                                                            <% } %>
-                                            </select>
-                                        </div>
-
-                                        <div style="display: flex; gap: 8px; align-items: center;">
+                                <div class="team-card-actions" style="display: flex; justify-content: flex-end; align-items: center; gap: 10px;">
+                                    <% if (opp.isApplied) { %>
+                                        <button class="btn-small-outline" disabled style="background-color: #10b981; color: white; border-color: #10b981; padding: 6px 14px; font-size: 12.5px;">✓ Applied</button>
+                                    <% } else { %>
+                                        <form action="/applications/apply" method="POST" style="margin: 0; display: inline;">
+                                            <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                                            <input type="hidden" name="teamRequirementId" value="<%= opp.team._id %>">
+                                            <input type="hidden" name="role" value="<%= opp.role.title %>">
                                             <button type="submit" class="btn-small-primary"
-                                                style="padding: 10px 20px; font-size: 14px; font-weight: 600;">Search</button>
-                                            <% if ((typeof q !=='undefined' && q) || (typeof selectedSkill
-                                                !=='undefined' && selectedSkill) || (typeof selectedRole !=='undefined'
-                                                && selectedRole) || (typeof selectedEvent !=='undefined' &&
-                                                selectedEvent)) { %>
-                                                <a href="/discover?tab=search" class="btn-small-outline"
-                                                    style="padding: 9px 14px; font-size: 13px; text-decoration: none; display: inline-flex; align-items: center;">Clear</a>
-                                                <% } %>
-                                        </div>
-                                    </div>
-                                </form>
-
-                                <!-- Results Summary -->
-                                <div
-                                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                                    <div style="font-size: 14px; color: #64748b;">
-                                        Found <strong style="color: #0f172a;">
-                                            <%= (typeof searchResults !=='undefined' && searchResults.totalCount
-                                                !==undefined) ? searchResults.totalCount : 0 %>
-                                        </strong> open requirements
-                                        <% if (typeof searchResults !=='undefined' && searchResults.totalCount> 0) { %>
-                                            (Page <%= searchResults.currentPage %> of <%= searchResults.totalPages %>)
-                                                    <% } %>
-                                    </div>
-                                </div>
-
-                                <!-- Teams Results List -->
-                                <div class="teams-list" style="display: flex; flex-direction: column; gap: 16px;">
-                                    <% if (typeof searchResults !=='undefined' && searchResults.results &&
-                                        searchResults.results.length> 0) { %>
-                                        <% searchResults.results.forEach(item=> { %>
-                                            <div class="team-card-advanced"
-                                                style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 22px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
-
-                                                <!-- Card Header -->
-                                                <div
-                                                    style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
-                                                    <div>
-                                                        <div
-                                                            style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-                                                            <h3
-                                                                style="margin: 0; font-size: 19px; font-weight: 700; color: #0f172a;">
-                                                                <%= item.team.projectName %>
-                                                            </h3>
-                                                            <span class="badge"
-                                                                style="background: #e0e7ff; color: #4338ca; font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 600; text-transform: uppercase;">
-                                                                <%= item.team.theme %>
-                                                            </span>
-                                                            <% if (item.team.eventId) { %>
-                                                                <span
-                                                                    style="background: #f1f5f9; color: #475569; font-size: 11.5px; padding: 2px 8px; border-radius: 4px; font-weight: 500;">
-                                                                    <%= item.team.eventId.name %>
-                                                                </span>
-                                                                <% } %>
-                                                        </div>
-                                                        <div style="font-size: 12.5px; color: #64748b;">
-                                                            Led by: <strong style="color: #334155;">
-                                                                <%= item.team.createdBy ? item.team.createdBy.name
-                                                                    : 'Student' %>
-                                                            </strong> ·
-                                                            Deadline: <strong style="color: #334155;">
-                                                                <%= formatDate(item.team.deadline) %>
-                                                            </strong> ·
-                                                            Capacity: <strong style="color: #334155;">
-                                                                <%= item.team.teamSize %> Members
-                                                            </strong>
-                                                        </div>
-                                                    </div>
-
-                                                    <div>
-                                                        <span
-                                                            style="font-size: 12px; background: #eff6ff; color: #1e40af; padding: 4px 10px; border-radius: 6px; font-weight: 600;">
-                                                            <%= item.roles.length %> Open Role<%= item.roles.length> 1 ?
-                                                                    's' : '' %>
-                                                        </span>
-                                                    </div>
-                                                </div>
-
-                                                <% if (item.team.projectRequirement) { %>
-                                                    <p
-                                                        style="color: #475569; font-size: 13.5px; line-height: 1.5; margin: 0 0 14px 0;">
-                                                        <%= item.team.projectRequirement %>
-                                                    </p>
-                                                    <% } %>
-
-                                                        <!-- Open Roles Sub-Cards -->
-                                                        <div
-                                                            style="display: flex; flex-direction: column; gap: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px;">
-                                                            <span
-                                                                style="font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">Available
-                                                                Roles</span>
-
-                                                            <% item.roles.forEach(r=> { %>
-                                                                <div
-                                                                    style="background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-                                                                    <div style="flex: 1; min-width: 240px;">
-                                                                        <div
-                                                                            style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-                                                                            <strong
-                                                                                style="font-size: 14.5px; color: #0f172a;">
-                                                                                <%= r.title %>
-                                                                            </strong>
-                                                                            <span
-                                                                                style="font-size: 11px; background: #dcfce7; color: #15803d; padding: 1px 6px; border-radius: 4px; font-weight: 600;">
-                                                                                <%= r.openings %> Opening<%= r.openings>
-                                                                                        1 ? 's' : '' %>
-                                                                            </span>
-                                                                            <span
-                                                                                style="font-size: 12px; font-weight: 700; color: #15803d; margin-left: 4px;">
-                                                                                <%= r.matchScore %>% Match
-                                                                            </span>
-                                                                        </div>
-
-                                                                        <div
-                                                                            style="display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; font-size: 11px;">
-                                                                            <span
-                                                                                style="color: #64748b; font-weight: 500;">Required:</span>
-                                                                            <% (r.requiredSkills || []).forEach(sk=> {
-                                                                                %>
-                                                                                <span
-                                                                                    style="background: #f1f5f9; color: #334155; padding: 1px 6px; border-radius: 4px;">
-                                                                                    <%= sk %>
-                                                                                </span>
-                                                                                <% }); %>
-                                                                                    <% if (r.preferredSkills &&
-                                                                                        r.preferredSkills.length> 0) {
-                                                                                        %>
-                                                                                        <span
-                                                                                            style="color: #64748b; margin-left: 4px;">Pref:</span>
-                                                                                        <%
-                                                                                            r.preferredSkills.forEach(ps=>
-                                                                                            { %>
-                                                                                            <span
-                                                                                                style="background: #fffbeb; color: #b45309; padding: 1px 6px; border-radius: 4px;">
-                                                                                                <%= ps %>
-                                                                                            </span>
-                                                                                            <% }); %>
-                                                                                                <% } %>
-                                                                        </div>
-
-                                                                        <!-- "Why this match?" Breakdown Toggle -->
-                                                                        <% if (r.breakdown) { %>
-                                                                            <details
-                                                                                style="margin-top: 6px; font-size: 11.5px; color: #64748b;">
-                                                                                <summary
-                                                                                    style="cursor: pointer; color: #2563eb; font-weight: 600; outline: none;">
-                                                                                    Why this match? ▾
-                                                                                </summary>
-                                                                                <div
-                                                                                    style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; padding: 6px 8px; background: #f8fafc; border-radius: 6px; border: 1px solid #e2e8f0;">
-                                                                                    <span
-                                                                                        style="background: #eff6ff; color: #1d4ed8; padding: 1px 6px; border-radius: 4px;"
-                                                                                        title="Required skills score & preferred bonus">Skill
-                                                                                        Match: <%=
-                                                                                            Math.round(r.breakdown.S *
-                                                                                            100) %>%</span>
-                                                                                    <span
-                                                                                        style="background: #f0fdf4; color: #15803d; padding: 1px 6px; border-radius: 4px;"
-                                                                                        title="GitHub verification + Peer endorsements">Credibility:
-                                                                                        <%= Math.round(r.breakdown.C *
-                                                                                            100) %>%</span>
-                                                                                    <span
-                                                                                        style="background: #faf5ff; color: #7e22ce; padding: 1px 6px; border-radius: 4px;"
-                                                                                        title="Wins + Reviews + Shortlists">Reputation:
-                                                                                        <%= Math.round(r.breakdown.R *
-                                                                                            100) %>%</span>
-                                                                                    <span
-                                                                                        style="background: #fff7ed; color: #c2410c; padding: 1px 6px; border-radius: 4px;"
-                                                                                        title="Current commitment">Availability:
-                                                                                        <%= Math.round(r.breakdown.A *
-                                                                                            100) %>%</span>
-                                                                                    <span
-                                                                                        style="background: #fefce8; color: #a16207; padding: 1px 6px; border-radius: 4px;"
-                                                                                        title="Recent activity">Active:
-                                                                                        <%= Math.round(r.breakdown.T *
-                                                                                            100) %>%</span>
-                                                                                </div>
-                                                                            </details>
-                                                                            <% } %>
-                                                                    </div>
-
-                                                                    <!-- Apply Action Button -->
-                                                                    <div>
-                                                                        <% if (r.isApplied) { %>
-                                                                            <button class="btn-small-outline" disabled
-                                                                                style="background: #10b981; color: white; border-color: #10b981; font-size: 12px; padding: 5px 12px;">✓
-                                                                                Applied</button>
-                                                                            <% } else { %>
-                                                                                <form action="/applications/apply"
-                                                                                    method="POST" style="margin: 0;">
-                                                                                    <input type="hidden" name="_csrf"
-                                                                                        value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
-                                                                                    <input type="hidden"
-                                                                                        name="teamRequirementId"
-                                                                                        value="<%= item.team._id %>">
-                                                                                    <input type="hidden" name="role"
-                                                                                        value="<%= r.title %>">
-                                                                                    <button type="submit"
-                                                                                        class="btn-small-primary"
-                                                                                        style="font-size: 12.5px; padding: 6px 14px;">Apply</button>
-                                                                                </form>
-                                                                                <% } %>
-                                                                    </div>
-                                                                </div>
-                                                                <% }); %>
-                                                        </div>
-
-                                            </div>
-                                            <% }); %>
-                                                <% } else { %>
-                                                    <!-- Empty State (Requirement 5) -->
-                                                    <div
-                                                        style="text-align: center; padding: 48px 24px; background: white; border-radius: 12px; border: 1px solid #e2e8f0;">
-                                                        <div style="font-size: 36px; margin-bottom: 12px;">🔍</div>
-                                                        <h3
-                                                            style="font-size: 18px; font-weight: 700; color: #0f172a; margin: 0 0 8px 0;">
-                                                            No matching requirements found</h3>
-                                                        <p
-                                                            style="color: #64748b; font-size: 14px; max-width: 500px; margin: 0 auto 18px auto; line-height: 1.5;">
-                                                            Try fewer filters, checking for typos, or searching for
-                                                            broader skill terms (e.g., 'React', 'Python', 'Design').
-                                                        </p>
-                                                        <a href="/discover?tab=search" class="btn-small-primary"
-                                                            style="text-decoration: none; display: inline-block; padding: 8px 20px;">Clear
-                                                            All Filters</a>
-                                                    </div>
-                                                    <% } %>
-                                </div>
-
-                                <!-- Paging Controls (Requirement 2) -->
-                                <% if (typeof searchResults !=='undefined' && searchResults.totalPages> 1) { %>
-                                    <div class="pagination-controls"
-                                        style="display: flex; justify-content: space-between; align-items: center; margin-top: 24px; padding: 14px 20px; background: white; border-radius: 10px; border: 1px solid #e2e8f0;">
-                                        <div>
-                                            <% if (searchResults.hasPrevPage) { %>
-                                                <a href="<%= buildFilterUrl(searchResults.currentPage - 1) %>"
-                                                    class="btn-small-outline"
-                                                    style="text-decoration: none; padding: 7px 16px; font-size: 13px;">←
-                                                    Previous</a>
-                                                <% } else { %>
-                                                    <span class="btn-small-outline"
-                                                        style="opacity: 0.4; cursor: not-allowed; padding: 7px 16px; font-size: 13px;">←
-                                                        Previous</span>
-                                                    <% } %>
-                                        </div>
-
-                                        <span style="font-size: 13.5px; color: #475569; font-weight: 500;">
-                                            Page <strong>
-                                                <%= searchResults.currentPage %>
-                                            </strong> of <strong>
-                                                <%= searchResults.totalPages %>
-                                            </strong>
-                                        </span>
-
-                                        <div>
-                                            <% if (searchResults.hasNextPage) { %>
-                                                <a href="<%= buildFilterUrl(searchResults.currentPage + 1) %>"
-                                                    class="btn-small-primary"
-                                                    style="text-decoration: none; padding: 7px 16px; font-size: 13px;">Next
-                                                    →</a>
-                                                <% } else { %>
-                                                    <span class="btn-small-primary"
-                                                        style="opacity: 0.4; cursor: not-allowed; padding: 7px 16px; font-size: 13px;">Next
-                                                        →</span>
-                                                    <% } %>
-                                        </div>
-                                    </div>
+                                                style="padding: 6px 16px; font-size: 13px;">Apply Now</button>
+                                        </form>
                                     <% } %>
-
-                            </div>
-
-                            <!-- Tab 3: Browse by Event -->
-                            <div id="browse-events"
-                                class="tab-pane <%= (typeof activeTab !== 'undefined' && activeTab === 'browse-events') ? 'active' : '' %>">
-                                <div class="events-grid"
-                                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
-                                    <% if (typeof events !=='undefined' && events && events.length> 0) { %>
-                                        <% events.forEach(evt=> { %>
-                                            <div class="event-card-new"
-                                                style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
-                                                <div class="event-card-header"
-                                                    style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-                                                    <h3
-                                                        style="margin: 0; font-size: 17px; font-weight: 700; color: #0f172a;">
-                                                        <%= evt.name %>
-                                                    </h3>
-                                                    <span class="badge tag-blue"
-                                                        style="background: #e0f2fe; color: #0369a1; font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 600;">
-                                                        <%= (evt.mode || 'OFFLINE' ).toUpperCase() %>
-                                                    </span>
-                                                </div>
-                                                <p class="event-date"
-                                                    style="font-size: 13px; color: #64748b; margin: 0 0 10px 0;">
-                                                    Event Date: <%= formatDate(evt.date) %>
-                                                </p>
-                                                <div class="event-roles-info"
-                                                    style="font-size: 13px; color: #475569; margin-bottom: 16px;">
-                                                    <span>Organized by: <strong>
-                                                            <%= evt.organizer || 'KKWIEER Campus' %>
-                                                        </strong></span>
-                                                </div>
-                                                <a href="/events/<%= evt._id %>" class="btn-dashed-new"
-                                                    style="margin: 0; padding: 8px; display: block; text-align: center; text-decoration: none; border: 1px dashed #cbd5e1; border-radius: 6px; font-size: 13px; font-weight: 600; color: #2563eb;">
-                                                    View Event Details & Teams →
-                                                </a>
-                                            </div>
-                                            <% }); %>
-                                                <% } else { %>
-                                                    <div
-                                                        style="text-align: center; padding: 40px; background: white; border-radius: 12px; border: 1px solid #e2e8f0; grid-column: 1 / -1;">
-                                                        <p style="color: #64748b; font-size: 15px; margin: 0 0 12px 0;">
-                                                            No upcoming events scheduled at this time.</p>
-                                                        <% if (currentUser && (currentUser.isAdmin ||
-                                                            (currentUser.isOrganizer &&
-                                                            currentUser.organizerStatus==='APPROVED' ))) { %>
-                                                            <a href="/events/new" class="btn-small-primary"
-                                                                style="display: inline-block; text-decoration: none;">+
-                                                                Add Campus Event</a>
-                                                            <% } %>
-                                                    </div>
-                                                    <% } %>
                                 </div>
                             </div>
-
+                        <% }); %>
+                    <% } else { %>
+                        <div class="discover-empty-state" style="text-align: center; padding: 48px 24px; background: var(--bg-card, #ffffff); border-radius: 12px; border: 1px dashed var(--border-color, #cbd5e1); width: 100%; box-sizing: border-box;">
+                            <div class="empty-state-icon" style="width: 64px; height: 64px; margin: 0 auto 16px auto; display: flex; align-items: center; justify-content: center; background: rgba(37, 99, 235, 0.1); border-radius: 50%; color: #2563eb;">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <path d="m21 21-4.3-4.3"></path>
+                                    <path d="M11 8v6"></path>
+                                    <path d="M8 11h6"></path>
+                                </svg>
+                            </div>
+                            <h3 style="font-size: 18px; font-weight: 700; color: var(--text-heading, #0f172a); margin: 0 0 8px 0;">
+                                No recommendations found yet
+                            </h3>
+                            <p style="color: var(--text-muted, #64748b); font-size: 14px; max-width: 480px; margin: 0 auto 20px auto; line-height: 1.5;">
+                                Try updating your profile skills or search across all active team requirements.
+                            </p>
+                            <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+                                <a href="/profile/edit" class="btn-small-primary" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center; padding: 10px 20px; font-size: 13.5px; font-weight: 600; border-radius: 8px;">
+                                    Update My Skills
+                                </a>
+                                <button type="button" class="btn-small-outline btn-switch-to-search" data-switch-tab="search-teams" style="display: inline-flex; align-items: center; justify-content: center; padding: 10px 20px; font-size: 13.5px; font-weight: 600; border-radius: 8px; cursor: pointer;">
+                                    Search all teams
+                                </button>
+                            </div>
+                        </div>
+                    <% } %>
                 </div>
             </div>
 
-            <script src="/js/discover.js"></script>
+            <!-- Tab 2: Search Teams (Server-Side Filtered & Paginated) -->
+            <div id="search-teams"
+                class="tab-pane <%= (typeof activeTab !== 'undefined' && activeTab === 'search') ? 'active' : '' %>">
+
+                <!-- Server-Side GET Form (Works with JS disabled) -->
+                <form action="/discover" method="GET" class="search-filters-form"
+                    id="discoverSearchForm" style="margin-bottom: 24px;">
+                    <input type="hidden" name="tab" value="search">
+
+                    <div class="search-filters-bar"
+                        style="display: flex; gap: 12px; flex-wrap: wrap; background: var(--bg-card, #ffffff); padding: 18px 20px; border-radius: 12px; border: 1px solid var(--border-color, #e2e8f0); box-shadow: 0 1px 3px rgba(0,0,0,0.04); align-items: center;">
+
+                        <!-- Search Input (projectName, theme, role title, required/preferred skills) -->
+                        <div class="search-input-wrapper"
+                            style="flex: 2; min-width: 240px; position: relative;">
+                            <input type="text" name="q" id="searchQ"
+                                value="<%= (typeof q !== 'undefined') ? q : '' %>"
+                                class="form-control-new"
+                                placeholder="Search by project name, theme, skill, or role..."
+                                aria-label="Search by project name, theme, skill, or role"
+                                style="width: 100%; height: 42px; padding: 10px 14px; font-size: 14px; border: 1px solid var(--border-input, #cbd5e1); border-radius: 8px; box-sizing: border-box; background: var(--bg-input, #ffffff); color: var(--text-primary, #0f172a);">
+                        </div>
+
+                        <!-- Dynamic Skill Filter Dropdown -->
+                        <div style="flex: 1; min-width: 160px;">
+                            <select name="skill" id="filterSkill"
+                                class="form-control-new filter-select-dropdown"
+                                aria-label="Filter by required skill"
+                                style="width: 100%; height: 42px; padding: 10px 12px; font-size: 13.5px; border: 1px solid var(--border-input, #cbd5e1); border-radius: 8px; background: var(--bg-input, #ffffff); color: var(--text-primary, #0f172a); box-sizing: border-box;">
+                                <option value="">Skill: All Skills</option>
+                                <% if (typeof availableSkills !== 'undefined' && availableSkills) { %>
+                                    <% availableSkills.forEach(s => { %>
+                                        <option value="<%= s %>" <%= (typeof selectedSkill !== 'undefined' && selectedSkill === s) ? 'selected' : '' %>><%= s %></option>
+                                    <% }); %>
+                                <% } %>
+                            </select>
+                        </div>
+
+                        <!-- Dynamic Role Filter Dropdown -->
+                        <div style="flex: 1; min-width: 160px;">
+                            <select name="role" id="filterRole"
+                                class="form-control-new filter-select-dropdown"
+                                aria-label="Filter by role title"
+                                style="width: 100%; height: 42px; padding: 10px 12px; font-size: 13.5px; border: 1px solid var(--border-input, #cbd5e1); border-radius: 8px; background: var(--bg-input, #ffffff); color: var(--text-primary, #0f172a); box-sizing: border-box;">
+                                <option value="">Role: All Roles</option>
+                                <% if (typeof availableRoles !== 'undefined' && availableRoles) { %>
+                                    <% availableRoles.forEach(r => { %>
+                                        <option value="<%= r %>" <%= (typeof selectedRole !== 'undefined' && selectedRole === r) ? 'selected' : '' %>><%= r %></option>
+                                    <% }); %>
+                                <% } %>
+                            </select>
+                        </div>
+
+                        <!-- Dynamic Events Filter Dropdown -->
+                        <div style="flex: 1; min-width: 160px;">
+                            <select name="event" id="filterEvent"
+                                class="form-control-new filter-select-dropdown"
+                                aria-label="Filter by event"
+                                style="width: 100%; height: 42px; padding: 10px 12px; font-size: 13.5px; border: 1px solid var(--border-input, #cbd5e1); border-radius: 8px; background: var(--bg-input, #ffffff); color: var(--text-primary, #0f172a); box-sizing: border-box;">
+                                <option value="">Event: All Events</option>
+                                <% if (typeof availableEvents !== 'undefined' && availableEvents) { %>
+                                    <% availableEvents.forEach(evt => { %>
+                                        <option value="<%= evt._id %>" <%= (typeof selectedEvent !== 'undefined' && selectedEvent === evt._id.toString()) ? 'selected' : '' %>><%= evt.name %></option>
+                                    <% }); %>
+                                <% } %>
+                            </select>
+                        </div>
+
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <button type="submit" class="btn-small-primary"
+                                style="height: 42px; padding: 0 20px; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center;">Search</button>
+                            <% if ((typeof q !== 'undefined' && q) || (typeof selectedSkill !== 'undefined' && selectedSkill) || (typeof selectedRole !== 'undefined' && selectedRole) || (typeof selectedEvent !== 'undefined' && selectedEvent)) { %>
+                                <a href="/discover?tab=search" class="btn-small-outline"
+                                    style="height: 42px; padding: 0 16px; font-size: 13px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box;">Clear Filters</a>
+                            <% } %>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Results Summary -->
+                <div class="search-results-summary"
+                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <div style="font-size: 14px; color: var(--text-muted, #64748b);">
+                        Found <strong style="color: var(--text-heading, #0f172a);">
+                            <%= (typeof searchResults !== 'undefined' && searchResults.totalCount !== undefined) ? searchResults.totalCount : 0 %>
+                        </strong> open requirements
+                        <% if (typeof searchResults !== 'undefined' && searchResults.totalCount > 0) { %>
+                            (Page <%= searchResults.currentPage %> of <%= searchResults.totalPages %>)
+                        <% } %>
+                    </div>
+                </div>
+
+                <!-- Teams Results List -->
+                <div class="teams-list" style="display: flex; flex-direction: column; gap: 16px;">
+                    <% if (typeof searchResults !== 'undefined' && searchResults.results && searchResults.results.length > 0) { %>
+                        <% searchResults.results.forEach(item => { %>
+                            <div class="team-card-advanced"
+                                style="background: var(--bg-card, #ffffff); border: 1px solid var(--border-color, #e2e8f0); border-radius: 12px; padding: 22px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+
+                                <!-- Card Header -->
+                                <div
+                                    style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+                                    <div>
+                                        <div
+                                            style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap;">
+                                            <h3
+                                                style="margin: 0; font-size: 19px; font-weight: 700; color: var(--text-heading, #0f172a);">
+                                                <%= item.team.projectName %>
+                                            </h3>
+                                            <span class="badge"
+                                                style="background: #e0e7ff; color: #4338ca; font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 600; text-transform: uppercase;">
+                                                <%= item.team.theme %>
+                                            </span>
+                                            <% if (item.team.eventId) { %>
+                                                <span
+                                                    style="background: var(--badge-bg, #f1f5f9); color: var(--badge-text, #475569); font-size: 11.5px; padding: 2px 8px; border-radius: 4px; font-weight: 500;">
+                                                    <%= item.team.eventId.name %>
+                                                </span>
+                                            <% } %>
+                                        </div>
+                                        <div style="font-size: 12.5px; color: var(--text-muted, #64748b);">
+                                            Led by: <strong style="color: var(--text-secondary, #334155);">
+                                                <%= item.team.createdBy ? item.team.createdBy.name : 'Student' %>
+                                            </strong> ·
+                                            Deadline: <strong style="color: var(--text-secondary, #334155);">
+                                                <%= formatDate(item.team.deadline) %>
+                                            </strong> ·
+                                            Capacity: <strong style="color: var(--text-secondary, #334155);">
+                                                <%= item.team.teamSize %> Members
+                                            </strong>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <span
+                                            style="font-size: 12px; background: #eff6ff; color: #1e40af; padding: 4px 10px; border-radius: 6px; font-weight: 600;">
+                                            <%= item.roles.length %> Open Role<%= item.roles.length > 1 ? 's' : '' %>
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <% if (item.team.projectRequirement) { %>
+                                    <p
+                                        style="color: var(--text-secondary, #475569); font-size: 13.5px; line-height: 1.5; margin: 0 0 14px 0;">
+                                        <%= item.team.projectRequirement %>
+                                    </p>
+                                <% } %>
+
+                                <!-- Open Roles Sub-Cards -->
+                                <div
+                                    style="display: flex; flex-direction: column; gap: 10px; background: var(--bg-card-subtle, #f8fafc); border: 1px solid var(--border-color, #e2e8f0); border-radius: 8px; padding: 14px;">
+                                    <span
+                                        style="font-size: 12px; font-weight: 700; color: var(--text-muted, #475569); text-transform: uppercase; letter-spacing: 0.5px;">Available
+                                        Roles</span>
+
+                                    <% item.roles.forEach(r => { %>
+                                        <div
+                                            style="background: var(--bg-card, #ffffff); border: 1px solid var(--border-color, #e2e8f0); border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                                            <div style="flex: 1; min-width: 240px;">
+                                                <div
+                                                    style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap;">
+                                                    <strong
+                                                        style="font-size: 14.5px; color: var(--text-heading, #0f172a);">
+                                                        <%= r.title %>
+                                                    </strong>
+                                                    <span
+                                                        style="font-size: 11px; background: var(--badge-bg, #f1f5f9); color: var(--badge-text, #475569); padding: 1px 6px; border-radius: 4px; font-weight: 600;">
+                                                        <%= r.openings %> Opening<%= r.openings > 1 ? 's' : '' %>
+                                                    </span>
+                                                    <span class="match-score <%= getMatchBadgeClass(r.matchScore) %>"
+                                                        style="font-size: 12px; font-weight: 700; padding: 2px 7px; border-radius: 4px; margin-left: 4px;">
+                                                        <%= r.matchScore %>% Match
+                                                    </span>
+                                                </div>
+
+                                                <div
+                                                    style="display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; font-size: 11px; align-items: center;">
+                                                    <span
+                                                        style="color: var(--text-muted, #64748b); font-weight: 500;">Required:</span>
+                                                    <% (r.requiredSkills || []).forEach(sk => { %>
+                                                        <span
+                                                            style="background: var(--badge-bg, #f1f5f9); color: var(--badge-text, #334155); border: 1px solid var(--border-color, #e2e8f0); padding: 1px 6px; border-radius: 4px;">
+                                                            <%= sk %>
+                                                        </span>
+                                                    <% }); %>
+                                                    <% if (r.preferredSkills && r.preferredSkills.length > 0) { %>
+                                                        <span
+                                                            style="color: var(--text-muted, #64748b); margin-left: 4px;">Pref:</span>
+                                                        <% r.preferredSkills.forEach(ps => { %>
+                                                            <span
+                                                                style="background: #fffbeb; color: #b45309; border: 1px solid #fde68a; padding: 1px 6px; border-radius: 4px;">
+                                                                <%= ps %>
+                                                            </span>
+                                                        <% }); %>
+                                                    <% } %>
+                                                </div>
+
+                                                <!-- "Why this match?" Breakdown Toggle -->
+                                                <% if (r.breakdown) { %>
+                                                    <details
+                                                        style="margin-top: 6px; font-size: 11.5px; color: var(--text-muted, #64748b);">
+                                                        <summary
+                                                            style="cursor: pointer; color: var(--link-color, #2563eb); font-weight: 600; outline: none;">
+                                                            Why this match? ▾
+                                                        </summary>
+                                                        <div
+                                                            style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; padding: 6px 8px; background: var(--bg-card-subtle, #f8fafc); border-radius: 6px; border: 1px solid var(--border-color, #e2e8f0);">
+                                                            <span
+                                                                style="background: #eff6ff; color: #1d4ed8; padding: 1px 6px; border-radius: 4px;"
+                                                                title="Required skills score & preferred bonus">Skill
+                                                                Match: <%= Math.round(r.breakdown.S * 100) %>%</span>
+                                                            <span
+                                                                style="background: #f0fdf4; color: #15803d; padding: 1px 6px; border-radius: 4px;"
+                                                                title="GitHub verification + Peer endorsements">Credibility:
+                                                                <%= Math.round(r.breakdown.C * 100) %>%</span>
+                                                            <span
+                                                                style="background: #faf5ff; color: #7e22ce; padding: 1px 6px; border-radius: 4px;"
+                                                                title="Wins + Reviews + Shortlists">Reputation:
+                                                                <%= Math.round(r.breakdown.R * 100) %>%</span>
+                                                            <span
+                                                                style="background: #fff7ed; color: #c2410c; padding: 1px 6px; border-radius: 4px;"
+                                                                title="Current commitment">Availability:
+                                                                <%= Math.round(r.breakdown.A * 100) %>%</span>
+                                                            <span
+                                                                style="background: #fefce8; color: #a16207; padding: 1px 6px; border-radius: 4px;"
+                                                                title="Recent activity">Active:
+                                                                <%= Math.round(r.breakdown.T * 100) %>%</span>
+                                                        </div>
+                                                    </details>
+                                                <% } %>
+                                            </div>
+
+                                            <!-- Apply Action Button -->
+                                            <div>
+                                                <% if (r.isApplied) { %>
+                                                    <button class="btn-small-outline" disabled
+                                                        style="background: #10b981; color: white; border-color: #10b981; font-size: 12px; padding: 5px 12px;">✓
+                                                        Applied</button>
+                                                <% } else { %>
+                                                    <form action="/applications/apply"
+                                                        method="POST" style="margin: 0;">
+                                                        <input type="hidden" name="_csrf"
+                                                            value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                                                        <input type="hidden"
+                                                            name="teamRequirementId"
+                                                            value="<%= item.team._id %>">
+                                                        <input type="hidden" name="role"
+                                                            value="<%= r.title %>">
+                                                        <button type="submit"
+                                                            class="btn-small-primary"
+                                                            style="font-size: 12.5px; padding: 6px 14px;">Apply</button>
+                                                    </form>
+                                                <% } %>
+                                            </div>
+                                        </div>
+                                    <% }); %>
+                                </div>
+
+                            </div>
+                        <% }); %>
+                    <% } else { %>
+                        <!-- Empty State (Requirement 5) -->
+                        <div
+                            style="text-align: center; padding: 48px 24px; background: var(--bg-card, #ffffff); border-radius: 12px; border: 1px solid var(--border-color, #e2e8f0);">
+                            <div style="font-size: 36px; margin-bottom: 12px;">🔍</div>
+                            <h3
+                                style="font-size: 18px; font-weight: 700; color: var(--text-heading, #0f172a); margin: 0 0 8px 0;">
+                                No matching requirements found</h3>
+                            <p
+                                style="color: var(--text-muted, #64748b); font-size: 14px; max-width: 500px; margin: 0 auto 18px auto; line-height: 1.5;">
+                                Try fewer filters, checking for typos, or searching for
+                                broader skill terms (e.g., 'React', 'Python', 'Design').
+                            </p>
+                            <a href="/discover?tab=search" class="btn-small-primary"
+                                style="text-decoration: none; display: inline-block; padding: 8px 20px;">Clear
+                                All Filters</a>
+                        </div>
+                    <% } %>
+                </div>
+
+                <!-- Paging Controls (Requirement 2) -->
+                <% if (typeof searchResults !== 'undefined' && searchResults.totalPages > 1) { %>
+                    <div class="pagination-controls"
+                        style="display: flex; justify-content: space-between; align-items: center; margin-top: 24px; padding: 14px 20px; background: var(--bg-card, #ffffff); border-radius: 10px; border: 1px solid var(--border-color, #e2e8f0);">
+                        <div>
+                            <% if (searchResults.hasPrevPage) { %>
+                                <a href="<%= buildFilterUrl(searchResults.currentPage - 1) %>"
+                                    class="btn-small-outline"
+                                    style="text-decoration: none; padding: 7px 16px; font-size: 13px;">←
+                                    Previous</a>
+                            <% } else { %>
+                                <span class="btn-small-outline"
+                                    style="opacity: 0.4; cursor: not-allowed; padding: 7px 16px; font-size: 13px;">←
+                                    Previous</span>
+                            <% } %>
+                        </div>
+
+                        <span style="font-size: 13.5px; color: var(--text-secondary, #475569); font-weight: 500;">
+                            Page <strong>
+                                <%= searchResults.currentPage %>
+                            </strong> of <strong>
+                                <%= searchResults.totalPages %>
+                            </strong>
+                        </span>
+
+                        <div>
+                            <% if (searchResults.hasNextPage) { %>
+                                <a href="<%= buildFilterUrl(searchResults.currentPage + 1) %>"
+                                    class="btn-small-primary"
+                                    style="text-decoration: none; padding: 7px 16px; font-size: 13px;">Next
+                                    →</a>
+                            <% } else { %>
+                                <span class="btn-small-primary"
+                                    style="opacity: 0.4; cursor: not-allowed; padding: 7px 16px; font-size: 13px;">Next
+                                    →</span>
+                            <% } %>
+                        </div>
+                    </div>
+                <% } %>
+
+            </div>
+
+            <!-- Tab 3: Browse by Event -->
+            <div id="browse-events"
+                class="tab-pane <%= (typeof activeTab !== 'undefined' && activeTab === 'browse-events') ? 'active' : '' %>">
+                <div class="events-grid"
+                    style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
+                    <% if (typeof events !== 'undefined' && events && events.length > 0) { %>
+                        <% events.forEach(evt => { %>
+                            <div class="event-card-new"
+                                style="background: var(--bg-card, #ffffff); border: 1px solid var(--border-color, #e2e8f0); border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+                                <div class="event-card-header"
+                                    style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                                    <h3
+                                        style="margin: 0; font-size: 17px; font-weight: 700; color: var(--text-heading, #0f172a);">
+                                        <%= evt.name %>
+                                    </h3>
+                                    <span class="badge tag-blue"
+                                        style="background: #e0f2fe; color: #0369a1; font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 600;">
+                                        <%= (evt.mode || 'OFFLINE').toUpperCase() %>
+                                    </span>
+                                </div>
+                                <p class="event-date"
+                                    style="font-size: 13px; color: var(--text-muted, #64748b); margin: 0 0 10px 0;">
+                                    Event Date: <%= formatDate(evt.date) %>
+                                </p>
+                                <div class="event-roles-info"
+                                    style="font-size: 13px; color: var(--text-secondary, #475569); margin-bottom: 16px;">
+                                    <span>Organized by: <strong>
+                                            <%= evt.organizer || 'KKWIEER Campus' %>
+                                        </strong></span>
+                                </div>
+                                <a href="/events/<%= evt._id %>" class="btn-dashed-new"
+                                    style="margin: 0; padding: 8px; display: block; text-align: center; text-decoration: none; border: 1px dashed var(--border-color, #cbd5e1); border-radius: 6px; font-size: 13px; font-weight: 600; color: var(--link-color, #2563eb);">
+                                    View Event Details & Teams →
+                                </a>
+                            </div>
+                        <% }); %>
+                    <% } else { %>
+                        <div
+                            style="text-align: center; padding: 40px; background: var(--bg-card, #ffffff); border-radius: 12px; border: 1px solid var(--border-color, #e2e8f0); grid-column: 1 / -1;">
+                            <p style="color: var(--text-muted, #64748b); font-size: 15px; margin: 0 0 12px 0;">
+                                No upcoming events scheduled at this time.</p>
+                            <% if (currentUser && (currentUser.isAdmin || (currentUser.isOrganizer && currentUser.organizerStatus === 'APPROVED'))) { %>
+                                <a href="/events/new" class="btn-small-primary"
+                                    style="display: inline-block; text-decoration: none;">+
+                                    Add Campus Event</a>
+                            <% } %>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="/js/discover.js"></script>

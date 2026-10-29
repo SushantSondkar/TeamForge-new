@@ -513,6 +513,64 @@ async function runTests() {
     assert.ok(options.availableRoles.includes("Frontend Engineer"), "Frontend Engineer should be in dynamically extracted roles");
     console.log("   ✓ Dynamic filter options are properly collected from active open requirements.");
 
+    // -------------------------------------------------------------
+    // TEST 10: Discover Page UI Polish & Accessibility Assertions
+    // -------------------------------------------------------------
+    console.log("\n11. Testing Discover Page UI Polish & Tab Accessibility...");
+    const ejs = require("ejs");
+    const path = require("path");
+    const fs = require("fs");
+    const discoverViewPath = path.join(__dirname, "../views/discover.ejs");
+    const discoverContent = fs.readFileSync(discoverViewPath, "utf8");
+
+    // 1. Audit for 0 inline event handlers and 0 inline <script> tags
+    const inlineHandlerMatch = discoverContent.match(/\bon[a-zA-Z]+\s*=/g);
+    assert.strictEqual(inlineHandlerMatch, null, "discover.ejs must not contain inline event handlers");
+
+    const inlineScriptMatch = discoverContent.match(/<script(?![^>]*\bsrc\b)[^>]*>/gi);
+    assert.strictEqual(inlineScriptMatch, null, "discover.ejs must not contain inline <script> tags");
+
+    // 2. Render discover.ejs template for a logged-in student with empty recommendations
+    const renderedHtml = await ejs.renderFile(discoverViewPath, {
+      currentUser: studentMe,
+      activeTab: "smart-recs",
+      recommendedOpportunities: [],
+      searchResults: { results: [], totalCount: 0, currentPage: 1, totalPages: 1 },
+      availableSkills: ["React", "Python"],
+      availableRoles: ["Frontend Engineer"],
+      availableEvents: [],
+      events: [],
+      formatDate: (d) => new Date(d).toLocaleDateString(),
+      buildFilterUrl: () => "/discover",
+      csrfToken: "dummy-csrf-token",
+      layout: () => ""
+    }, {
+      views: [path.join(__dirname, "../views")]
+    });
+
+    assert.ok(renderedHtml.includes('Explore Active Requirements'), "Page renders heading");
+    assert.ok(renderedHtml.includes('Find teams and open roles matching your skills.'), "Page renders subtitle");
+    assert.strictEqual(renderedHtml.includes('Server-side filtering with real MatchScore calculation'), false, "Technical wording removed from subtitle");
+
+    // 3. Verify all three tabs exist with role="tab" and aria-selected
+    assert.ok(renderedHtml.includes('id="tab-smart-recs"'), "Smart recs tab exists");
+    assert.ok(renderedHtml.includes('id="tab-search-teams"'), "Search teams tab exists");
+    assert.ok(renderedHtml.includes('id="tab-browse-events"'), "Browse events tab exists");
+
+    const tabRoles = renderedHtml.match(/role="tab"/g) || [];
+    assert.strictEqual(tabRoles.length, 3, "All three tabs must have role='tab'");
+
+    assert.ok(renderedHtml.includes('aria-selected="true"'), "Active tab has aria-selected='true'");
+    assert.ok(renderedHtml.includes('aria-selected="false"'), "Inactive tabs have aria-selected='false'");
+
+    // 4. Verify empty state renders both buttons
+    assert.ok(renderedHtml.includes('href="/profile/edit"'), "Empty state must have 'Update My Skills' button");
+    assert.ok(renderedHtml.includes('Update My Skills'), "Button text 'Update My Skills' must be present");
+    assert.ok(renderedHtml.includes('data-switch-tab="search-teams"'), "Empty state must have 'Search all teams' button");
+    assert.ok(renderedHtml.includes('Search all teams'), "Button text 'Search all teams' must be present");
+
+    console.log("   ✓ Discover page renders cleanly with 3 accessible tabs, both empty state buttons, and 0 inline scripts.");
+
     console.log("\n=================================================");
     console.log("ALL PHASE 10A DISCOVER SEARCH TESTS PASSED (100%)");
     console.log("=================================================\n");
