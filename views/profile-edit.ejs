@@ -216,9 +216,17 @@
                     Technical Skills & Proficiency (Skill:Level, comma-separated)
                 </label>
                 <% 
-                    const currentSkillsStr = (currentUser && currentUser.skills) 
-                        ? currentUser.skills.map(s => `${s.name}:${s.level || 3}`).join(', ') 
-                        : '';
+                    let currentSkillsStr = "";
+                    if (currentUser && currentUser.skills) {
+                        if (typeof currentUser.skills === 'string') {
+                            currentSkillsStr = currentUser.skills;
+                        } else if (Array.isArray(currentUser.skills)) {
+                            currentSkillsStr = currentUser.skills.map(s => {
+                                if (typeof s === 'string') return s;
+                                return `${s.name || ''}:${s.level || 3}`;
+                            }).filter(Boolean).join(', ');
+                        }
+                    }
                 %>
                 <input type="text" id="skills" name="skills" value="<%= currentSkillsStr %>"
                        placeholder="e.g. React:5, Node.js:4, MongoDB:4, Python:3"
@@ -235,8 +243,17 @@
                 </label>
                 <%
                     let projStr = "";
-                    if (currentUser && currentUser.projects && currentUser.projects.length > 0) {
-                        projStr = currentUser.projects.map(p => `${p.title || ''} | ${p.description || ''} | ${p.link || ''} | ${p.techStack || ''}`).join('\n');
+                    if (currentUser && currentUser.projectsRaw !== undefined) {
+                        projStr = currentUser.projectsRaw;
+                    } else if (currentUser && currentUser.projects) {
+                        if (typeof currentUser.projects === 'string') {
+                            projStr = currentUser.projects;
+                        } else if (Array.isArray(currentUser.projects)) {
+                            projStr = currentUser.projects.map(p => {
+                                if (typeof p === 'string') return p;
+                                return `${p.title || ''} | ${p.description || ''} | ${p.link || ''} | ${p.techStack || ''}`;
+                            }).filter(Boolean).join('\n');
+                        }
                     }
                 %>
                 <textarea id="projectsRaw" name="projectsRaw" rows="3" placeholder="DevPortal | Campus developer platform | https://github.com/my/project | React, Node.js"
@@ -251,8 +268,17 @@
                 </label>
                 <%
                     let hackStr = "";
-                    if (currentUser && currentUser.pastHackathons && currentUser.pastHackathons.length > 0) {
-                        hackStr = currentUser.pastHackathons.map(h => `${h.name || ''} | ${h.year || ''} | ${h.projectTitle || ''} | ${h.role || ''} | ${h.placement || ''}`).join('\n');
+                    if (currentUser && currentUser.pastHackathonsRaw !== undefined) {
+                        hackStr = currentUser.pastHackathonsRaw;
+                    } else if (currentUser && currentUser.pastHackathons) {
+                        if (typeof currentUser.pastHackathons === 'string') {
+                            hackStr = currentUser.pastHackathons;
+                        } else if (Array.isArray(currentUser.pastHackathons)) {
+                            hackStr = currentUser.pastHackathons.map(h => {
+                                if (typeof h === 'string') return h;
+                                return `${h.name || ''} | ${h.year || ''} | ${h.projectTitle || ''} | ${h.role || ''} | ${h.placement || ''}`;
+                            }).filter(Boolean).join('\n');
+                        }
                     }
                 %>
                 <textarea id="pastHackathonsRaw" name="pastHackathonsRaw" rows="3" placeholder="Smart India Hackathon | 2025 | AI Traffic Router | Lead Developer | 1st Place"
